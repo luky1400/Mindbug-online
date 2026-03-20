@@ -1,0 +1,682 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mindbug Web</title>
+  <style>
+    :root {
+      --bg: #0b1220;
+      --panel: #131d30;
+      --panel-2: #192641;
+      --border: #2d3f66;
+      --text: #e7edf9;
+      --muted: #9fb0cf;
+      --accent: #71a3ff;
+      --danger: #ff8282;
+      --ok: #70d39a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, Segoe UI, Arial, sans-serif;
+      background: radial-gradient(circle at top, #10203e, var(--bg));
+      color: var(--text);
+      min-height: 100vh;
+    }
+    .app { max-width: 1320px; margin: 0 auto; padding: 18px; display: grid; gap: 14px; }
+    .panel { background: color-mix(in oklab, var(--panel), black 6%); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
+    .topbar { display: grid; gap: 10px; grid-template-columns: 1fr auto auto; align-items: center; }
+    .setup { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+    label { color: var(--muted); font-size: 14px; }
+    input[type="text"], input[type="number"] {
+      background: #0c1528; color: var(--text); border: 1px solid var(--border);
+      border-radius: 8px; padding: 8px 10px; min-width: 130px;
+    }
+    button {
+      background: #1f3359; color: var(--text); border: 1px solid var(--border);
+      border-radius: 8px; padding: 8px 12px; cursor: pointer;
+    }
+    button:hover { background: #294575; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .meta { color: var(--muted); font-size: 14px; }
+    .error { color: var(--danger); min-height: 20px; font-size: 14px; }
+    .controls { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+    .controls h3 { margin: 2px 0 10px; font-size: 16px; }
+    .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .board { display: grid; gap: 12px; }
+    .zone { background: var(--panel-2); border: 1px solid var(--border); border-radius: 12px; padding: 12px; display: grid; gap: 10px; }
+    .zone.active { outline: 2px solid color-mix(in oklab, var(--accent), transparent 40%); }
+    .zone h2 { margin: 0; font-size: 18px; }
+    .stats { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip { background: #0e1a30; border: 1px solid var(--border); border-radius: 999px; padding: 5px 10px; font-size: 12px; color: var(--muted); }
+    .group-title { margin: 0; font-size: 13px; color: var(--muted); }
+    .cards-row { display: flex; flex-wrap: wrap; gap: 8px; min-height: 140px; align-items: flex-start; }
+    .card-btn {
+      width: 96px; border-radius: 10px; overflow: hidden; border: 2px solid transparent;
+      background: #0f172a; color: var(--text); padding: 0; text-align: left; position: relative;
+    }
+    .card-btn.selectable { cursor: pointer; }
+    .card-btn.selected { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in oklab, var(--accent), transparent 65%); }
+    .card-img {
+      width: 100%; height: 128px; object-fit: cover; display: block; background: #0a1323;
+      border-bottom: 1px solid var(--border);
+    }
+    .card-label { font-size: 11px; line-height: 1.25; padding: 6px; color: var(--muted); min-height: 42px; }
+    .strength-tag {
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      background: rgba(7, 18, 36, 0.86);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 2px 6px;
+      color: #dce8ff;
+      min-width: 26px;
+      text-align: center;
+    }
+    .strength-tag.buff { color: #8ff1ad; border-color: #2f8a58; background: rgba(19, 50, 32, 0.88); }
+    .strength-tag.debuff { color: #ff9f9f; border-color: #8f3a3a; background: rgba(50, 20, 20, 0.88); }
+    .strength-tag.neutral { color: #dce8ff; }
+    .placeholder { color: #7f90b2; border: 1px dashed var(--border); border-radius: 8px; padding: 10px; font-size: 13px; }
+    .log { white-space: pre-wrap; max-height: 220px; overflow: auto; font-size: 13px; background: #0d1528; border: 1px solid var(--border); border-radius: 8px; padding: 10px; }
+    .status-ok { color: var(--ok); }
+    .game-over-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(6, 11, 22, 0.82);
+      backdrop-filter: blur(3px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+    }
+    .game-over-card {
+      width: min(560px, 92vw);
+      background: #111c31;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.45);
+    }
+    .game-over-card h2 { margin: 0 0 8px; }
+    .winner-name { color: var(--ok); font-weight: 700; }
+    .drop-zone {
+      border: 1px dashed var(--border);
+      border-radius: 8px;
+      padding: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      min-height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      background: #0f182d;
+    }
+    .drop-zone.active { border-color: var(--accent); color: var(--text); }
+    @media (max-width: 900px) {
+      .topbar, .controls { grid-template-columns: 1fr; }
+      .card-btn { width: 90px; }
+      .card-img { height: 120px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="panel topbar">
+      <div class="setup">
+        <strong>Mindbug Web</strong>
+        <label>Player 1 <input id="p1" type="text" value="Player 1" /></label>
+        <label>Player 2 <input id="p2" type="text" value="Player 2" /></label>
+      </div>
+      <button id="new-game-btn">New Game</button>
+      <div class="row">
+        <button id="refresh-btn">Refresh</button>
+        <button id="end-turn-btn">End Turn</button>
+      </div>
+      <div id="meta" class="meta">No active game.</div>
+      <div id="status" class="meta"></div>
+      <div id="error" class="error"></div>
+    </div>
+
+    <div class="panel controls">
+      <div>
+        <h3>Play</h3>
+        <div class="row">
+          <button id="play-btn">Play Selected Hand Card</button>
+          <label><input id="use-mindbug" type="checkbox" /> Opponent uses Mindbug</label>
+        </div>
+        <div id="play-drop-zone" class="drop-zone">Drag a hand card here to play</div>
+      </div>
+      <div>
+        <h3>Attack</h3>
+        <div class="row">
+          <button id="attack-btn">Attack Selected Defender</button>
+          <button id="direct-attack-btn">Direct Attack</button>
+        </div>
+        <div class="row">
+          <label><input id="hunter-override" type="checkbox" checked /> Use HUNTER target override</label>
+        </div>
+        <div id="direct-attack-drop-zone" class="drop-zone">Drag attacker card here for direct attack</div>
+      </div>
+      <div>
+        <h3>Selection</h3>
+        <div id="selection" class="meta">No card selected.</div>
+      </div>
+    </div>
+
+    <div class="board">
+      <section id="opponent-zone" class="zone"></section>
+      <section id="turn-zone" class="zone"></section>
+    </div>
+
+    <div class="panel">
+      <h3 style="margin:0 0 8px;">Recent Log</h3>
+      <div id="log" class="log">-</div>
+    </div>
+  </div>
+
+  <div id="game-over-screen" class="game-over-overlay">
+    <div class="game-over-card">
+      <h2>Game Over</h2>
+      <p><span id="winner-name" class="winner-name">-</span> wins!</p>
+      <div class="row" style="justify-content:center;">
+        <button id="new-game-overlay-btn">Start New Game</button>
+        <button id="close-overlay-btn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let gameId = null;
+    let currentState = null;
+    let selectedHandIndex = null;
+    let selectedAttackerIndex = null;
+    let selectedDefenderIndex = null;
+    let pendingFrenzyAttack = null;
+    const baseStrengthByName = {
+      "Axolotl Healer": 4,
+      "Bee Bear": 8,
+      "Brain Fly": 4,
+      "Bugserker": 3,
+      "Chameleon Sniper": 1,
+      "Compost Dragon": 3,
+      "Count Draculeech": 7,
+      "Creep from the Deep": 4,
+      "Deathweaver": 2,
+      "Elephantopus": 7,
+      "Explosive Toad": 5,
+      "Ferret Bomber": 2,
+      "Ferret Pacifier": 4,
+      "Froblin Instigator": 1,
+      "Giraffodile": 7,
+      "Goblin Werewolf": 2,
+      "Gorillion": 10,
+      "Goreagle Alpha": 6,
+      "Grave Robber": 7,
+      "Hamster Lion": 8,
+      "Harpy Mother": 5,
+      "Hungry Hungry Hamster": 2,
+      "Hyenix": 7,
+      "Kangasaurus Rex": 7,
+      "Killer Bee": 5,
+      "Lone Yeti": 5,
+      "Luchataur": 9,
+      "Majestic Manticore": 6,
+      "Mysterious Mermaid": 7,
+      "Plated Scorpion": 2,
+      "Rhino Turtle": 8,
+      "Shark Dog": 4,
+      "Sharky Crab Dog Mummypus": 5,
+      "Shield Bugs": 4,
+      "Short Neck Giraffodile": 7,
+      "Snail Hydra": 9,
+      "Snail Thrower": 1,
+      "Spider Owl": 3,
+      "Strange Barrel": 6,
+      "The Lurker": 4,
+      "Tiger Squirrel": 3,
+      "Turbo Bug": 4,
+      "Turf the Surfer": 8,
+      "Tusked Extorter": 8,
+      "Urchin Hurler": 5
+    };
+
+    function setError(message) {
+      document.getElementById("error").textContent = message || "";
+    }
+
+    function setStatus(message, ok = false) {
+      const el = document.getElementById("status");
+      el.textContent = message || "";
+      el.className = ok ? "meta status-ok" : "meta";
+    }
+
+    function parseCardLabel(label) {
+      const raw = String(label || "").trim();
+      const match = raw.match(/^(.*?)\s\[(\-?\d+)\](.*)$/);
+      if (!match) {
+        return { name: raw, strength: "?", details: "" };
+      }
+      return {
+        name: match[1].trim(),
+        strength: match[2].trim(),
+        details: match[3].trim()
+      };
+    }
+
+    function cardNameFromLabel(label) {
+      return parseCardLabel(label).name;
+    }
+
+    function slugifyName(cardLabel) {
+      return cardNameFromLabel(cardLabel)
+        .toLowerCase()
+        .replace(/[^a-z0-9 ]+/g, "")
+        .trim()
+        .replace(/\s+/g, "_");
+    }
+
+    function cardImageUrl(cardLabel) {
+      return `/card-images/${slugifyName(cardLabel)}.png`;
+    }
+
+    function cardHasTag(cardLabel, tag) {
+      return String(cardLabel || "").toUpperCase().includes(tag.toUpperCase());
+    }
+
+    function isClickable(type) {
+      return type === "hand" || type === "attacker" || type === "defender";
+    }
+
+    function isSelected(index, type) {
+      if (type === "hand") return selectedHandIndex === index;
+      if (type === "attacker") return selectedAttackerIndex === index;
+      if (type === "defender") return selectedDefenderIndex === index;
+      return false;
+    }
+
+    function chooseIndex(index, type) {
+      if (type === "hand") selectedHandIndex = selectedHandIndex === index ? null : index;
+      if (type === "attacker") selectedAttackerIndex = selectedAttackerIndex === index ? null : index;
+      if (type === "defender") selectedDefenderIndex = selectedDefenderIndex === index ? null : index;
+      updateSelectionText();
+      render(currentState);
+    }
+
+    function cardHtml(label, index, type) {
+      const parsed = parseCardLabel(label);
+      const currentStrength = Number(parsed.strength);
+      const baseStrength = baseStrengthByName[parsed.name];
+      const strengthClass = Number.isFinite(currentStrength) && Number.isFinite(baseStrength)
+        ? (currentStrength > baseStrength ? "buff" : (currentStrength < baseStrength ? "debuff" : "neutral"))
+        : "neutral";
+      const clickable = isClickable(type);
+      const selected = isSelected(index, type);
+      const classes = ["card-btn"];
+      if (clickable) classes.push("selectable");
+      if (selected) classes.push("selected");
+      const action = clickable ? `onclick="chooseIndex(${index}, '${type}')"` : "";
+      const draggable = type === "hand" || type === "attacker";
+      const drag = draggable
+        ? `draggable="true" ondragstart="onCardDragStart(event, ${index}, '${type}')"`
+        : "";
+      const drop = type === "defender"
+        ? `ondragover="allowDrop(event)" ondrop="onAttackDropOnDefender(event, ${index})"`
+        : "";
+      return `
+        <button class="${classes.join(" ")}" ${action} ${drag} ${drop}>
+          <span class="strength-tag ${strengthClass}">${parsed.strength}</span>
+          <img class="card-img" src="${cardImageUrl(label)}" alt="${label}" onerror="this.style.display='none'" />
+          <div class="card-label">${parsed.name}${parsed.details ? `<br>${parsed.details}` : ""}</div>
+        </button>
+      `;
+    }
+
+    function cardsRowHtml(cards, type) {
+      if (!cards || cards.length === 0) {
+        return `<div class="placeholder">No cards</div>`;
+      }
+      return cards.map((label, idx) => cardHtml(label, idx, type)).join("");
+    }
+
+    function updateSelectionText() {
+      const attackerText = selectedAttackerIndex === null ? "-" : selectedAttackerIndex;
+      const defenderText = selectedDefenderIndex === null ? "-" : selectedDefenderIndex;
+      const handText = selectedHandIndex === null ? "-" : selectedHandIndex;
+      document.getElementById("selection").textContent =
+        `Hand: ${handText} | Attacker: ${attackerText} | Defender: ${defenderText}`;
+    }
+
+    function setActionButtonsEnabled(enabled) {
+      document.getElementById("play-btn").disabled = !enabled;
+      document.getElementById("attack-btn").disabled = !enabled;
+      document.getElementById("direct-attack-btn").disabled = !enabled;
+      document.getElementById("end-turn-btn").disabled = !enabled;
+      document.getElementById("use-mindbug").disabled = !enabled;
+      document.getElementById("hunter-override").disabled = !enabled;
+    }
+
+    async function api(path, options = {}) {
+      const response = await fetch(path, {
+        headers: { "Content-Type": "application/json" },
+        ...options
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.detail || "Request failed");
+      return data;
+    }
+
+    function keepSelectionsValid(state) {
+      const turnPlayer = state.players.find((p) => p.name === state.turn_player);
+      const opponent = state.players.find((p) => p.name !== state.turn_player);
+      const hand = state.turn_hand || turnPlayer?.hand || [];
+      const board = turnPlayer?.battlefield || [];
+      const oppBoard = opponent?.battlefield || [];
+      if (selectedHandIndex !== null && (selectedHandIndex < 0 || selectedHandIndex >= hand.length)) selectedHandIndex = null;
+      if (selectedAttackerIndex !== null && (selectedAttackerIndex < 0 || selectedAttackerIndex >= board.length)) selectedAttackerIndex = null;
+      if (selectedDefenderIndex !== null && (selectedDefenderIndex < 0 || selectedDefenderIndex >= oppBoard.length)) selectedDefenderIndex = null;
+      if (pendingFrenzyAttack) {
+        if (
+          pendingFrenzyAttack.attackerIndex < 0 ||
+          pendingFrenzyAttack.attackerIndex >= board.length
+        ) {
+          pendingFrenzyAttack = null;
+        }
+      }
+    }
+
+    function render(state) {
+      if (!state) return;
+      currentState = state;
+      keepSelectionsValid(state);
+      updateSelectionText();
+
+      const turnPlayer = state.players.find((p) => p.name === state.turn_player);
+      const opponent = state.players.find((p) => p.name !== state.turn_player);
+
+      document.getElementById("meta").textContent =
+        `Game ${gameId ?? "-"} | Turn: ${state.turn_player} | State: ${state.game_state}` +
+        (state.winner ? ` | Winner: ${state.winner}` : "");
+
+      const turnZone = document.getElementById("turn-zone");
+      turnZone.className = "zone active";
+      turnZone.innerHTML = `
+        <h2>${turnPlayer.name} (On Turn)</h2>
+        <div class="stats">
+          <span class="chip">Lives: ${turnPlayer.lives}</span>
+          <span class="chip">Mindbugs: ${turnPlayer.mindbugs_remaining}</span>
+          <span class="chip">Hand: ${turnPlayer.hand_count}</span>
+          <span class="chip">Draw: ${turnPlayer.draw_count}</span>
+          <span class="chip">Discard: ${turnPlayer.discard_count}</span>
+        </div>
+        <p class="group-title">Battlefield (click to select attacker)</p>
+        <div class="cards-row">${cardsRowHtml(turnPlayer.battlefield || [], "attacker")}</div>
+        <p class="group-title">Hand (click to select card to play)</p>
+        <div class="cards-row">${cardsRowHtml(state.turn_hand || turnPlayer.hand || [], "hand")}</div>
+        <p class="group-title">Discard Pile</p>
+        <div class="cards-row">${cardsRowHtml(turnPlayer.discard || [], "discard")}</div>
+      `;
+
+      const opponentZone = document.getElementById("opponent-zone");
+      opponentZone.className = "zone";
+      opponentZone.innerHTML = `
+        <h2>${opponent.name}</h2>
+        <div class="stats">
+          <span class="chip">Lives: ${opponent.lives}</span>
+          <span class="chip">Mindbugs: ${opponent.mindbugs_remaining}</span>
+          <span class="chip">Hand: ${opponent.hand_count} (hidden)</span>
+          <span class="chip">Draw: ${opponent.draw_count}</span>
+          <span class="chip">Discard: ${opponent.discard_count}</span>
+        </div>
+        <p class="group-title">Battlefield (click to select defender)</p>
+        <div class="cards-row">${cardsRowHtml(opponent.battlefield || [], "defender")}</div>
+        <p class="group-title">Discard Pile</p>
+        <div class="cards-row">${cardsRowHtml(opponent.discard || [], "discard")}</div>
+      `;
+
+      const log = state.log && state.log.length ? state.log.join("\n") : "-";
+      document.getElementById("log").textContent = log;
+
+      const isGameOver = state.game_state === "GAME_OVER";
+      setActionButtonsEnabled(!isGameOver);
+      if (pendingFrenzyAttack && !isGameOver) {
+        document.getElementById("play-btn").disabled = true;
+      }
+      const overlay = document.getElementById("game-over-screen");
+      if (isGameOver) {
+        document.getElementById("winner-name").textContent = state.winner || "Unknown player";
+        overlay.style.display = "flex";
+      } else {
+        overlay.style.display = "none";
+      }
+    }
+
+    async function refreshState() {
+      if (!gameId) return;
+      const data = await api(`/game/${gameId}/state`);
+      render(data.state);
+    }
+
+    async function createGame() {
+      setError("");
+      try {
+        const payload = {
+          player1: document.getElementById("p1").value || "Player 1",
+          player2: document.getElementById("p2").value || "Player 2"
+        };
+        const data = await api("/game/new", {
+          method: "POST",
+          body: JSON.stringify(payload)
+        });
+        gameId = data.game_id;
+        selectedHandIndex = null;
+        selectedAttackerIndex = null;
+        selectedDefenderIndex = null;
+        pendingFrenzyAttack = null;
+        render(data.state);
+        setStatus("Game created.", true);
+      } catch (err) {
+        setError(err.message);
+      }
+    }
+
+    async function maybeAutoEndTurnAfterAction(actionState, actionLabel) {
+      if (actionState?.game_state === "GAME_OVER") {
+        render(actionState);
+        setStatus(`${actionLabel} resolved. Game over.`, true);
+        return;
+      }
+      const endData = await api(`/game/${gameId}/end-turn`, {
+        method: "POST",
+        body: "{}"
+      });
+      selectedHandIndex = null;
+      selectedAttackerIndex = null;
+      selectedDefenderIndex = null;
+      pendingFrenzyAttack = null;
+      render(endData.state);
+      setStatus(`${actionLabel} resolved. Turn ended automatically.`, true);
+    }
+
+    async function playSelectedCard(forcedHandIndex = null) {
+      setError("");
+      if (!gameId) return setError("Create a game first.");
+      if (pendingFrenzyAttack) {
+        return setError("Finish the pending FRENZY extra attack or end turn.");
+      }
+      const handIndex = forcedHandIndex ?? selectedHandIndex;
+      if (handIndex === null) return setError("Select a hand card first.");
+      try {
+        const payload = {
+          hand_index: handIndex,
+          use_opponent_mindbug: document.getElementById("use-mindbug").checked
+        };
+        const data = await api(`/game/${gameId}/play-card`, {
+          method: "POST",
+          body: JSON.stringify(payload)
+        });
+        await maybeAutoEndTurnAfterAction(data.state, "Play");
+      } catch (err) {
+        setError(err.message);
+      }
+    }
+
+    async function attackSelected(direct = false, forcedAttackerIndex = null, forcedDefenderIndex = null) {
+      setError("");
+      if (!gameId) return setError("Create a game first.");
+      const attackerIndex = forcedAttackerIndex ?? selectedAttackerIndex;
+      const defenderIndex = direct ? null : (forcedDefenderIndex ?? selectedDefenderIndex);
+      if (attackerIndex === null) return setError("Select an attacker first.");
+      if (!direct && defenderIndex === null) return setError("Select a defender or use Direct Attack.");
+
+      const turnPlayer = currentState?.players?.find((p) => p.name === currentState.turn_player);
+      const attackerLabel = turnPlayer?.battlefield?.[attackerIndex];
+      const isHunter = cardHasTag(attackerLabel, "HUNTER");
+      const isFrenzy = cardHasTag(attackerLabel, "FRENZY");
+      const hunterOverride = document.getElementById("hunter-override").checked;
+      if (!direct && isHunter && hunterOverride && defenderIndex === null) {
+        return setError("For HUNTER override, select a defender target.");
+      }
+      if (pendingFrenzyAttack && attackerIndex !== pendingFrenzyAttack.attackerIndex) {
+        return setError("Use the same FRENZY attacker for the second attack, or end turn.");
+      }
+
+      try {
+        const payload = {
+          attacker_index: attackerIndex,
+          defender_index: defenderIndex,
+          hunter_target_override: direct ? false : hunterOverride
+        };
+        const data = await api(`/game/${gameId}/attack`, {
+          method: "POST",
+          body: JSON.stringify(payload)
+        });
+        const turnPlayerAfter = data.state?.players?.find((p) => p.name === data.state.turn_player);
+        const attackerStillAlive =
+          attackerIndex < (turnPlayerAfter?.battlefield?.length || 0);
+        if (
+          isFrenzy &&
+          !pendingFrenzyAttack &&
+          data.state?.game_state !== "GAME_OVER" &&
+          attackerStillAlive
+        ) {
+          pendingFrenzyAttack = { attackerIndex };
+          selectedAttackerIndex = attackerIndex;
+          selectedDefenderIndex = null;
+          render(data.state);
+          setStatus("FRENZY: attacker may attack one more time this turn.", true);
+          return;
+        }
+        pendingFrenzyAttack = null;
+        await maybeAutoEndTurnAfterAction(
+          data.state,
+          direct ? "Direct attack" : "Attack"
+        );
+      } catch (err) {
+        setError(err.message);
+      }
+    }
+
+    function parseDragPayload(event) {
+      const raw = event.dataTransfer.getData("application/json");
+      if (!raw) return null;
+      try {
+        return JSON.parse(raw);
+      } catch {
+        return null;
+      }
+    }
+
+    function allowDrop(event) {
+      event.preventDefault();
+      if (event.currentTarget?.classList) event.currentTarget.classList.add("active");
+    }
+
+    function onCardDragStart(event, index, type) {
+      event.dataTransfer.setData(
+        "application/json",
+        JSON.stringify({ index, type })
+      );
+      event.dataTransfer.effectAllowed = "move";
+    }
+
+    async function onPlayDrop(event) {
+      event.preventDefault();
+      event.currentTarget.classList.remove("active");
+      const payload = parseDragPayload(event);
+      if (!payload || payload.type !== "hand") return;
+      if (pendingFrenzyAttack) {
+        setError("Finish the pending FRENZY extra attack or end turn.");
+        return;
+      }
+      await playSelectedCard(payload.index);
+    }
+
+    async function onAttackDropOnDefender(event, defenderIndex) {
+      event.preventDefault();
+      const payload = parseDragPayload(event);
+      if (!payload || payload.type !== "attacker") return;
+      await attackSelected(false, payload.index, defenderIndex);
+    }
+
+    async function onDirectAttackDrop(event) {
+      event.preventDefault();
+      event.currentTarget.classList.remove("active");
+      const payload = parseDragPayload(event);
+      if (!payload || payload.type !== "attacker") return;
+      await attackSelected(true, payload.index, null);
+    }
+
+    function clearDropHighlight(event) {
+      event.currentTarget.classList.remove("active");
+    }
+
+    async function endTurn() {
+      setError("");
+      if (!gameId) return setError("Create a game first.");
+      try {
+        const data = await api(`/game/${gameId}/end-turn`, {
+          method: "POST",
+          body: "{}"
+        });
+        selectedHandIndex = null;
+        selectedAttackerIndex = null;
+        selectedDefenderIndex = null;
+        pendingFrenzyAttack = null;
+        render(data.state);
+        setStatus("Turn ended.", true);
+      } catch (err) {
+        setError(err.message);
+      }
+    }
+
+    window.chooseIndex = chooseIndex;
+    window.allowDrop = allowDrop;
+    window.onCardDragStart = onCardDragStart;
+    window.onAttackDropOnDefender = onAttackDropOnDefender;
+    document.getElementById("new-game-btn").onclick = createGame;
+    document.getElementById("new-game-overlay-btn").onclick = createGame;
+    document.getElementById("close-overlay-btn").onclick = () => {
+      document.getElementById("game-over-screen").style.display = "none";
+    };
+    document.getElementById("refresh-btn").onclick = refreshState;
+    document.getElementById("play-btn").onclick = playSelectedCard;
+    document.getElementById("attack-btn").onclick = () => attackSelected(false);
+    document.getElementById("direct-attack-btn").onclick = () => attackSelected(true);
+    document.getElementById("end-turn-btn").onclick = endTurn;
+    const playDropZone = document.getElementById("play-drop-zone");
+    playDropZone.ondragover = allowDrop;
+    playDropZone.ondrop = onPlayDrop;
+    playDropZone.ondragleave = clearDropHighlight;
+    const directDropZone = document.getElementById("direct-attack-drop-zone");
+    directDropZone.ondragover = allowDrop;
+    directDropZone.ondrop = onDirectAttackDrop;
+    directDropZone.ondragleave = clearDropHighlight;
+  </script>
+</body>
+</html>
