@@ -201,7 +201,7 @@ class Game:
         enforce_turn_action_limit: bool = False,
         auto_end_turn_after_successful_play: bool = False,
         auto_end_turn_after_resolved_attack: bool = False,
-        # TODO - add cards_available_for_game?
+
     ):
         # TODO - Later implement for 4 players
         if len(player_names) != 2:
@@ -228,6 +228,7 @@ class Game:
         self.enforce_turn_action_limit = enforce_turn_action_limit
         self.auto_end_turn_after_successful_play = auto_end_turn_after_successful_play
         self.auto_end_turn_after_resolved_attack = auto_end_turn_after_resolved_attack
+        self.selected_sets: list[CardSet] = []
 
     @property
     def current_player(self) -> Player:
@@ -237,11 +238,28 @@ class Game:
     def opponent(self) -> Player:
         return self.players[1 - self.turn]
 
+    def _resolve_selected_sets(
+        self, card_pool: list[Card], sets: list[CardSet] | None = None
+    ) -> list[CardSet]:
+        if sets is not None:
+            resolved_sets: list[CardSet] = []
+            for card_set in sets:
+                if card_set not in resolved_sets:
+                    resolved_sets.append(card_set)
+            return resolved_sets
+
+        available_sets: list[CardSet] = []
+        for card in card_pool:
+            if card.set is not None and card.set not in available_sets:
+                available_sets.append(card.set)
+        return available_sets
+
     def _select_cards_for_game(
         self, card_pool: list[Card], sets: list[CardSet] | None = None
     ) -> list[Card]:
+        self.selected_sets = self._resolve_selected_sets(card_pool, sets)
         if sets is not None:
-            allowed_sets = set(sets)
+            allowed_sets = set(self.selected_sets)
             card_pool = [card for card in card_pool if card.set in allowed_sets]
         if len(card_pool) < self.number_of_cards_in_game:
             raise ValueError("Card pool does not contain enough cards for a game.")

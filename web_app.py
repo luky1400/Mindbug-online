@@ -131,7 +131,7 @@ class GameSession:
                 "connected_players": len(self.players),
                 "max_players": 2,
                 "invite_code": self.game_id,
-                "selected_sets": [card_set.value for card_set in self.selected_sets],
+                "selected_sets": [card_set.value for card_set in self.game.selected_sets],
             }
         )
         return state

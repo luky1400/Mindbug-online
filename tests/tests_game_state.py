@@ -92,6 +92,20 @@ def test_start_game_uses_only_selected_card_sets() -> None:
 
     game.start_game(card_pool=get_card_pool(), sets=[CardSet.NEW_SERVANTS])
 
+    assert game.selected_sets == [CardSet.NEW_SERVANTS]
+
     for player in game.players:
         assert all(card.set == CardSet.NEW_SERVANTS for card in player.hand)
         assert all(card.set == CardSet.NEW_SERVANTS for card in player.draw_pile.cards)
+
+
+def test_start_game_stores_all_available_sets_when_no_filter_is_passed() -> None:
+    game = Game(
+        player_names=["Player 1", "Player 2"],
+        starting_hand_size=0,
+        starting_draw_pile_size=0,
+    )
+
+    game.start_game(card_pool=get_card_pool())
+
+    assert game.selected_sets == [CardSet.FIRST_CONTACT, CardSet.NEW_SERVANTS]
