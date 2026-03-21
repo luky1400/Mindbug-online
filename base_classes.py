@@ -246,7 +246,6 @@ class Game:
         self._pending_mindbug_decision = None
         self._recalculate_ongoing_effects()
 
-    # NOTE - card is optional, if not provided, play card from hand
     def play_card(
         self,
         hand_index: Optional[int] = None,

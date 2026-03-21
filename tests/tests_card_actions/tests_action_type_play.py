@@ -121,7 +121,7 @@ def test_play_ferret_bomber_opponent_discards_2_and_draws_if_possible() -> None:
     assert all(card in opponent.discard_pile for card in opponent_hand_cards)
     assert len(opponent.hand) == 2
     assert all(card in opponent.hand for card in opponent_draw_pile_cards)
-    # TODO - this test sometimes passes and sometimes fails, need to debug why
+    # NOTE - this test sometimes passes and sometimes fails, need to debug why
     assert len(opponent.draw_pile.cards) == 0
 
 
