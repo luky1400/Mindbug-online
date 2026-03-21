@@ -109,7 +109,6 @@ PYTHONPATH=. pytest tests/tests_mindbug_use.py
   - dát na rozklikávatko: pravidla, logs
 - UI screens:
   - room
-  - victory screen
 - UI additonal:
   - Hide redundant information in UI
     - End turn (if not attacking FRENZY still lives)
@@ -146,5 +145,5 @@ V případě shody tento proces opakujte."
 ## Documentation notes
 
 - resolved plays and attacks automatically trigger end_turn()
-- 
+- App.tsx: the multiplayer client clears selections immediately when a defense response is sent
 

@@ -371,15 +371,27 @@
       return data;
     }
 
-    function keepSelectionsValid(state) {
+    function getDefenderSelectionPool(state) {
       const turnPlayer = state.players.find((p) => p.name === state.turn_player);
       const opponent = state.players.find((p) => p.name !== state.turn_player);
+      return state.pending_defense?.response_required_from_viewer
+        ? (turnPlayer?.battlefield || [])
+        : (opponent?.battlefield || []);
+    }
+
+    function keepSelectionsValid(state) {
+      const previousState = currentState;
+      const turnPlayer = state.players.find((p) => p.name === state.turn_player);
       const hand = state.turn_hand || turnPlayer?.hand || [];
       const board = turnPlayer?.battlefield || [];
-      const oppBoard = opponent?.battlefield || [];
-      if (selectedHandIndex !== null && (selectedHandIndex < 0 || selectedHandIndex >= hand.length)) selectedHandIndex = null;
-      if (selectedAttackerIndex !== null && (selectedAttackerIndex < 0 || selectedAttackerIndex >= board.length)) selectedAttackerIndex = null;
-      if (selectedDefenderIndex !== null && (selectedDefenderIndex < 0 || selectedDefenderIndex >= oppBoard.length)) selectedDefenderIndex = null;
+      const previousTurnPlayer = previousState?.players?.find((p) => p.name === previousState.turn_player);
+      const previousHand = previousState?.turn_hand || previousTurnPlayer?.hand || [];
+      const previousBoard = previousTurnPlayer?.battlefield || [];
+      const defenderPool = getDefenderSelectionPool(state);
+      const previousDefenderPool = previousState ? getDefenderSelectionPool(previousState) : [];
+      if (selectedHandIndex !== null && (selectedHandIndex < 0 || selectedHandIndex >= hand.length || previousHand[selectedHandIndex] !== hand[selectedHandIndex])) selectedHandIndex = null;
+      if (selectedAttackerIndex !== null && (selectedAttackerIndex < 0 || selectedAttackerIndex >= board.length || previousBoard[selectedAttackerIndex] !== board[selectedAttackerIndex])) selectedAttackerIndex = null;
+      if (selectedDefenderIndex !== null && (selectedDefenderIndex < 0 || selectedDefenderIndex >= defenderPool.length || previousDefenderPool[selectedDefenderIndex] !== defenderPool[selectedDefenderIndex])) selectedDefenderIndex = null;
       if (pendingFrenzyAttack) {
         if (
           pendingFrenzyAttack.attackerIndex < 0 ||

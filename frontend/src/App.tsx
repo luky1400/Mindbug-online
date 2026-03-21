@@ -72,21 +72,55 @@ export function App() {
     localStorage.removeItem(SESSION_STORAGE_KEY);
   }
 
+  function clearSelections() {
+    setSelectedHandIndex(null);
+    setSelectedAttackerIndex(null);
+    setSelectedDefenderIndex(null);
+  }
+
+  function getDefenderSelectionPool(sourceState: MultiplayerState | null) {
+    if (!sourceState) return [];
+    return sourceState.pending_defense?.response_required_from_viewer
+      ? sourceState.viewer?.battlefield || []
+      : sourceState.opponent?.battlefield || [];
+  }
+
   function normalizeSelections(nextState: MultiplayerState) {
+    const previousHand = state?.viewer?.hand || [];
+    const previousBoard = state?.viewer?.battlefield || [];
+    const previousDefenderPool = getDefenderSelectionPool(state);
     const nextHand = nextState.viewer?.hand || [];
     const nextBoard = nextState.viewer?.battlefield || [];
-    const nextOpponentBoard = nextState.opponent?.battlefield || [];
-    const defenderSelectionPool = nextState.pending_defense?.response_required_from_viewer
-      ? nextBoard
-      : nextOpponentBoard;
+    const defenderSelectionPool = getDefenderSelectionPool(nextState);
 
-    if (selectedHandIndex !== null && (selectedHandIndex < 0 || selectedHandIndex >= nextHand.length)) {
+    if (
+      selectedHandIndex !== null &&
+      (
+        selectedHandIndex < 0 ||
+        selectedHandIndex >= nextHand.length ||
+        previousHand[selectedHandIndex] !== nextHand[selectedHandIndex]
+      )
+    ) {
       setSelectedHandIndex(null);
     }
-    if (selectedAttackerIndex !== null && (selectedAttackerIndex < 0 || selectedAttackerIndex >= nextBoard.length)) {
+    if (
+      selectedAttackerIndex !== null &&
+      (
+        selectedAttackerIndex < 0 ||
+        selectedAttackerIndex >= nextBoard.length ||
+        previousBoard[selectedAttackerIndex] !== nextBoard[selectedAttackerIndex]
+      )
+    ) {
       setSelectedAttackerIndex(null);
     }
-    if (selectedDefenderIndex !== null && (selectedDefenderIndex < 0 || selectedDefenderIndex >= defenderSelectionPool.length)) {
+    if (
+      selectedDefenderIndex !== null &&
+      (
+        selectedDefenderIndex < 0 ||
+        selectedDefenderIndex >= defenderSelectionPool.length ||
+        previousDefenderPool[selectedDefenderIndex] !== defenderSelectionPool[selectedDefenderIndex]
+      )
+    ) {
       setSelectedDefenderIndex(null);
     }
     if (
@@ -98,6 +132,16 @@ export function App() {
   }
 
   function applyState(nextState: MultiplayerState) {
+    const turnChanged = state?.turn_player !== nextState.turn_player;
+    const defenseStepEnded = Boolean(state?.pending_defense) && !nextState.pending_defense;
+    const mindbugStepEnded = Boolean(state?.pending_mindbug) && !nextState.pending_mindbug;
+
+    if (turnChanged) {
+      clearSelections();
+    } else if (defenseStepEnded || mindbugStepEnded) {
+      setSelectedDefenderIndex(null);
+    }
+
     normalizeSelections(nextState);
     setState(nextState);
     if (nextState.game_state === "GAME_OVER") {
@@ -123,9 +167,7 @@ export function App() {
     setGameId(nextGameId);
     setPlayerId(nextPlayerId);
     setJoinCode(nextGameId);
-    setSelectedHandIndex(null);
-    setSelectedAttackerIndex(null);
-    setSelectedDefenderIndex(null);
+    clearSelections();
     setShowGameOver(false);
     applyState(nextState);
     persistSession({ gameId: nextGameId, playerId: nextPlayerId });
@@ -234,10 +276,21 @@ export function App() {
 
     const attackerLabel = viewer.battlefield[attackerIndex];
     const isHunter = cardHasTag(attackerLabel, "HUNTER");
+    const normalizedDefenderIndex =
+      selectedDefenderIndex !== null &&
+      selectedDefenderIndex >= 0 &&
+      selectedDefenderIndex < (opponent?.battlefield.length || 0)
+        ? selectedDefenderIndex
+        : null;
+
+    if (selectedDefenderIndex !== normalizedDefenderIndex) {
+      setSelectedDefenderIndex(normalizedDefenderIndex);
+    }
+
     if (hasPendingFrenzyAttack && attackerIndex !== state.pending_frenzy_attacker_index) {
       return setErrorText("Use the same FRENZY attacker for the second attack, or end turn.");
     }
-    if (!isHunter && selectedDefenderIndex !== null) {
+    if (!isHunter && normalizedDefenderIndex !== null) {
       return setErrorText("Cannot target attack with a non-HUNTER attacker. Remove target and attack again.");
     }
 
@@ -245,10 +298,10 @@ export function App() {
       () =>
         socketActions.attack(socketRef.current as Socket, {
           attacker_index: attackerIndex,
-          defender_index: isHunter ? selectedDefenderIndex : null,
+          defender_index: isHunter ? normalizedDefenderIndex : null,
           hunter_target_override: true
         }),
-      isHunter && selectedDefenderIndex !== null ? "Hunter attack resolved." : "Attack declared."
+      isHunter && normalizedDefenderIndex !== null ? "Hunter attack resolved." : "Attack declared."
     );
   }
 
@@ -260,6 +313,7 @@ export function App() {
       return setErrorText("Selected creature cannot block this attack.");
     }
 
+    clearSelections();
     await emitAction(
       () => socketActions.defend(socketRef.current as Socket, { defender_index: selectedDefenderIndex }),
       "Blocker selected."
@@ -269,6 +323,7 @@ export function App() {
   async function takeLifeLoss() {
     if (!socketRef.current) return setErrorText("Create or join a room first.");
     if (!canAnswerDefense) return setErrorText("No defense response is waiting for you.");
+    clearSelections();
     await emitAction(
       () => socketActions.defend(socketRef.current as Socket, { defender_index: null }),
       "Attack goes through."
@@ -297,9 +352,7 @@ export function App() {
     setGameId(null);
     setPlayerId(null);
     setState(null);
-    setSelectedHandIndex(null);
-    setSelectedAttackerIndex(null);
-    setSelectedDefenderIndex(null);
+    clearSelections();
     setStatusText("Session cleared on this device.");
     const url = new URL(window.location.href);
     url.searchParams.delete("game");
