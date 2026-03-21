@@ -12,6 +12,11 @@ def _new_game() -> Game:
     return game
 
 
+def _attack_and_defend(game: Game, attacker_index: int = 0, defender_index: int | None = 0) -> None:
+    game.attack(attacker_index=attacker_index)
+    game.defend(defender_index=defender_index)
+
+
 # Destroying TOUGH creatures
 def test_destroy_tough_creature_with_one_charge_survives_and_loses_charge() -> None:
     game = _new_game()
@@ -62,7 +67,7 @@ def test_attack_defeated_tough_creature_with_one_charge_survives_and_loses_charg
     attacker_owner.cards_laid_out = [attacker]
     defender_owner.cards_laid_out = [tough_creature]
 
-    game.attack(attacker_index=0, defender_index=0)
+    _attack_and_defend(game, attacker_index=0, defender_index=0)
 
     assert tough_creature in defender_owner.cards_laid_out
     assert tough_creature.tough_charges == 0
@@ -79,7 +84,7 @@ def test_attack_defeated_tough_creature_with_zero_charges_moves_to_discard() -> 
     attacker_owner.cards_laid_out = [attacker]
     defender_owner.cards_laid_out = [tough_creature]
 
-    game.attack(attacker_index=0, defender_index=0)
+    _attack_and_defend(game, attacker_index=0, defender_index=0)
 
     assert tough_creature not in defender_owner.cards_laid_out
     assert tough_creature in defender_owner.discard_pile
@@ -94,14 +99,14 @@ def test_attack_tough_creature_twice_first_consumes_tough_then_moves_to_discard(
     attacker_owner.cards_laid_out = [attacker]
     defender_owner.cards_laid_out = [tough_creature]
 
-    game.attack(attacker_index=0, defender_index=0)
+    _attack_and_defend(game, attacker_index=0, defender_index=0)
 
     assert tough_creature in defender_owner.cards_laid_out
     assert tough_creature.tough_charges == 0
     assert attacker in attacker_owner.cards_laid_out
 
     # FRENZY: attacker chooses to attack again in the same turn.
-    game.attack(attacker_index=0, defender_index=0)
+    _attack_and_defend(game, attacker_index=0, defender_index=0)
 
     assert tough_creature not in defender_owner.cards_laid_out
     assert tough_creature in defender_owner.discard_pile

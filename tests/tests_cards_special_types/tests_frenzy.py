@@ -14,6 +14,11 @@ def _new_game() -> Game:
     return game
 
 
+def _attack_and_defend(game: Game, attacker_index: int = 0, defender_index: int | None = 0) -> None:
+    game.attack(attacker_index=attacker_index)
+    game.defend(defender_index=defender_index)
+
+
 def test_non_frenzy_creature_can_attack_only_once_per_turn() -> None:
     game = _new_game()
     player = game.current_player
@@ -27,10 +32,10 @@ def test_non_frenzy_creature_can_attack_only_once_per_turn() -> None:
     player.hand = [Tiger_squirrel()]
     opponent.cards_laid_out = [blocker_1, blocker_2]
 
-    game.attack(attacker_index=0, defender_index=0)
+    _attack_and_defend(game, attacker_index=0, defender_index=0)
 
     with pytest.raises(ValueError, match="cannot attack more than 1 times this turn"):
-        game.attack(attacker_index=0, defender_index=0)
+        game.attack(attacker_index=0)
 
 
 def test_frenzy_creature_can_attack_twice_but_not_three_times_per_turn() -> None:
@@ -45,8 +50,8 @@ def test_frenzy_creature_can_attack_twice_but_not_three_times_per_turn() -> None
     player.cards_laid_out = [attacker]
     opponent.cards_laid_out = [blocker_1, blocker_2, blocker_3]
 
-    game.attack(attacker_index=0, defender_index=0)
-    game.attack(attacker_index=0, defender_index=0)
+    _attack_and_defend(game, attacker_index=0, defender_index=0)
+    _attack_and_defend(game, attacker_index=0, defender_index=0)
 
     with pytest.raises(ValueError, match="cannot attack more than 2 times this turn"):
-        game.attack(attacker_index=0, defender_index=0)
+        game.attack(attacker_index=0)

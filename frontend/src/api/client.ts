@@ -1,6 +1,7 @@
 import type {
   AttackRequest,
   CreateGameRequest,
+  DefendRequest,
   JoinGameRequest,
   SessionResponse
 } from "../types/game";
@@ -110,6 +111,9 @@ export const socketActions = {
   },
   attack(socket: Socket, payload: AttackRequest) {
     return emitWithAck<SocketAckResponse>(socket, "attack", payload);
+  },
+  defend(socket: Socket, payload: DefendRequest) {
+    return emitWithAck<SocketAckResponse>(socket, "defend", payload);
   },
   endTurn(socket: Socket) {
     return emitWithAck<SocketAckResponse>(socket, "end_turn");

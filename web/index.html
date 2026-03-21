@@ -540,36 +540,59 @@
       }
     }
 
-    async function attackSelected(direct = false, forcedAttackerIndex = null, forcedDefenderIndex = null) {
+    async function resolveDefense(defenderIndex = null) {
+      const data = await api(`/legacy-game/${gameId}/defend`, {
+        method: "POST",
+        body: JSON.stringify({ defender_index: defenderIndex })
+      });
+      pendingFrenzyAttack = null;
+      await maybeAutoEndTurnAfterAction(data.state, "Attack");
+    }
+
+    async function attackSelected(forcedAttackerIndex = null, forcedDefenderIndex = null) {
       setError("");
       if (!gameId) return setError("Create a game first.");
+      if (currentState?.game_state === "AWAITING_DEFENSE") {
+        if ((forcedDefenderIndex ?? selectedDefenderIndex) === null) {
+          return setError("Select a defending creature or use Lose 1 Life.");
+        }
+        try {
+          await resolveDefense(forcedDefenderIndex ?? selectedDefenderIndex);
+        } catch (err) {
+          setError(err.message);
+        }
+        return;
+      }
       const attackerIndex = forcedAttackerIndex ?? selectedAttackerIndex;
-      const defenderIndex = direct ? null : (forcedDefenderIndex ?? selectedDefenderIndex);
       if (attackerIndex === null) return setError("Select an attacker first.");
-      if (!direct && defenderIndex === null) return setError("Select a defender or use Direct Attack.");
 
       const turnPlayer = currentState?.players?.find((p) => p.name === currentState.turn_player);
       const attackerLabel = turnPlayer?.battlefield?.[attackerIndex];
       const isHunter = cardHasTag(attackerLabel, "HUNTER");
       const isFrenzy = cardHasTag(attackerLabel, "FRENZY");
-      const hunterOverride = document.getElementById("hunter-override").checked;
-      if (!direct && isHunter && hunterOverride && defenderIndex === null) {
-        return setError("For HUNTER override, select a defender target.");
-      }
+      const defenderIndex = forcedDefenderIndex ?? selectedDefenderIndex;
       if (pendingFrenzyAttack && attackerIndex !== pendingFrenzyAttack.attackerIndex) {
         return setError("Use the same FRENZY attacker for the second attack, or end turn.");
+      }
+      if (!isHunter && defenderIndex !== null) {
+        return setError("Cannot target attack with a non-HUNTER attacker. Remove target and attack again.");
       }
 
       try {
         const payload = {
           attacker_index: attackerIndex,
-          defender_index: defenderIndex,
-          hunter_target_override: direct ? false : hunterOverride
+          defender_index: isHunter ? defenderIndex : null,
+          hunter_target_override: true
         };
         const data = await api(`/legacy-game/${gameId}/attack`, {
           method: "POST",
           body: JSON.stringify(payload)
         });
+        if (data.state?.game_state === "AWAITING_DEFENSE") {
+          render(data.state);
+          setStatus("Attack declared. Defender chooses a blocker or loses 1 life.", true);
+          return;
+        }
         const turnPlayerAfter = data.state?.players?.find((p) => p.name === data.state.turn_player);
         const attackerStillAlive =
           attackerIndex < (turnPlayerAfter?.battlefield?.length || 0);
@@ -589,7 +612,7 @@
         pendingFrenzyAttack = null;
         await maybeAutoEndTurnAfterAction(
           data.state,
-          direct ? "Direct attack" : "Attack"
+          isHunter && defenderIndex !== null ? "Hunter attack" : "Attack"
         );
       } catch (err) {
         setError(err.message);
@@ -635,15 +658,20 @@
       event.preventDefault();
       const payload = parseDragPayload(event);
       if (!payload || payload.type !== "attacker") return;
-      await attackSelected(false, payload.index, defenderIndex);
+      await attackSelected(payload.index, defenderIndex);
     }
 
-    async function onDirectAttackDrop(event) {
-      event.preventDefault();
-      event.currentTarget.classList.remove("active");
-      const payload = parseDragPayload(event);
-      if (!payload || payload.type !== "attacker") return;
-      await attackSelected(true, payload.index, null);
+    async function loseLifeToAttack() {
+      setError("");
+      if (!gameId) return setError("Create a game first.");
+      if (currentState?.game_state !== "AWAITING_DEFENSE") {
+        return setError("Declare an attack first. The defender can then choose to lose 1 life.");
+      }
+      try {
+        await resolveDefense(null);
+      } catch (err) {
+        setError(err.message);
+      }
     }
 
     function clearDropHighlight(event) {
@@ -680,8 +708,8 @@
     };
     document.getElementById("refresh-btn").onclick = refreshState;
     document.getElementById("play-btn").onclick = playSelectedCard;
-    document.getElementById("attack-btn").onclick = () => attackSelected(false);
-    document.getElementById("direct-attack-btn").onclick = () => attackSelected(true);
+    document.getElementById("attack-btn").onclick = () => attackSelected();
+    document.getElementById("direct-attack-btn").onclick = loseLifeToAttack;
     document.getElementById("end-turn-btn").onclick = endTurn;
     const playDropZone = document.getElementById("play-drop-zone");
     playDropZone.ondragover = allowDrop;
@@ -689,7 +717,11 @@
     playDropZone.ondragleave = clearDropHighlight;
     const directDropZone = document.getElementById("direct-attack-drop-zone");
     directDropZone.ondragover = allowDrop;
-    directDropZone.ondrop = onDirectAttackDrop;
+    directDropZone.ondrop = (event) => {
+      event.preventDefault();
+      event.currentTarget.classList.remove("active");
+      void loseLifeToAttack();
+    };
     directDropZone.ondragleave = clearDropHighlight;
   </script>
 </body>

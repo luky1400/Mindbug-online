@@ -12,6 +12,11 @@ def _new_game() -> Game:
     return game
 
 
+def _attack_and_defend(game: Game, attacker_index: int = 0, defender_index: int | None = 0) -> None:
+    game.attack(attacker_index=attacker_index)
+    game.defend(defender_index=defender_index)
+
+
 def test_poisonous_attacker_defeats_stronger_non_tough_defender() -> None:
     game = _new_game()
     attacker_owner = game.current_player
@@ -23,7 +28,7 @@ def test_poisonous_attacker_defeats_stronger_non_tough_defender() -> None:
     attacker_owner.cards_laid_out = [poisonous_attacker]
     defender_owner.cards_laid_out = [strong_defender]
 
-    game.attack(attacker_index=0, defender_index=0)
+    _attack_and_defend(game, attacker_index=0, defender_index=0)
 
     # Defender is defeated due to POISONOUS, regardless of power.
     assert strong_defender in defender_owner.discard_pile
@@ -44,7 +49,7 @@ def test_poisonous_defender_defeats_stronger_attacker_when_blocking() -> None:
     attacker_owner.cards_laid_out = [strong_attacker]
     defender_owner.cards_laid_out = [poisonous_defender]
 
-    game.attack(attacker_index=0, defender_index=0)
+    _attack_and_defend(game, attacker_index=0, defender_index=0)
 
     # Attacker is defeated because blocker is POISONOUS.
     assert strong_attacker in attacker_owner.discard_pile
@@ -68,14 +73,14 @@ def test_poisonous_damage_consumes_tough_then_next_hit_defeats_creature() -> Non
     defender_owner.cards_laid_out = [tough_defender]
 
     # First hit: defender survives due to TOUGH and spends a charge.
-    game.attack(attacker_index=0, defender_index=0)
+    _attack_and_defend(game, attacker_index=0, defender_index=0)
     assert tough_defender in defender_owner.cards_laid_out
     assert tough_defender.tough_charges == 0
     assert tough_defender not in defender_owner.discard_pile
 
     # Rebuild attacker board for a second poisonous attack.
     attacker_owner.cards_laid_out = [Axolotl_healer()]
-    game.attack(attacker_index=0, defender_index=0)
+    _attack_and_defend(game, attacker_index=0, defender_index=0)
 
     assert tough_defender not in defender_owner.cards_laid_out
     assert tough_defender in defender_owner.discard_pile

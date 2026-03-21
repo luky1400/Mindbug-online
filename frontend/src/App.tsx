@@ -9,7 +9,6 @@ import { HandPanel } from "./components/HandPanel";
 import type { MultiplayerState } from "./types/game";
 import { cardHasTag } from "./utils/cards";
 
-type AttackMode = "direct" | "normal";
 type StoredSession = {
   gameId: string;
   playerId: string;
@@ -29,7 +28,6 @@ export function App() {
   const [selectedHandIndex, setSelectedHandIndex] = useState<number | null>(null);
   const [selectedAttackerIndex, setSelectedAttackerIndex] = useState<number | null>(null);
   const [selectedDefenderIndex, setSelectedDefenderIndex] = useState<number | null>(null);
-  const [hunterOverride, setHunterOverride] = useState(true);
   const [statusText, setStatusText] = useState("");
   const [errorText, setErrorText] = useState("");
   const [showGameOver, setShowGameOver] = useState(false);
@@ -41,7 +39,16 @@ export function App() {
   const isWaitingForOpponent = state?.room_status === "WAITING_FOR_PLAYER";
   const gameOver = state?.game_state === "GAME_OVER";
   const canAnswerMindbug = Boolean(state?.pending_mindbug?.response_required_from_viewer);
-  const canAct = Boolean(state && viewer && opponent && state.is_viewer_turn && !gameOver && !state.pending_mindbug);
+  const canAnswerDefense = Boolean(state?.pending_defense?.response_required_from_viewer);
+  const canAct = Boolean(
+    state &&
+    viewer &&
+    opponent &&
+    state.is_viewer_turn &&
+    !gameOver &&
+    !state.pending_mindbug &&
+    !state.pending_defense
+  );
   const hasPendingFrenzyAttack = state?.pending_frenzy_attacker_index !== null && state?.pending_frenzy_attacker_index !== undefined;
 
   const metaText = useMemo(() => {
@@ -52,7 +59,7 @@ export function App() {
     return `Room ${gameId} | You: ${state.viewer_player_name} | Turn: ${state.turn_player ?? "-"} | State: ${state.game_state}${state.winner ? ` | Winner: ${state.winner}` : ""}`;
   }, [gameId, isWaitingForOpponent, state]);
 
-  const selectionText = `Hand: ${selectedHandIndex ?? "-"} | Attacker: ${selectedAttackerIndex ?? "-"} | Defender: ${selectedDefenderIndex ?? "-"}`;
+  const selectionText = `Hand: ${selectedHandIndex ?? "-"} | Attacker: ${selectedAttackerIndex ?? "-"} | Target/Blocker: ${selectedDefenderIndex ?? "-"}`;
 
   function persistSession(nextSession: StoredSession) {
     localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(nextSession));
@@ -69,6 +76,9 @@ export function App() {
     const nextHand = nextState.viewer?.hand || [];
     const nextBoard = nextState.viewer?.battlefield || [];
     const nextOpponentBoard = nextState.opponent?.battlefield || [];
+    const defenderSelectionPool = nextState.pending_defense?.response_required_from_viewer
+      ? nextBoard
+      : nextOpponentBoard;
 
     if (selectedHandIndex !== null && (selectedHandIndex < 0 || selectedHandIndex >= nextHand.length)) {
       setSelectedHandIndex(null);
@@ -76,7 +86,7 @@ export function App() {
     if (selectedAttackerIndex !== null && (selectedAttackerIndex < 0 || selectedAttackerIndex >= nextBoard.length)) {
       setSelectedAttackerIndex(null);
     }
-    if (selectedDefenderIndex !== null && (selectedDefenderIndex < 0 || selectedDefenderIndex >= nextOpponentBoard.length)) {
+    if (selectedDefenderIndex !== null && (selectedDefenderIndex < 0 || selectedDefenderIndex >= defenderSelectionPool.length)) {
       setSelectedDefenderIndex(null);
     }
     if (
@@ -215,33 +225,53 @@ export function App() {
     await emitAction(() => socketActions.playCard(socketRef.current as Socket, handIndex), "Card played.");
   }
 
-  async function attackSelected(mode: AttackMode = "normal") {
+  async function attackSelected() {
     if (!socketRef.current || !state || !viewer) return setErrorText("Create or join a room first.");
     if (!canAct) return setErrorText("You cannot attack right now.");
 
     const attackerIndex = selectedAttackerIndex;
-    const defenderIndex = mode === "direct" ? null : selectedDefenderIndex;
     if (attackerIndex === null) return setErrorText("Select an attacker first.");
-    if (mode !== "direct" && defenderIndex === null) return setErrorText("Select a defender or use direct attack.");
 
     const attackerLabel = viewer.battlefield[attackerIndex];
     const isHunter = cardHasTag(attackerLabel, "HUNTER");
-
-    if (isHunter && hunterOverride && mode !== "direct" && defenderIndex === null) {
-      return setErrorText("For HUNTER override, select a defender target.");
-    }
     if (hasPendingFrenzyAttack && attackerIndex !== state.pending_frenzy_attacker_index) {
       return setErrorText("Use the same FRENZY attacker for the second attack, or end turn.");
+    }
+    if (!isHunter && selectedDefenderIndex !== null) {
+      return setErrorText("Cannot target attack with a non-HUNTER attacker. Remove target and attack again.");
     }
 
     await emitAction(
       () =>
         socketActions.attack(socketRef.current as Socket, {
-        attacker_index: attackerIndex,
-        defender_index: defenderIndex,
-        hunter_target_override: mode === "direct" ? false : hunterOverride
+          attacker_index: attackerIndex,
+          defender_index: isHunter ? selectedDefenderIndex : null,
+          hunter_target_override: true
         }),
-      mode === "direct" ? "Direct attack resolved." : "Attack resolved."
+      isHunter && selectedDefenderIndex !== null ? "Hunter attack resolved." : "Attack declared."
+    );
+  }
+
+  async function defendWithSelectedBlocker() {
+    if (!socketRef.current) return setErrorText("Create or join a room first.");
+    if (!canAnswerDefense) return setErrorText("No defense response is waiting for you.");
+    if (selectedDefenderIndex === null) return setErrorText("Select your blocking creature first.");
+    if (!state?.pending_defense?.eligible_defender_indices.includes(selectedDefenderIndex)) {
+      return setErrorText("Selected creature cannot block this attack.");
+    }
+
+    await emitAction(
+      () => socketActions.defend(socketRef.current as Socket, { defender_index: selectedDefenderIndex }),
+      "Blocker selected."
+    );
+  }
+
+  async function takeLifeLoss() {
+    if (!socketRef.current) return setErrorText("Create or join a room first.");
+    if (!canAnswerDefense) return setErrorText("No defense response is waiting for you.");
+    await emitAction(
+      () => socketActions.defend(socketRef.current as Socket, { defender_index: null }),
+      "Attack goes through."
     );
   }
 
@@ -357,6 +387,10 @@ export function App() {
                           ? state.pending_mindbug.response_required_from_viewer
                             ? `Respond to ${state.pending_mindbug.acting_player_name}'s ${state.pending_mindbug.card_label}.`
                             : `Waiting for ${state.pending_mindbug.responding_player_name} to answer the Mindbug prompt.`
+                          : state.pending_defense
+                            ? state.pending_defense.response_required_from_viewer
+                              ? `Defend against ${state.pending_defense.attacking_player_name}'s ${state.pending_defense.attacker_label}.`
+                              : `Waiting for ${state.pending_defense.defending_player_name} to choose a blocker or lose 1 life.`
                           : state.is_viewer_turn
                             ? "Your turn."
                             : `Waiting for ${state.turn_player}.`}
@@ -369,6 +403,15 @@ export function App() {
                       </button>
                       <button className="btn btn-outline-light" onClick={() => void answerMindbug(false)} type="button">
                         Decline
+                      </button>
+                    </div>
+                  ) : state.pending_defense?.response_required_from_viewer ? (
+                    <div className="d-flex gap-2">
+                      <button className="btn btn-outline-light" onClick={() => void defendWithSelectedBlocker()} type="button">
+                        Block with selected creature
+                      </button>
+                      <button className="btn btn-warning" onClick={() => void takeLifeLoss()} type="button">
+                        Lose 1 life
                       </button>
                     </div>
                   ) : null}
@@ -390,31 +433,16 @@ export function App() {
                     </div>
                     <div className="col-md-4">
                       <h2 className="section-title">Attack</h2>
-                      <div className="d-grid gap-2">
-                        <button className="btn btn-outline-light" disabled={!canAct} onClick={() => void attackSelected("normal")} type="button">
-                          Attack selected defender
-                        </button>
-                        <button className="btn btn-outline-warning" disabled={!canAct} onClick={() => void attackSelected("direct")} type="button">
-                          Direct attack
-                        </button>
-                      </div>
-                      <div className="form-check mt-2">
-                        <input
-                          id="hunterOverride"
-                          className="form-check-input"
-                          type="checkbox"
-                          checked={hunterOverride}
-                          disabled={!canAct}
-                          onChange={(event) => setHunterOverride(event.target.checked)}
-                        />
-                        <label htmlFor="hunterOverride" className="form-check-label text-light">
-                          Use HUNTER target override
-                        </label>
-                      </div>
+                      <button className="btn btn-outline-light w-100" disabled={!canAct} onClick={() => void attackSelected()} type="button">
+                        Attack
+                      </button>
+                      <p className="section-help mt-2 mb-0">
+                        Select an enemy target only when your attacker has `HUNTER`. Otherwise click `Attack` without a target and the defender will respond.
+                      </p>
                     </div>
                     <div className="col-md-4">
                       <h2 className="section-title">Turn</h2>
-                      <button className="btn btn-success w-100 mb-2" disabled={!state.is_viewer_turn || Boolean(gameOver) || canAnswerMindbug} onClick={() => void endTurn()} type="button">
+                      <button className="btn btn-success w-100 mb-2" disabled={!state.is_viewer_turn || Boolean(gameOver) || canAnswerMindbug || canAnswerDefense} onClick={() => void endTurn()} type="button">
                         End turn
                       </button>
                       <div className="selection-box">{selectionText}</div>
@@ -429,9 +457,9 @@ export function App() {
             <BoardZone
               title={opponent?.name || state.opponent_player_name || "Opponent"}
               player={opponent || { player_index: 1, name: state.opponent_player_name || "Opponent", lives: 0, mindbugs_remaining: 0, hand_count: 0, draw_count: 0, discard_count: 0, battlefield: [], discard: [], hand: [] }}
-              battlefieldMode="defender"
-              selectedBattlefieldIndex={selectedDefenderIndex}
-              onSelectBattlefield={(index) => toggleSelected("defender", index)}
+              battlefieldMode={canAnswerDefense ? "readonly" : "defender"}
+              selectedBattlefieldIndex={canAnswerDefense ? null : selectedDefenderIndex}
+              onSelectBattlefield={canAnswerDefense ? undefined : (index) => toggleSelected("defender", index)}
             />
           </div>
           <div className="col-12">
@@ -439,9 +467,9 @@ export function App() {
               title={`${viewer.name}${state.is_viewer_turn ? " (your turn)" : ""}`}
               player={viewer}
               active={state.is_viewer_turn}
-              battlefieldMode="attacker"
-              selectedBattlefieldIndex={selectedAttackerIndex}
-              onSelectBattlefield={(index) => toggleSelected("attacker", index)}
+              battlefieldMode={canAnswerDefense ? "defender" : "attacker"}
+              selectedBattlefieldIndex={canAnswerDefense ? selectedDefenderIndex : selectedAttackerIndex}
+              onSelectBattlefield={(index) => toggleSelected(canAnswerDefense ? "defender" : "attacker", index)}
             />
           </div>
           <div className="col-12">

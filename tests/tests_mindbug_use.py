@@ -79,7 +79,8 @@ def test_multiplayer_mindbug_steal_does_not_consume_active_players_turn_action()
     assert game.turn == 0
     assert game._turn_action_taken is False
 
-    game.attack(attacker_index=0, defender_index=None)
+    game.attack(attacker_index=0)
+    game.defend(None)
 
     assert tiger_squirrel in player.cards_laid_out
     assert opponent.number_of_lives == game.starting_lives - 1

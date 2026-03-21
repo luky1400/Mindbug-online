@@ -20,6 +20,14 @@ export interface PendingMindbugState {
   response_required_from_viewer: boolean;
 }
 
+export interface PendingDefenseState {
+  attacking_player_name: string;
+  defending_player_name: string;
+  attacker_label: CardLabel;
+  response_required_from_viewer: boolean;
+  eligible_defender_indices: number[];
+}
+
 export interface MultiplayerState {
   room_status: string;
   game_state: string;
@@ -34,6 +42,7 @@ export interface MultiplayerState {
   viewer: PlayerState | null;
   opponent: PlayerState | null;
   pending_mindbug: PendingMindbugState | null;
+  pending_defense: PendingDefenseState | null;
   pending_frenzy_attacker_index: number | null;
   connected_players: number;
   max_players: number;
@@ -58,4 +67,8 @@ export interface AttackRequest {
   attacker_index: number;
   defender_index: number | null;
   hunter_target_override: boolean;
+}
+
+export interface DefendRequest {
+  defender_index: number | null;
 }

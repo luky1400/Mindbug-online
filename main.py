@@ -181,36 +181,36 @@ def player_turn_attack(game: Game) -> None:
                 print(f"Could not attack: {exc}")
             return
 
+    try:
+        game.attack(attacker_idx, None, hunter_target_override=False)
+    except ValueError as exc:
+        print(f"Could not attack: {exc}")
+        return
+
+    if game.game_state != GameState.AWAITING_DEFENSE:
+        return
+
     print("\nOpponent chooses from eligible blockers:")
-    print("  [x] Let attack go through (direct life damage)")
+    print("  [x] Let attack go through (lose 1 life)")
     legal_defender_indices = game.get_eligible_defender_indices(
         attacker_idx, hunter_target_override=False
     )
     for i in legal_defender_indices:
         print(f"  [{i}] {defender_owner.cards_laid_out[i].short_label()}")
 
-    if len(legal_defender_indices) == 0:
-        print("No legal blockers. Attack goes directly.")
-        try:
-            game.attack(attacker_idx, None, hunter_target_override=False)
-        except ValueError as exc:
-            print(f"Could not attack: {exc}")
-        return
-
     target = input(f"{defender_owner.name}, choose defender index or x: ").strip().lower()
-
     try:
         if target == "x":
-            game.attack(attacker_idx, None, hunter_target_override=False)
+            game.defend(None)
         else:
             if not target.isdigit():
                 raise ValueError("Defender index must be a number or x.")
             defender_idx = int(target)
             if defender_idx not in legal_defender_indices:
                 raise ValueError("Choose one of the listed defender indices or x.")
-            game.attack(attacker_idx, defender_idx, hunter_target_override=False)
+            game.defend(defender_idx)
     except ValueError as exc:
-        print(f"Could not attack: {exc}")
+        print(f"Could not defend: {exc}")
 
 
 def main() -> None:

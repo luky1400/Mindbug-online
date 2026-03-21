@@ -44,6 +44,10 @@ class AttackRequest(BaseModel):
     hunter_target_override: bool = True
 
 
+class DefendRequest(BaseModel):
+    defender_index: int | None = Field(default=None, ge=0)
+
+
 @dataclass
 class SessionPlayer:
     player_id: str
@@ -107,6 +111,7 @@ class GameSession:
                 "opponent": None,
                 "log": ["Waiting for second player to join."],
                 "pending_mindbug": None,
+                "pending_defense": None,
                 "pending_frenzy_attacker_index": None,
                 "connected_players": len(self.players),
                 "max_players": 2,
@@ -239,6 +244,14 @@ def _ensure_pending_mindbug_responder(game: Game, player_index: int) -> None:
         raise ValueError("Waiting for the other player to answer the Mindbug prompt.")
 
 
+def _ensure_pending_defense_responder(game: Game, player_index: int) -> None:
+    pending = game._pending_defense_decision
+    if pending is None:
+        raise ValueError("There is no pending defense decision.")
+    if pending.defending_player_index != player_index:
+        raise ValueError("Waiting for the defending player to choose a blocker or lose 1 life.")
+
+
 async def _emit_state_to_player(session: GameSession, player: SessionPlayer) -> None:
     payload = {"state": session.serialize_for(player.player_id)}
     for sid in list(player.connected_sids):
@@ -328,6 +341,16 @@ def legacy_attack(game_id: str, payload: AttackRequest) -> dict[str, Any]:
             defender_index=payload.defender_index,
             hunter_target_override=payload.hunter_target_override,
         )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return {"game_id": game_id, "state": game.get_state()}
+
+
+@fastapi_app.post("/legacy-game/{game_id}/defend")
+def legacy_defend(game_id: str, payload: DefendRequest) -> dict[str, Any]:
+    game = _get_legacy_game(game_id)
+    try:
+        game.defend(payload.defender_index)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     return {"game_id": game_id, "state": game.get_state()}
@@ -434,6 +457,17 @@ async def attack(sid: str, payload: dict[str, Any]) -> dict[str, Any]:
             defender_index=None if defender_index is None else int(defender_index),
             hunter_target_override=bool(payload.get("hunter_target_override", True)),
         )
+
+    return await _handle_socket_action(sid, action)
+
+
+@sio.event
+async def defend(sid: str, payload: dict[str, Any]) -> dict[str, Any]:
+    def action(session: GameSession, player: SessionPlayer) -> None:
+        game = _require_active_game(session)
+        _ensure_pending_defense_responder(game, player.player_index)
+        defender_index = payload.get("defender_index")
+        game.defend(None if defender_index is None else int(defender_index))
 
     return await _handle_socket_action(sid, action)
 

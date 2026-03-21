@@ -25,6 +25,11 @@ def _new_game() -> Game:
     return game
 
 
+def _attack_and_defend(game: Game, attacker_index: int = 0, defender_index: int | None = 0) -> None:
+    game.attack(attacker_index=attacker_index)
+    game.defend(defender_index=defender_index)
+
+
 def test_defeated_explosive_toad_defeats_an_enemy_creature() -> None:
     game = _new_game()
     player = game.current_player
@@ -36,7 +41,7 @@ def test_defeated_explosive_toad_defeats_an_enemy_creature() -> None:
     player.cards_laid_out = [explosive_toad]
     opponent.cards_laid_out = [enemy_creature]
 
-    game.attack(attacker_index=0, defender_index=0)
+    _attack_and_defend(game, attacker_index=0, defender_index=0)
 
     assert explosive_toad in player.discard_pile
     assert explosive_toad not in player.cards_laid_out
@@ -57,7 +62,7 @@ def test_defeated_harpy_mother_takes_control_of_up_to_2_weak_enemy_creatures() -
     player.cards_laid_out = [harpy_mother]
     opponent.cards_laid_out = [weak_enemy_1, weak_enemy_2, strong_enemy]
 
-    game.attack(attacker_index=0, defender_index=2)
+    _attack_and_defend(game, attacker_index=0, defender_index=2)
 
     assert harpy_mother in player.discard_pile
     assert weak_enemy_1 in player.cards_laid_out
@@ -80,7 +85,7 @@ def test_defeated_strange_barrel_steals_up_to_2_cards_from_opponent_hand() -> No
     opponent.cards_laid_out = [enemy_creature]
     opponent.hand = [opponent_card_1, opponent_card_2]
 
-    game.attack(attacker_index=0, defender_index=0)
+    _attack_and_defend(game, attacker_index=0, defender_index=0)
 
     assert strange_barrel in player.discard_pile
     assert len(player.hand) == 2
@@ -103,7 +108,7 @@ def test_defeated_harpy_mother_takes_control_of_2_tough_enemy_creatures_without_
     player.cards_laid_out = [harpy_mother]
     opponent.cards_laid_out = [tough_enemy_with_zero, tough_enemy_with_one, strong_enemy]
 
-    game.attack(attacker_index=0, defender_index=2)
+    _attack_and_defend(game, attacker_index=0, defender_index=2)
 
     assert harpy_mother in player.discard_pile
     assert tough_enemy_with_zero in player.cards_laid_out
@@ -132,7 +137,7 @@ def test_snail_hydra_attacks_and_by_action_attack_destroys_explosive_toad_and_ex
     # First random pick: Snail Hydra ATTACK action destroys Explosive Toad (index 1).
     # Second random pick: Explosive Toad DEFEATED action destroys Snail Hydra (index 0).
     with patch("cards.randint", side_effect=[1, 0]):
-        game.attack(attacker_index=0, defender_index=0)
+        game.attack(attacker_index=0)
 
     assert snail_hydra in player.discard_pile
     assert explosive_toad in opponent.discard_pile

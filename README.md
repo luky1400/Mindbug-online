@@ -104,7 +104,6 @@ PYTHONPATH=. pytest tests/tests_mindbug_use.py
 - finish backend to work well
   - handle that player or opponent can choose which cards to play or discard
   - add tests regularly for things that are not working
-- refactor function attack
 
 ## TODO - game rules
 
