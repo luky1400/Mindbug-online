@@ -115,8 +115,7 @@ PYTHONPATH=. pytest tests/tests_mindbug_use.py
     - End turn (if not attacking FRENZY still lives)
   - visualize that TOUGH has 0 tough_charges left
   - možnost zvětšit i cards_laid_out (a in discard pile)
-  - 
-
+  - Když defender vybira, jestli a cim bude branit, tak mu ukazat kartu utocnika (nejak ji zvyraznit nebo presunout do prostred).
 
 ## TODO - game rules
 
@@ -148,3 +147,4 @@ V případě shody tento proces opakujte."
 
 - resolved plays and attacks automatically trigger end_turn()
 - 
+
