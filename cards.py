@@ -501,7 +501,7 @@ class killer_bee(Card):
     def trigger_action(self, game: Game) -> None:
         game.opponent.lose_life(1)
         game.log.append(
-            f"{game.current_player.name}'s {game.current_player.cards_laid_out[0].name} attacks {game.opponent.name} for 1 life."
+            f"{game.opponent.name} loses 1 life because {game.current_player.name} plays Killer Bee."
         )
 
 
