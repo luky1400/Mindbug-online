@@ -1,6 +1,7 @@
 export type CardLabel = string;
 
 export interface PlayerState {
+  player_index: number;
   name: string;
   lives: number;
   mindbugs_remaining: number;
@@ -12,28 +13,45 @@ export interface PlayerState {
   hand?: CardLabel[];
 }
 
-export interface GameState {
-  turn_player: string;
+export interface PendingMindbugState {
+  acting_player_name: string;
+  responding_player_name: string;
+  card_label: CardLabel;
+  response_required_from_viewer: boolean;
+}
+
+export interface MultiplayerState {
+  room_status: string;
   game_state: string;
+  turn_player: string | null;
   winner?: string | null;
   log: string[];
-  players: PlayerState[];
-  turn_hand?: CardLabel[];
+  viewer_player_id: string;
+  viewer_player_name: string;
+  viewer_player_index: number;
+  opponent_player_name: string | null;
+  is_viewer_turn: boolean;
+  viewer: PlayerState | null;
+  opponent: PlayerState | null;
+  pending_mindbug: PendingMindbugState | null;
+  pending_frenzy_attacker_index: number | null;
+  connected_players: number;
+  max_players: number;
+  invite_code: string;
 }
 
-export interface GameResponse {
+export interface SessionResponse {
   game_id: string;
-  state: GameState;
+  player_id: string;
+  state: MultiplayerState;
 }
 
-export interface NewGameRequest {
-  player1: string;
-  player2: string;
+export interface CreateGameRequest {
+  player_name: string;
 }
 
-export interface PlayCardRequest {
-  hand_index: number;
-  use_opponent_mindbug: boolean;
+export interface JoinGameRequest {
+  player_name: string;
 }
 
 export interface AttackRequest {

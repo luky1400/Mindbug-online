@@ -1,64 +1,74 @@
-import { useMemo, useState } from "react";
-import { gameApi } from "./api/client";
-import { ActionPanel } from "./components/ActionPanel";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { Socket } from "socket.io-client";
+import { createGameSocket, gameApi, socketActions } from "./api/client";
 import { BoardZone } from "./components/BoardZone";
 import { CardPreviewModal } from "./components/CardPreviewModal";
 import { GameLog } from "./components/GameLog";
 import { GameOverModal } from "./components/GameOverModal";
 import { HandPanel } from "./components/HandPanel";
-import { TopBar } from "./components/TopBar";
-import type { GameState } from "./types/game";
+import type { MultiplayerState } from "./types/game";
 import { cardHasTag } from "./utils/cards";
 
 type AttackMode = "direct" | "normal";
+type StoredSession = {
+  gameId: string;
+  playerId: string;
+};
+
+const SESSION_STORAGE_KEY = "mindbug-multiplayer-session";
 
 export function App() {
+  const socketRef = useRef<Socket | null>(null);
   const [gameId, setGameId] = useState<string | null>(null);
-  const [state, setState] = useState<GameState | null>(null);
-  const [player1, setPlayer1] = useState("Player 1");
-  const [player2, setPlayer2] = useState("Player 2");
+  const [playerId, setPlayerId] = useState<string | null>(null);
+  const [state, setState] = useState<MultiplayerState | null>(null);
+  const [hostName, setHostName] = useState("Player 1");
+  const [joinName, setJoinName] = useState("Player 2");
+  const [joinCode, setJoinCode] = useState(() => new URLSearchParams(window.location.search).get("game") || "");
 
   const [selectedHandIndex, setSelectedHandIndex] = useState<number | null>(null);
   const [selectedAttackerIndex, setSelectedAttackerIndex] = useState<number | null>(null);
   const [selectedDefenderIndex, setSelectedDefenderIndex] = useState<number | null>(null);
-  const [pendingFrenzyAttack, setPendingFrenzyAttack] = useState<{ attackerIndex: number } | null>(null);
-
-  const [useMindbug, setUseMindbug] = useState(false);
   const [hunterOverride, setHunterOverride] = useState(true);
   const [statusText, setStatusText] = useState("");
   const [errorText, setErrorText] = useState("");
   const [showGameOver, setShowGameOver] = useState(false);
   const [previewCardLabel, setPreviewCardLabel] = useState<string | null>(null);
 
-  const turnPlayer = useMemo(
-    () => state?.players.find((player) => player.name === state.turn_player) || null,
-    [state]
-  );
-  const opponent = useMemo(
-    () => state?.players.find((player) => player.name !== state.turn_player) || null,
-    [state]
-  );
-
-  const turnHand = useMemo(() => {
-    if (!state || !turnPlayer) return [];
-    return state.turn_hand || turnPlayer.hand || [];
-  }, [state, turnPlayer]);
-
+  const viewer = state?.viewer || null;
+  const opponent = state?.opponent || null;
+  const hand = viewer?.hand || [];
+  const isWaitingForOpponent = state?.room_status === "WAITING_FOR_PLAYER";
   const gameOver = state?.game_state === "GAME_OVER";
+  const canAnswerMindbug = Boolean(state?.pending_mindbug?.response_required_from_viewer);
+  const canAct = Boolean(state && viewer && opponent && state.is_viewer_turn && !gameOver && !state.pending_mindbug);
+  const hasPendingFrenzyAttack = state?.pending_frenzy_attacker_index !== null && state?.pending_frenzy_attacker_index !== undefined;
 
   const metaText = useMemo(() => {
-    if (!state || !gameId) return "No active game.";
-    return `Game ${gameId} | Turn: ${state.turn_player} | State: ${state.game_state}${state.winner ? ` | Winner: ${state.winner}` : ""}`;
-  }, [state, gameId]);
+    if (!state || !gameId) return "Create or join a multiplayer room.";
+    if (isWaitingForOpponent) {
+      return `Room ${gameId} | Invite code: ${state.invite_code} | Players: ${state.connected_players}/${state.max_players}`;
+    }
+    return `Room ${gameId} | You: ${state.viewer_player_name} | Turn: ${state.turn_player ?? "-"} | State: ${state.game_state}${state.winner ? ` | Winner: ${state.winner}` : ""}`;
+  }, [gameId, isWaitingForOpponent, state]);
 
   const selectionText = `Hand: ${selectedHandIndex ?? "-"} | Attacker: ${selectedAttackerIndex ?? "-"} | Defender: ${selectedDefenderIndex ?? "-"}`;
 
-  function normalizeSelections(nextState: GameState) {
-    const nextTurnPlayer = nextState.players.find((player) => player.name === nextState.turn_player);
-    const nextOpponent = nextState.players.find((player) => player.name !== nextState.turn_player);
-    const nextHand = nextState.turn_hand || nextTurnPlayer?.hand || [];
-    const nextBoard = nextTurnPlayer?.battlefield || [];
-    const nextOpponentBoard = nextOpponent?.battlefield || [];
+  function persistSession(nextSession: StoredSession) {
+    localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(nextSession));
+    const url = new URL(window.location.href);
+    url.searchParams.set("game", nextSession.gameId);
+    window.history.replaceState({}, "", url);
+  }
+
+  function clearPersistedSession() {
+    localStorage.removeItem(SESSION_STORAGE_KEY);
+  }
+
+  function normalizeSelections(nextState: MultiplayerState) {
+    const nextHand = nextState.viewer?.hand || [];
+    const nextBoard = nextState.viewer?.battlefield || [];
+    const nextOpponentBoard = nextState.opponent?.battlefield || [];
 
     if (selectedHandIndex !== null && (selectedHandIndex < 0 || selectedHandIndex >= nextHand.length)) {
       setSelectedHandIndex(null);
@@ -69,12 +79,15 @@ export function App() {
     if (selectedDefenderIndex !== null && (selectedDefenderIndex < 0 || selectedDefenderIndex >= nextOpponentBoard.length)) {
       setSelectedDefenderIndex(null);
     }
-    if (pendingFrenzyAttack && (pendingFrenzyAttack.attackerIndex < 0 || pendingFrenzyAttack.attackerIndex >= nextBoard.length)) {
-      setPendingFrenzyAttack(null);
+    if (
+      nextState.pending_frenzy_attacker_index !== null &&
+      nextState.pending_frenzy_attacker_index !== undefined
+    ) {
+      setSelectedAttackerIndex(nextState.pending_frenzy_attacker_index);
     }
   }
 
-  function applyState(nextState: GameState) {
+  function applyState(nextState: MultiplayerState) {
     normalizeSelections(nextState);
     setState(nextState);
     if (nextState.game_state === "GAME_OVER") {
@@ -82,139 +95,188 @@ export function App() {
     }
   }
 
+  function connectSocket(nextGameId: string, nextPlayerId: string) {
+    socketRef.current?.disconnect();
+    const socket = createGameSocket(nextGameId, nextPlayerId, {
+      onState: (nextState) => {
+        setErrorText("");
+        applyState(nextState);
+      },
+      onError: (message) => {
+        setErrorText(message);
+      }
+    });
+    socketRef.current = socket;
+  }
+
+  function activateSession(nextGameId: string, nextPlayerId: string, nextState: MultiplayerState) {
+    setGameId(nextGameId);
+    setPlayerId(nextPlayerId);
+    setJoinCode(nextGameId);
+    setSelectedHandIndex(null);
+    setSelectedAttackerIndex(null);
+    setSelectedDefenderIndex(null);
+    setShowGameOver(false);
+    applyState(nextState);
+    persistSession({ gameId: nextGameId, playerId: nextPlayerId });
+    connectSocket(nextGameId, nextPlayerId);
+  }
+
+  async function restoreSession(storedSession: StoredSession) {
+    try {
+      const response = await gameApi.getState(storedSession.gameId, storedSession.playerId);
+      activateSession(response.game_id, response.player_id, response.state);
+      setStatusText("Reconnected to saved multiplayer session.");
+    } catch {
+      clearPersistedSession();
+    }
+  }
+
+  useEffect(() => {
+    const rawSession = localStorage.getItem(SESSION_STORAGE_KEY);
+    if (!rawSession) return;
+
+    try {
+      void restoreSession(JSON.parse(rawSession) as StoredSession);
+    } catch {
+      clearPersistedSession();
+    }
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      socketRef.current?.disconnect();
+    };
+  }, []);
+
   async function createGame() {
     setErrorText("");
     try {
       const response = await gameApi.createGame({
-        player1: player1.trim() || "Player 1",
-        player2: player2.trim() || "Player 2"
+        player_name: hostName.trim() || "Player 1"
       });
-      setGameId(response.game_id);
-      setSelectedHandIndex(null);
-      setSelectedAttackerIndex(null);
-      setSelectedDefenderIndex(null);
-      setPendingFrenzyAttack(null);
-      setStatusText("Game created.");
-      setShowGameOver(false);
-      applyState(response.state);
+      activateSession(response.game_id, response.player_id, response.state);
+      setStatusText(`Room created. Share invite code ${response.game_id} with the second player.`);
+    } catch (error) {
+      setErrorText((error as Error).message);
+    }
+  }
+
+  async function joinGame() {
+    if (!joinCode.trim()) {
+      setErrorText("Enter an invite code first.");
+      return;
+    }
+    setErrorText("");
+    try {
+      const response = await gameApi.joinGame(joinCode.trim(), {
+        player_name: joinName.trim() || "Player 2"
+      });
+      activateSession(response.game_id, response.player_id, response.state);
+      setStatusText(`Joined room ${response.game_id}.`);
     } catch (error) {
       setErrorText((error as Error).message);
     }
   }
 
   async function refreshState() {
-    if (!gameId) {
-      setErrorText("Create a game first.");
+    if (!gameId || !playerId) {
+      setErrorText("Create or join a room first.");
       return;
     }
     setErrorText("");
     try {
-      const response = await gameApi.getState(gameId);
+      const response = await gameApi.getState(gameId, playerId);
       applyState(response.state);
     } catch (error) {
       setErrorText((error as Error).message);
     }
   }
 
-  async function maybeAutoEndTurnAfterAction(nextState: GameState, actionLabel: string) {
-    if (!gameId) return;
-    if (nextState.game_state === "GAME_OVER") {
-      applyState(nextState);
-      setStatusText(`${actionLabel} resolved. Game over.`);
-      return;
-    }
-    const endResponse = await gameApi.endTurn(gameId);
-    setSelectedHandIndex(null);
-    setSelectedAttackerIndex(null);
-    setSelectedDefenderIndex(null);
-    setPendingFrenzyAttack(null);
-    applyState(endResponse.state);
-    setStatusText(`${actionLabel} resolved. Turn ended automatically.`);
-  }
-
-  async function playSelectedCard(forcedHandIndex: number | null = null) {
-    if (!gameId) return setErrorText("Create a game first.");
-    if (pendingFrenzyAttack) return setErrorText("Finish the pending FRENZY extra attack or end turn.");
-    const handIndex = forcedHandIndex ?? selectedHandIndex;
-    if (handIndex === null) return setErrorText("Select a hand card first.");
-
+  async function emitAction(action: () => Promise<{ ok: boolean; error?: string }>, successText: string) {
     setErrorText("");
     try {
-      const response = await gameApi.playCard(gameId, {
-        hand_index: handIndex,
-        use_opponent_mindbug: useMindbug
-      });
-      await maybeAutoEndTurnAfterAction(response.state, "Play");
+      const response = await action();
+      if (!response.ok) {
+        setErrorText(response.error || "Action failed.");
+        return;
+      }
+      setStatusText(successText);
     } catch (error) {
       setErrorText((error as Error).message);
     }
   }
 
+  async function playSelectedCard(forcedHandIndex: number | null = null) {
+    if (!socketRef.current) return setErrorText("Create or join a room first.");
+    if (!canAct) return setErrorText("You cannot play a card right now.");
+    const handIndex = forcedHandIndex ?? selectedHandIndex;
+    if (handIndex === null) return setErrorText("Select a hand card first.");
+    await emitAction(() => socketActions.playCard(socketRef.current as Socket, handIndex), "Card played.");
+  }
+
   async function attackSelected(mode: AttackMode = "normal") {
-    if (!gameId || !state || !turnPlayer) return setErrorText("Create a game first.");
+    if (!socketRef.current || !state || !viewer) return setErrorText("Create or join a room first.");
+    if (!canAct) return setErrorText("You cannot attack right now.");
 
     const attackerIndex = selectedAttackerIndex;
     const defenderIndex = mode === "direct" ? null : selectedDefenderIndex;
     if (attackerIndex === null) return setErrorText("Select an attacker first.");
     if (mode !== "direct" && defenderIndex === null) return setErrorText("Select a defender or use direct attack.");
 
-    const attackerLabel = turnPlayer.battlefield[attackerIndex];
+    const attackerLabel = viewer.battlefield[attackerIndex];
     const isHunter = cardHasTag(attackerLabel, "HUNTER");
-    const isFrenzy = cardHasTag(attackerLabel, "FRENZY");
 
     if (isHunter && hunterOverride && mode !== "direct" && defenderIndex === null) {
       return setErrorText("For HUNTER override, select a defender target.");
     }
-    if (pendingFrenzyAttack && attackerIndex !== pendingFrenzyAttack.attackerIndex) {
+    if (hasPendingFrenzyAttack && attackerIndex !== state.pending_frenzy_attacker_index) {
       return setErrorText("Use the same FRENZY attacker for the second attack, or end turn.");
     }
 
-    setErrorText("");
-    try {
-      const response = await gameApi.attack(gameId, {
+    await emitAction(
+      () =>
+        socketActions.attack(socketRef.current as Socket, {
         attacker_index: attackerIndex,
         defender_index: defenderIndex,
         hunter_target_override: mode === "direct" ? false : hunterOverride
-      });
-      const turnPlayerAfter = response.state.players.find((player) => player.name === response.state.turn_player);
-      const attackerStillAlive = attackerIndex < (turnPlayerAfter?.battlefield.length || 0);
-
-      if (isFrenzy && !pendingFrenzyAttack && response.state.game_state !== "GAME_OVER" && attackerStillAlive) {
-        setPendingFrenzyAttack({ attackerIndex });
-        setSelectedAttackerIndex(attackerIndex);
-        setSelectedDefenderIndex(null);
-        applyState(response.state);
-        setStatusText("FRENZY: attacker may attack one more time this turn.");
-        return;
-      }
-
-      setPendingFrenzyAttack(null);
-      await maybeAutoEndTurnAfterAction(response.state, mode === "direct" ? "Direct attack" : "Attack");
-    } catch (error) {
-      setErrorText((error as Error).message);
-    }
+        }),
+      mode === "direct" ? "Direct attack resolved." : "Attack resolved."
+    );
   }
 
   async function endTurn() {
-    if (!gameId) return setErrorText("Create a game first.");
-    setErrorText("");
-    try {
-      const response = await gameApi.endTurn(gameId);
-      setSelectedHandIndex(null);
-      setSelectedAttackerIndex(null);
-      setSelectedDefenderIndex(null);
-      setPendingFrenzyAttack(null);
-      setStatusText("Turn ended.");
-      applyState(response.state);
-    } catch (error) {
-      setErrorText((error as Error).message);
-    }
+    if (!socketRef.current) return setErrorText("Create or join a room first.");
+    if (!state?.is_viewer_turn) return setErrorText("It is not your turn.");
+    await emitAction(() => socketActions.endTurn(socketRef.current as Socket), "Turn ended.");
   }
 
-  function toggleSelected(
-    type: "hand" | "attacker" | "defender",
-    index: number
-  ) {
+  async function answerMindbug(useMindbug: boolean) {
+    if (!socketRef.current) return setErrorText("Create or join a room first.");
+    if (!canAnswerMindbug) return setErrorText("No Mindbug response is waiting for you.");
+    await emitAction(
+      () => socketActions.mindbugResponse(socketRef.current as Socket, useMindbug),
+      useMindbug ? "Mindbug used." : "Mindbug declined."
+    );
+  }
+
+  function leaveSession() {
+    socketRef.current?.disconnect();
+    socketRef.current = null;
+    clearPersistedSession();
+    setGameId(null);
+    setPlayerId(null);
+    setState(null);
+    setSelectedHandIndex(null);
+    setSelectedAttackerIndex(null);
+    setSelectedDefenderIndex(null);
+    setStatusText("Session cleared on this device.");
+    const url = new URL(window.location.href);
+    url.searchParams.delete("game");
+    window.history.replaceState({}, "", url);
+  }
+
+  function toggleSelected(type: "hand" | "attacker" | "defender", index: number) {
     if (type === "hand") setSelectedHandIndex((current) => (current === index ? null : index));
     if (type === "attacker") setSelectedAttackerIndex((current) => (current === index ? null : index));
     if (type === "defender") setSelectedDefenderIndex((current) => (current === index ? null : index));
@@ -222,38 +284,151 @@ export function App() {
 
   return (
     <main className="app-shell container-xl py-3">
-      <TopBar
-        player1={player1}
-        player2={player2}
-        onPlayer1Change={setPlayer1}
-        onPlayer2Change={setPlayer2}
-        onNewGame={createGame}
-        onRefresh={refreshState}
-        metaText={metaText}
-        statusText={statusText}
-        errorText={errorText}
-      />
+      <section className="card border-0 bg-panel">
+        <div className="card-body">
+          <div className="d-flex flex-wrap align-items-end gap-3 mb-3">
+            <h1 className="app-title m-0 me-auto">Mindbug Multiplayer</h1>
+            <button className="btn btn-outline-light" onClick={refreshState} type="button">
+              Refresh state
+            </button>
+            <button className="btn btn-outline-danger" onClick={leaveSession} type="button">
+              Leave local session
+            </button>
+          </div>
 
-      <ActionPanel
-        hasGame={Boolean(gameId)}
-        disabled={Boolean(gameOver)}
-        useMindbug={useMindbug}
-        onUseMindbugChange={setUseMindbug}
-        hunterOverride={hunterOverride}
-        onHunterOverrideChange={setHunterOverride}
-        selectionText={selectionText}
-        onPlayCard={() => void playSelectedCard()}
-        onAttack={() => void attackSelected("normal")}
-        onDirectAttack={() => void attackSelected("direct")}
-        onEndTurn={() => void endTurn()}
-      />
+          <div className="setup-grid">
+            <div className="setup-panel">
+              <h2 className="section-title">Create room</h2>
+              <label className="text-light w-100">
+                Your name
+                <input
+                  className="form-control mt-1"
+                  value={hostName}
+                  onChange={(event) => setHostName(event.target.value)}
+                />
+              </label>
+              <button className="btn btn-primary mt-2" onClick={createGame} type="button">
+                Create room
+              </button>
+            </div>
 
-      {state && turnPlayer && opponent ? (
+            <div className="setup-panel">
+              <h2 className="section-title">Join room</h2>
+              <label className="text-light w-100">
+                Invite code
+                <input
+                  className="form-control mt-1"
+                  value={joinCode}
+                  onChange={(event) => setJoinCode(event.target.value)}
+                />
+              </label>
+              <label className="text-light w-100 mt-2">
+                Your name
+                <input
+                  className="form-control mt-1"
+                  value={joinName}
+                  onChange={(event) => setJoinName(event.target.value)}
+                />
+              </label>
+              <button className="btn btn-success mt-2" onClick={joinGame} type="button">
+                Join room
+              </button>
+            </div>
+          </div>
+
+          <div className="meta-text mt-3">{metaText}</div>
+          {statusText ? <div className="status-text">{statusText}</div> : null}
+          {errorText ? <div className="error-text">{errorText}</div> : null}
+        </div>
+      </section>
+
+      {state && viewer ? (
         <div className="row g-3">
           <div className="col-12">
+            <section className="card border-0 bg-panel">
+              <div className="card-body">
+                <div className="d-flex flex-wrap gap-2 align-items-center justify-content-between">
+                  <div>
+                    <div className="section-title mb-1">Room status</div>
+                    <div className="turn-banner">
+                      {isWaitingForOpponent
+                        ? `Waiting for second player. Share code ${state.invite_code}.`
+                        : state.pending_mindbug
+                          ? state.pending_mindbug.response_required_from_viewer
+                            ? `Respond to ${state.pending_mindbug.acting_player_name}'s ${state.pending_mindbug.card_label}.`
+                            : `Waiting for ${state.pending_mindbug.responding_player_name} to answer the Mindbug prompt.`
+                          : state.is_viewer_turn
+                            ? "Your turn."
+                            : `Waiting for ${state.turn_player}.`}
+                    </div>
+                  </div>
+                  {state.pending_mindbug?.response_required_from_viewer ? (
+                    <div className="d-flex gap-2">
+                      <button className="btn btn-warning" onClick={() => void answerMindbug(true)} type="button">
+                        Use Mindbug
+                      </button>
+                      <button className="btn btn-outline-light" onClick={() => void answerMindbug(false)} type="button">
+                        Decline
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            </section>
+          </div>
+
+          {!isWaitingForOpponent ? (
+            <div className="col-12">
+              <section className="card border-0 bg-panel">
+                <div className="card-body">
+                  <div className="row g-3 align-items-end">
+                    <div className="col-md-4">
+                      <h2 className="section-title">Play</h2>
+                      <button className="btn btn-primary w-100" disabled={!canAct} onClick={() => void playSelectedCard()} type="button">
+                        Play selected hand card
+                      </button>
+                    </div>
+                    <div className="col-md-4">
+                      <h2 className="section-title">Attack</h2>
+                      <div className="d-grid gap-2">
+                        <button className="btn btn-outline-light" disabled={!canAct} onClick={() => void attackSelected("normal")} type="button">
+                          Attack selected defender
+                        </button>
+                        <button className="btn btn-outline-warning" disabled={!canAct} onClick={() => void attackSelected("direct")} type="button">
+                          Direct attack
+                        </button>
+                      </div>
+                      <div className="form-check mt-2">
+                        <input
+                          id="hunterOverride"
+                          className="form-check-input"
+                          type="checkbox"
+                          checked={hunterOverride}
+                          disabled={!canAct}
+                          onChange={(event) => setHunterOverride(event.target.checked)}
+                        />
+                        <label htmlFor="hunterOverride" className="form-check-label text-light">
+                          Use HUNTER target override
+                        </label>
+                      </div>
+                    </div>
+                    <div className="col-md-4">
+                      <h2 className="section-title">Turn</h2>
+                      <button className="btn btn-success w-100 mb-2" disabled={!state.is_viewer_turn || Boolean(gameOver) || canAnswerMindbug} onClick={() => void endTurn()} type="button">
+                        End turn
+                      </button>
+                      <div className="selection-box">{selectionText}</div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            </div>
+          ) : null}
+
+          <div className="col-12">
             <BoardZone
-              title={`${opponent.name}`}
-              player={opponent}
+              title={opponent?.name || state.opponent_player_name || "Opponent"}
+              player={opponent || { player_index: 1, name: state.opponent_player_name || "Opponent", lives: 0, mindbugs_remaining: 0, hand_count: 0, draw_count: 0, discard_count: 0, battlefield: [], discard: [], hand: [] }}
               battlefieldMode="defender"
               selectedBattlefieldIndex={selectedDefenderIndex}
               onSelectBattlefield={(index) => toggleSelected("defender", index)}
@@ -261,9 +436,9 @@ export function App() {
           </div>
           <div className="col-12">
             <BoardZone
-              title={`${turnPlayer.name} (on turn)`}
-              player={turnPlayer}
-              active
+              title={`${viewer.name}${state.is_viewer_turn ? " (your turn)" : ""}`}
+              player={viewer}
+              active={state.is_viewer_turn}
               battlefieldMode="attacker"
               selectedBattlefieldIndex={selectedAttackerIndex}
               onSelectBattlefield={(index) => toggleSelected("attacker", index)}
@@ -273,7 +448,7 @@ export function App() {
             <section className="card border-0 bg-panel">
               <div className="card-body">
                 <HandPanel
-                  cards={turnHand}
+                  cards={hand}
                   selectedIndex={selectedHandIndex}
                   onSelect={(index) => toggleSelected("hand", index)}
                   onPreview={(label) => setPreviewCardLabel(label)}
@@ -285,7 +460,7 @@ export function App() {
       ) : (
         <section className="card border-0 bg-panel">
           <div className="card-body">
-            <div className="placeholder">Create a game to see board state.</div>
+            <div className="placeholder">Create a room or join with an invite code to start multiplayer.</div>
           </div>
         </section>
       )}

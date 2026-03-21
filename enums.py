@@ -18,4 +18,5 @@ class CardActionType(Enum):
 class GameState(Enum):
     START_TURN = "START_TURN"
     ACTIVE = "ACTIVE"
+    AWAITING_MINDBUG = "AWAITING_MINDBUG"
     GAME_OVER = "GAME_OVER"

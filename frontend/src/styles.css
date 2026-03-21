@@ -23,6 +23,19 @@ body {
   gap: 12px;
 }
 
+.setup-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.setup-panel {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  background: #10192d;
+}
+
 .bg-panel {
   background: color-mix(in oklab, var(--panel), black 6%);
   border: 1px solid var(--border);
@@ -119,6 +132,11 @@ body {
   color: var(--muted);
   background: #0f182d;
   font-size: 0.88rem;
+}
+
+.turn-banner {
+  font-size: 1rem;
+  color: #ecf2ff;
 }
 
 .card-tile {

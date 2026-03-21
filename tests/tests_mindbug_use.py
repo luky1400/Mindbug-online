@@ -52,3 +52,60 @@ def test_opponent_steals_kangasaurus_rex_with_mindbug_and_activates_its_play_act
         if card is not plated_scorpion
     )
     assert all(card is not plated_scorpion for card in player.discard_pile)
+
+
+def test_multiplayer_mindbug_steal_does_not_consume_active_players_turn_action() -> None:
+    game = Game(
+        player_names=["Player 1", "Player 2"],
+        starting_hand_size=0,
+        starting_draw_pile_size=0,
+        await_mindbug_response=True,
+        enforce_turn_action_limit=True,
+    )
+    game.start_game(card_pool=[])
+
+    player = game.current_player
+    opponent = game.opponent
+
+    tiger_squirrel = Tiger_squirrel()
+    player.hand = [Chameleon_sniper()]
+    player.cards_laid_out = [tiger_squirrel]
+    opponent.hand = [Chameleon_sniper(), Luchataur()]
+
+    game.play_card(hand_index=0)
+    game.respond_to_mindbug(True)
+
+    assert game.turn == 0
+    assert game._turn_action_taken is False
+
+    game.attack(attacker_index=0, defender_index=None)
+
+    assert tiger_squirrel in player.cards_laid_out
+    assert opponent.number_of_lives == game.starting_lives - 1
+
+
+def test_multiplayer_declined_mindbug_automatically_passes_turn() -> None:
+    game = Game(
+        player_names=["Player 1", "Player 2"],
+        starting_hand_size=0,
+        starting_draw_pile_size=0,
+        await_mindbug_response=True,
+        enforce_turn_action_limit=True,
+        auto_end_turn_after_successful_play=True,
+    )
+    game.start_game(card_pool=[])
+
+    player = game.current_player
+    opponent = game.opponent
+
+    player.hand = [Chameleon_sniper()]
+    opponent.hand = [Luchataur()]
+
+    game.play_card(hand_index=0)
+    game.respond_to_mindbug(False)
+
+    assert game.turn == 1
+    assert game.current_player is opponent
+    assert game.game_state == game.game_state.START_TURN
+    assert game._turn_action_taken is False
+    assert any(isinstance(card, Chameleon_sniper) for card in player.cards_laid_out)

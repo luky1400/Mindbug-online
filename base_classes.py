@@ -166,8 +166,25 @@ class Player:
         self.discard_pile.append(card)
 
 
+@dataclass
+class PendingMindbugDecision:
+    acting_player_index: int
+    responding_player_index: int
+    card: Card
+
+
 class Game:
-    def __init__(self, player_names: list[str], starting_lives: int = 5, starting_hand_size: int = 5, starting_draw_pile_size: int = 5, players_start_with_mindbugs: int = 2):
+    def __init__(
+        self,
+        player_names: list[str],
+        starting_lives: int = 5,
+        starting_hand_size: int = 5,
+        starting_draw_pile_size: int = 5,
+        players_start_with_mindbugs: int = 2,
+        await_mindbug_response: bool = False,
+        enforce_turn_action_limit: bool = False,
+        auto_end_turn_after_successful_play: bool = False,
+    ):
         # TODO - Later implement for 4 players
         if len(player_names) != 2:
             raise ValueError("Mindbug supports exactly 2 players.")
@@ -181,8 +198,14 @@ class Game:
         self.winner: Optional[Player] = None
         self.log: list[str] = []
         self._attacks_this_turn: dict[int, int] = {}
+        self._turn_action_taken: bool = False
+        self._pending_frenzy_attacker_id: int | None = None
+        self._pending_mindbug_decision: PendingMindbugDecision | None = None
         self.number_of_players = len(player_names)
         self.number_of_cards_in_game = (self.starting_draw_pile_size + self.starting_hand_size) * self.number_of_players
+        self.await_mindbug_response = await_mindbug_response
+        self.enforce_turn_action_limit = enforce_turn_action_limit
+        self.auto_end_turn_after_successful_play = auto_end_turn_after_successful_play
 
     @property
     def current_player(self) -> Player:
@@ -218,58 +241,111 @@ class Game:
         self.winner = None
         self.log = ["Game started."]
         self._attacks_this_turn = {}
+        self._turn_action_taken = False
+        self._pending_frenzy_attacker_id = None
+        self._pending_mindbug_decision = None
         self._recalculate_ongoing_effects()
 
-    # TODO - refactor - do not return boolean, return None
     # NOTE - card is optional, if not provided, play card from hand - TODO - refactor this
-    def play_card(self, hand_index: Optional[int] = None, card: Optional[Card] = None, use_opponent_mindbug: bool = False) -> bool:
+    def play_card(
+        self,
+        hand_index: Optional[int] = None,
+        card: Optional[Card] = None,
+        use_opponent_mindbug: Optional[bool] = None,
+    ) -> bool | None:
         self._ensure_active()
+        self._ensure_no_pending_resolution()
+        if self.enforce_turn_action_limit and self._turn_action_taken:
+            raise ValueError("You already took your action this turn.")
         self._recalculate_ongoing_effects()
         actor = self.current_player
         opponent = self.opponent
         if card is None and hand_index is not None:
             card = actor.play_from_hand(hand_index)
+        if card is None:
+            raise ValueError("No card was selected to play.")
 
-        if use_opponent_mindbug:
-            if opponent.mindbugs_remaining <= 0:
-                actor.hand.insert(hand_index, card)
-                raise ValueError(f"{opponent.name} has no mindbug left.")
-            opponent.mindbugs_remaining -= 1
-            opponent.cards_laid_out.append(card)
-            self._recalculate_ongoing_effects()
-            self.log.append(f"{opponent.name} uses Mindbug and steals {card.name}.")
-            # If a stolen card has a PLAY action, resolve it for the stealing player.
-            if card.action_type == CardActionType.PLAY and not opponent.cannot_activate_play_effects:
-                original_turn = self.turn
-                self.turn = 1 - self.turn
-                try:
-                    card.trigger_action(self)
-                finally:
-                    self.turn = original_turn
-                self._recalculate_ongoing_effects()
-            self._check_game_over()
-            actor.draw(1)
+        self.log.append(f"{actor.name} plays {card.name}.")
+        if use_opponent_mindbug is True:
+            self._pending_mindbug_decision = PendingMindbugDecision(
+                acting_player_index=self.turn,
+                responding_player_index=1 - self.turn,
+                card=card,
+            )
+            self.respond_to_mindbug(True)
             return True
-        else:
-            actor.cards_laid_out.append(card)
-            self._recalculate_ongoing_effects()
-            self.log.append(f"{actor.name} plays {card.name}.")
-            # Trigger action if card has a PLAY action type and the actor is allowed to activate it.
-            if card.action_type == CardActionType.PLAY and not actor.cannot_activate_play_effects:
-                card.trigger_action(self)
-                self._recalculate_ongoing_effects()
 
-        self._check_game_over()
-        actor.draw(1)
+        if use_opponent_mindbug is False:
+            self._finalize_played_card(owner_index=self.turn, card=card)
+            self.log.append(f"{opponent.name} declines to use Mindbug.")
+            self._auto_end_turn_after_play_if_needed()
+            return False
+
+        if opponent.mindbugs_remaining > 0 and self.await_mindbug_response:
+            self._pending_mindbug_decision = PendingMindbugDecision(
+                acting_player_index=self.turn,
+                responding_player_index=1 - self.turn,
+                card=card,
+            )
+            self.game_state = GameState.AWAITING_MINDBUG
+            self.log.append(f"Waiting for {opponent.name} to decide whether to use Mindbug.")
+            return None
+
+        self._finalize_played_card(owner_index=self.turn, card=card)
+        if opponent.mindbugs_remaining > 0:
+            self.log.append(f"{opponent.name} declines to use Mindbug.")
+        else:
+            self.log.append(f"{opponent.name} has no Mindbug left.")
+        self._auto_end_turn_after_play_if_needed()
         return False
+
+    def respond_to_mindbug(self, use_mindbug: bool) -> None:
+        self._ensure_active()
+        if self._pending_mindbug_decision is None:
+            raise ValueError("There is no pending Mindbug decision.")
+
+        pending = self._pending_mindbug_decision
+        actor_index = pending.acting_player_index
+        responder_index = pending.responding_player_index
+        actor = self.players[actor_index]
+        responder = self.players[responder_index]
+        card = pending.card
+
+        self._pending_mindbug_decision = None
+        self.game_state = GameState.ACTIVE
+
+        if use_mindbug:
+            if responder.mindbugs_remaining <= 0:
+                self._finalize_played_card(owner_index=actor_index, card=card)
+                self.log.append(f"{responder.name} tried to use Mindbug but has none left.")
+                return
+
+            responder.mindbugs_remaining -= 1
+            self.log.append(f"{responder.name} uses Mindbug and steals {card.name}.")
+            self._finalize_played_card(
+                owner_index=responder_index,
+                card=card,
+                draw_for_player_index=actor_index,
+                consume_turn_action=False,
+            )
+            return
+
+        self.log.append(f"{responder.name} declines to use Mindbug.")
+        self._finalize_played_card(owner_index=actor_index, card=card)
+        self._auto_end_turn_after_play_if_needed()
 
     # TODO - do not put defender_index as argument to attack function, instead create defend function that takes attacker and defender and is used inside attack function
     # In defend function - implement - can_block_attack for all cards laid out on the battlefield - then let defender decide only from cards that can block, if cards_can_block == empty - loose life directly.
     def attack(self, attacker_index: int, defender_index: Optional[int] = None, hunter_target_override: bool = True) -> None:
         self._ensure_active()
+        self._ensure_no_pending_resolution()
         self._recalculate_ongoing_effects()
         attacker_owner = self.current_player
         defender_owner = self.opponent
+        is_resolving_frenzy_attack = self._pending_frenzy_attacker_id is not None
+
+        if self.enforce_turn_action_limit and self._turn_action_taken and not is_resolving_frenzy_attack:
+            raise ValueError("You already took your action this turn.")
 
         if attacker_index < 0 or attacker_index >= len(attacker_owner.cards_laid_out):
             raise ValueError("Invalid attacker index.")
@@ -278,6 +354,8 @@ class Game:
             raise ValueError("No cards laid out to attack.")
 
         attacker = attacker_owner.cards_laid_out[attacker_index]
+        if is_resolving_frenzy_attack and id(attacker) != self._pending_frenzy_attacker_id:
+            raise ValueError("You must use the same FRENZY creature for the bonus attack.")
         if attacker.cannot_attack:
             raise ValueError(f"{attacker.name} cannot attack right now.")
         attacks_used = self._attacks_this_turn.get(id(attacker), 0)
@@ -291,6 +369,8 @@ class Game:
             attacker.trigger_action(self)
             # ATTACK action can remove attacker before combat resolution (e.g. Snail Hydra attacks and destroys Explosive Toad, which then destroys Snail Hydra).
             if attacker not in attacker_owner.cards_laid_out:
+                self._turn_action_taken = True
+                self._pending_frenzy_attacker_id = None
                 self.log.append(
                     f"{attacker_owner.name}'s {attacker.name} is no longer on the battlefield. Attack is cancelled."
                 )
@@ -300,6 +380,7 @@ class Game:
             defender_owner.lose_life(1)
             self.log.append(f"{attacker_owner.name}'s {attacker.name} attacks directly for 1 life.")
             self._check_game_over()
+            self._finalize_attack_action(attacker_owner, attacker)
             return
 
         if defender_index < 0 or defender_index >= len(defender_owner.cards_laid_out):
@@ -337,6 +418,7 @@ class Game:
         self.log.append(
             f"{attacker_owner.name}'s {attacker.name} attacks {defender_owner.name}'s {defender.name}."
         )
+        self._finalize_attack_action(attacker_owner, attacker)
 
     def _is_eligible_defender(
         self,
@@ -384,15 +466,21 @@ class Game:
 
     def end_turn(self) -> None:
         self._ensure_active()
+        self._ensure_no_pending_resolution()
         self.turn = 1 - self.turn
         self._attacks_this_turn = {}
+        self._turn_action_taken = False
+        self._pending_frenzy_attacker_id = None
         self._recalculate_ongoing_effects()
         self.game_state = GameState.START_TURN
         self.log.append(f"Turn passes to {self.current_player.name}.")
 
-    def get_state(self) -> dict[str, Any]:
+    def get_state(self, viewer_index: Optional[int] = None) -> dict[str, Any]:
+        if viewer_index is not None:
+            return self._build_player_view(viewer_index)
+
         turn_player = self.current_player
-        players_state = [self._serialize_player(p) for p in self.players]
+        players_state = [self._serialize_player(index) for index in range(len(self.players))]
         indexed_turn_hand = ", ".join(f"{index}: {card.short_label()}" for index, card in enumerate(turn_player.hand))
         for player_state in players_state:
             if player_state["name"] == turn_player.name:
@@ -408,13 +496,15 @@ class Game:
             "log": list(self.log[-10:]),
         }
 
-    def _serialize_player(self, player: Player) -> dict[str, Any]:
+    def _serialize_player(self, player_index: int, include_hand: bool = True) -> dict[str, Any]:
+        player = self.players[player_index]
         return {
+            "player_index": player_index,
             "name": player.name,
             "lives": player.number_of_lives,
             "mindbugs_remaining": player.mindbugs_remaining,
             "hand_count": len(player.hand),
-            "hand": [card.short_label() for card in player.hand],
+            "hand": [card.short_label() for card in player.hand] if include_hand else [],
             "battlefield": [c.short_label() for c in player.cards_laid_out],
             "discard_count": len(player.discard_pile),
             "discard": [card.short_label() for card in player.discard_pile],
@@ -453,6 +543,100 @@ class Game:
     def _ensure_active(self) -> None:
         if self.game_state == GameState.GAME_OVER:
             raise ValueError("Game is already over.")
+
+    def _ensure_no_pending_resolution(self) -> None:
+        if self._pending_mindbug_decision is not None:
+            responder = self.players[self._pending_mindbug_decision.responding_player_index]
+            raise ValueError(f"Waiting for {responder.name} to decide whether to use Mindbug.")
+
+    def _finalize_played_card(
+        self,
+        owner_index: int,
+        card: Card,
+        draw_for_player_index: Optional[int] = None,
+        consume_turn_action: bool = True,
+    ) -> None:
+        owner = self.players[owner_index]
+        owner.cards_laid_out.append(card)
+        self._recalculate_ongoing_effects()
+        if card.action_type == CardActionType.PLAY and not owner.cannot_activate_play_effects:
+            original_turn = self.turn
+            self.turn = owner_index
+            try:
+                card.trigger_action(self)
+            finally:
+                self.turn = original_turn
+            self._recalculate_ongoing_effects()
+
+        self._check_game_over()
+        draw_owner_index = owner_index if draw_for_player_index is None else draw_for_player_index
+        self.players[draw_owner_index].draw(1)
+        if self.enforce_turn_action_limit and consume_turn_action:
+            self._turn_action_taken = True
+            self._pending_frenzy_attacker_id = None
+
+    def _finalize_attack_action(self, attacker_owner: Player, attacker: Card) -> None:
+        if not self.enforce_turn_action_limit:
+            self._pending_frenzy_attacker_id = None
+            return
+
+        self._turn_action_taken = True
+        if (
+            CardSpecialType.FRENZY in attacker.special_types
+            and attacker in attacker_owner.cards_laid_out
+            and self._attacks_this_turn.get(id(attacker), 0) == 1
+            and self.game_state != GameState.GAME_OVER
+        ):
+            self._pending_frenzy_attacker_id = id(attacker)
+            self.log.append(f"{attacker.name} may attack one more time this turn due to FRENZY.")
+            return
+
+        self._pending_frenzy_attacker_id = None
+
+    def _build_player_view(self, viewer_index: int) -> dict[str, Any]:
+        viewer = self.players[viewer_index]
+        opponent_index = 1 - viewer_index
+        opponent = self.players[opponent_index]
+        pending_mindbug = None
+        if self._pending_mindbug_decision is not None:
+            pending_mindbug = {
+                "acting_player_name": self.players[self._pending_mindbug_decision.acting_player_index].name,
+                "responding_player_name": self.players[self._pending_mindbug_decision.responding_player_index].name,
+                "card_label": self._pending_mindbug_decision.card.short_label(),
+                "response_required_from_viewer": self._pending_mindbug_decision.responding_player_index == viewer_index,
+            }
+
+        return {
+            "game_state": self.game_state.value,
+            "room_status": self.game_state.value,
+            "turn_player": self.current_player.name,
+            "winner": None if not self.winner else self.winner.name,
+            "viewer_player_name": viewer.name,
+            "viewer_player_index": viewer_index,
+            "opponent_player_name": opponent.name,
+            "is_viewer_turn": self.turn == viewer_index,
+            "viewer": self._serialize_player(viewer_index, include_hand=True),
+            "opponent": self._serialize_player(opponent_index, include_hand=False),
+            "log": list(self.log[-10:]),
+            "pending_mindbug": pending_mindbug,
+            "pending_frenzy_attacker_index": self._get_pending_frenzy_attacker_index(viewer_index),
+        }
+
+    def _auto_end_turn_after_play_if_needed(self) -> None:
+        if not self.auto_end_turn_after_successful_play:
+            return
+        if self.game_state == GameState.GAME_OVER:
+            return
+        self.end_turn()
+
+    def _get_pending_frenzy_attacker_index(self, viewer_index: int) -> int | None:
+        if self._pending_frenzy_attacker_id is None or self.turn != viewer_index:
+            return None
+
+        for index, card in enumerate(self.players[viewer_index].cards_laid_out):
+            if id(card) == self._pending_frenzy_attacker_id:
+                return index
+        return None
 
     def _recalculate_ongoing_effects(self) -> None:
         for player in self.players:

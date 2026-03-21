@@ -261,11 +261,13 @@ class Ferret_bomber(Card):
     set: str = "First Contact"
 
     def trigger_action(self, game: Game) -> None:
-        for _ in range(2):
+        discarded_cards = 0
+        for _ in range(min(2, len(game.opponent.hand))):
             # TODO - implement player card choice, instead of random
             card = game.opponent.hand.pop(randint(0, len(game.opponent.hand) - 1))
             game.opponent.move_to_discard(card)
-            game.opponent.draw(1)
+            discarded_cards += 1
+        game.opponent.draw(discarded_cards)
         game.log.append(
             f"{game.current_player.name}'s {game.current_player.cards_laid_out[0].name} makes {game.opponent.name} discard 2 cards."
         )

@@ -12,7 +12,7 @@ This project contains a playable terminal prototype of a Mindbug-style card game
 python3 main.py
 ```
 
-### 2) Web version (FastAPI + basic frontend)
+### 2) Multiplayer web version (FastAPI + Socket.IO)
 
 Install dependencies:
 
@@ -56,6 +56,13 @@ npm run build
 After build, FastAPI serves `frontend/dist/index.html` at `/` automatically.
 If `frontend/dist` does not exist, FastAPI falls back to `web/index.html`.
 
+### 4) Multiplayer flow
+
+1. Open the frontend and create a room.
+2. Share the invite code with the second player.
+3. Join that room from a second browser window or another device.
+4. Both players receive live state updates through Socket.IO.
+
 ## Run Tests
 
 ```bash
@@ -73,11 +80,13 @@ PYTHONPATH=. pytest tests/tests_mindbug_use.py
 - 2-player turn-based game loop
 - Play a creature or attack each turn
 - Mindbug steal mechanic (1 use per player)
+- Realtime multiplayer rooms with FastAPI + Socket.IO
+- Separate player sessions with hidden opponent hands
 - Creature combat with `TOUGH`, `POISONOUS`, `HUNTER`, `FRENZY`, and `SNEAKY` creature types
 - Creature actions are supported
 - Life tracking and winner detection
-- Web API for game actions
-- Basic browser UI
+- Web API for room creation, join, and session restore
+- React browser UI
 
 ## Files
 
@@ -85,8 +94,9 @@ PYTHONPATH=. pytest tests/tests_mindbug_use.py
 - `cards.py` - card pool definitions
 - `enums.py` - shared enums
 - `main.py` - CLI game runner
-- `web_app.py` - FastAPI backend and endpoints
+- `web_app.py` - FastAPI + Socket.IO multiplayer backend
 - `web/index.html` - basic frontend UI
+- `frontend/` - React + TypeScript multiplayer frontend
 - `requirements.txt` - Python dependencies
 
 ## TODO
@@ -94,10 +104,7 @@ PYTHONPATH=. pytest tests/tests_mindbug_use.py
 - finish backend to work well
   - handle that player or opponent can choose which cards to play or discard
   - add tests regularly for things that are not working
-- rewrite functions - attack, play_card, .. e.g. player plays_card and only then opponent decides whether to use mindbug or not.- we must remove mindbug argument from play_card function. - put use mindbug logic inside play_card function
-  - so that frontend would wokr as expected (e.g. player plays a card and then defender needs to decide whether to use mindbug or not, ..)
-- Add online multiplayer turns using Socket.io (async).
-- (Replace in-memory game store with database-backed sessions.)
+- refactor functions - attack, play_card
 
 ## TODO - game rules
 
@@ -115,8 +122,8 @@ vyhodnocování jednoho efektu předtím, než začnete vyhodnocovat další."
 
 ## Nice to have
 
+- add persistent database-backed sessions so rooms survive server restarts.
 - add other sets
-- Add proper authentication
 - "Začínajícího hráče určíte tak, že si každý hráč náhodně vylosuje jednu kartu z hromádky nepoužitých karet nestvůr a poté si hráči porovnají sílu těchto karet. Hráč, jehož karta má vyšší hodnotu síly, bude začínajícím hráčem.
 V případě shody tento proces opakujte."
 - [QA](https://www.zatrolene-hry.cz/spolecenska-hra/mozkozrout-12630/otazky/)
