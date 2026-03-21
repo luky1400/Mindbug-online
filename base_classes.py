@@ -382,7 +382,6 @@ class Game:
         self._auto_end_turn_after_play_if_needed()
 
     # TODO - do not put defender_index as argument to attack function, instead create defend function that takes attacker and defender and is used inside attack function
-    # In defend function - implement - can_block_attack for all cards laid out on the battlefield - then let defender decide only from cards that can block, if cards_can_block == empty - loose life directly.
     def attack(
         self,
         attacker_index: int,
@@ -430,6 +429,7 @@ class Game:
         # Trigger action if attacker has an action type
         if attacker.action_type == CardActionType.ATTACK:
             attacker.trigger_action(self)
+            self._check_game_over()
             # ATTACK action can remove attacker before combat resolution (e.g. Snail Hydra attacks and destroys Explosive Toad, which then destroys Snail Hydra).
             if attacker not in attacker_owner.cards_laid_out:
                 self._turn_action_taken = True

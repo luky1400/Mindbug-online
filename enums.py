@@ -18,6 +18,7 @@ class CardActionType(Enum):
 class CardSet(Enum):
     FIRST_CONTACT = "First Contact"
     NEW_SERVANTS = "New Servants"
+    PROMO_CARDS = "Promo Cards"
 
 
 class GameState(Enum):
