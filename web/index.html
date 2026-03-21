@@ -458,7 +458,7 @@
 
     async function refreshState() {
       if (!gameId) return;
-      const data = await api(`/game/${gameId}/state`);
+      const data = await api(`/legacy-game/${gameId}/state`);
       render(data.state);
     }
 
@@ -469,7 +469,7 @@
           player1: document.getElementById("p1").value || "Player 1",
           player2: document.getElementById("p2").value || "Player 2"
         };
-        const data = await api("/game/new", {
+        const data = await api("/legacy-game/new", {
           method: "POST",
           body: JSON.stringify(payload)
         });
@@ -491,7 +491,7 @@
         setStatus(`${actionLabel} resolved. Game over.`, true);
         return;
       }
-      const endData = await api(`/game/${gameId}/end-turn`, {
+      const endData = await api(`/legacy-game/${gameId}/end-turn`, {
         method: "POST",
         body: "{}"
       });
@@ -513,13 +513,27 @@
       if (handIndex === null) return setError("Select a hand card first.");
       try {
         const payload = {
-          hand_index: handIndex,
-          use_opponent_mindbug: document.getElementById("use-mindbug").checked
+          hand_index: handIndex
         };
-        const data = await api(`/game/${gameId}/play-card`, {
+        const data = await api(`/legacy-game/${gameId}/play-card`, {
           method: "POST",
           body: JSON.stringify(payload)
         });
+        if (data.state?.game_state === "AWAITING_MINDBUG") {
+          const useMindbug = document.getElementById("use-mindbug").checked;
+          const responseData = await api(`/legacy-game/${gameId}/mindbug-response`, {
+            method: "POST",
+            body: JSON.stringify({ use_mindbug: useMindbug })
+          });
+          if (useMindbug && responseData.state?.game_state !== "GAME_OVER") {
+            selectedHandIndex = null;
+            render(responseData.state);
+            setStatus("Mindbug used. Current player chooses action again.", true);
+            return;
+          }
+          await maybeAutoEndTurnAfterAction(responseData.state, "Play");
+          return;
+        }
         await maybeAutoEndTurnAfterAction(data.state, "Play");
       } catch (err) {
         setError(err.message);
@@ -552,7 +566,7 @@
           defender_index: defenderIndex,
           hunter_target_override: direct ? false : hunterOverride
         };
-        const data = await api(`/game/${gameId}/attack`, {
+        const data = await api(`/legacy-game/${gameId}/attack`, {
           method: "POST",
           body: JSON.stringify(payload)
         });
@@ -640,7 +654,7 @@
       setError("");
       if (!gameId) return setError("Create a game first.");
       try {
-        const data = await api(`/game/${gameId}/end-turn`, {
+        const data = await api(`/legacy-game/${gameId}/end-turn`, {
           method: "POST",
           body: "{}"
         });

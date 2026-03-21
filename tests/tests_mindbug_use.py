@@ -14,6 +14,7 @@ def test_opponent_steals_kangasaurus_rex_with_mindbug_and_activates_its_play_act
         player_names=["Player 1", "Player 2"],
         starting_hand_size=0,
         starting_draw_pile_size=0,
+        await_mindbug_response=True,
     )
     game.start_game(card_pool=[])
 
@@ -36,9 +37,9 @@ def test_opponent_steals_kangasaurus_rex_with_mindbug_and_activates_its_play_act
     player.hand = [Kangasaurus_rex()]
     player.cards_laid_out = [*weak_player_cards, strong_player_card]
 
-    was_stolen = game.play_card(hand_index=0, use_opponent_mindbug=True)
+    game.play_card(hand_index=0)
+    game.respond_to_mindbug(True)
 
-    assert was_stolen is True
     assert opponent.mindbugs_remaining == 1
     assert any(isinstance(card, Kangasaurus_rex) for card in opponent.cards_laid_out)
     assert strong_player_card in player.cards_laid_out

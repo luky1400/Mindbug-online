@@ -251,8 +251,7 @@ class Game:
         self,
         hand_index: Optional[int] = None,
         card: Optional[Card] = None,
-        use_opponent_mindbug: Optional[bool] = None,
-    ) -> bool | None:
+    ) -> None:
         self._ensure_active()
         self._ensure_no_pending_resolution()
         if self.enforce_turn_action_limit and self._turn_action_taken:
@@ -266,22 +265,6 @@ class Game:
             raise ValueError("No card was selected to play.")
 
         self.log.append(f"{actor.name} plays {card.name}.")
-        if use_opponent_mindbug is True:
-            self._pending_mindbug_decision = PendingMindbugDecision(
-                acting_player_index=self.turn,
-                responding_player_index=1 - self.turn,
-                card=card,
-            )
-            self.respond_to_mindbug(True)
-            return True
-
-        if use_opponent_mindbug is False:
-            self._finalize_played_card(owner_index=self.turn, card=card)
-            self.log.append(f"{opponent.name} declines to use Mindbug.")
-            self._auto_end_turn_after_play_if_needed()
-            return False
-
-        # If user_opponent_mindbug is None, we await mindbug response from opponent
         if opponent.mindbugs_remaining > 0 and self.await_mindbug_response:
             self._pending_mindbug_decision = PendingMindbugDecision(
                 acting_player_index=self.turn,
@@ -290,7 +273,7 @@ class Game:
             )
             self.game_state = GameState.AWAITING_MINDBUG
             self.log.append(f"Waiting for {opponent.name} to decide whether to use Mindbug.")
-            return None
+            return
 
         self._finalize_played_card(owner_index=self.turn, card=card)
         if opponent.mindbugs_remaining > 0:
@@ -298,7 +281,6 @@ class Game:
         else:
             self.log.append(f"{opponent.name} has no Mindbug left.")
         self._auto_end_turn_after_play_if_needed()
-        return False
 
     def respond_to_mindbug(self, use_mindbug: bool) -> None:
         self._ensure_active() # redundant?

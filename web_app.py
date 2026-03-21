@@ -25,6 +25,19 @@ class JoinGameRequest(BaseModel):
     player_name: str = Field(default="Player 2", min_length=1, max_length=50)
 
 
+class LegacyNewGameRequest(BaseModel):
+    player1: str = Field(default="Player 1", min_length=1, max_length=50)
+    player2: str = Field(default="Player 2", min_length=1, max_length=50)
+
+
+class PlayCardRequest(BaseModel):
+    hand_index: int = Field(ge=0)
+
+
+class MindbugResponseRequest(BaseModel):
+    use_mindbug: bool = False
+
+
 class AttackRequest(BaseModel):
     attacker_index: int = Field(ge=0)
     defender_index: int | None = Field(default=None, ge=0)
@@ -146,10 +159,39 @@ class GameStore:
         return session, player
 
 
+class LegacyGameStore:
+    def __init__(self) -> None:
+        self._games: dict[str, Game] = {}
+        self._lock = Lock()
+
+    def create_game(self, player1: str, player2: str) -> tuple[str, Game]:
+        game = Game(
+            [player1, player2],
+            starting_lives=3,
+            starting_hand_size=5,
+            starting_draw_pile_size=5,
+            players_start_with_mindbugs=2,
+            await_mindbug_response=True,
+        )
+        game.start_game(card_pool=get_card_pool())
+        game_id = str(uuid4())
+        with self._lock:
+            self._games[game_id] = game
+        return game_id, game
+
+    def get_game(self, game_id: str) -> Game:
+        with self._lock:
+            game = self._games.get(game_id)
+        if game is None:
+            raise KeyError(game_id)
+        return game
+
+
 fastapi_app = FastAPI(title="Mindbug Prototype API", version="0.2.0")
 sio = socketio.AsyncServer(async_mode="asgi", cors_allowed_origins="*")
 app = socketio.ASGIApp(sio, other_asgi_app=fastapi_app)
 store = GameStore()
+legacy_store = LegacyGameStore()
 web_root = Path(__file__).parent / "web"
 frontend_dist_root = Path(__file__).parent / "frontend" / "dist"
 card_images_root = Path(__file__).parent / "images" / "card_images" / "English"
@@ -175,6 +217,13 @@ def _require_active_game(session: GameSession) -> Game:
     if session.game is None:
         raise ValueError("Waiting for second player to join.")
     return session.game
+
+
+def _get_legacy_game(game_id: str) -> Game:
+    try:
+        return legacy_store.get_game(game_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail="Game not found.") from exc
 
 
 def _ensure_turn_owner(game: Game, player_index: int) -> None:
@@ -215,6 +264,15 @@ def new_game(payload: CreateGameRequest) -> dict[str, Any]:
     return _game_response(session, player)
 
 
+@fastapi_app.post("/legacy-game/new")
+def legacy_new_game(payload: LegacyNewGameRequest) -> dict[str, Any]:
+    game_id, game = legacy_store.create_game(
+        _normalize_player_name(payload.player1, "Player 1"),
+        _normalize_player_name(payload.player2, "Player 2"),
+    )
+    return {"game_id": game_id, "state": game.get_state()}
+
+
 @fastapi_app.post("/game/{game_id}/join")
 def join_game(game_id: str, payload: JoinGameRequest) -> dict[str, Any]:
     try:
@@ -233,6 +291,56 @@ def game_state(game_id: str, player_id: str = Query(..., min_length=1)) -> dict[
     except KeyError as exc:
         raise HTTPException(status_code=404, detail="Game or player not found.") from exc
     return _game_response(session, player)
+
+
+@fastapi_app.get("/legacy-game/{game_id}/state")
+def legacy_game_state(game_id: str) -> dict[str, Any]:
+    game = _get_legacy_game(game_id)
+    return {"game_id": game_id, "state": game.get_state()}
+
+
+@fastapi_app.post("/legacy-game/{game_id}/play-card")
+def legacy_play_card(game_id: str, payload: PlayCardRequest) -> dict[str, Any]:
+    game = _get_legacy_game(game_id)
+    try:
+        game.play_card(hand_index=payload.hand_index)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return {"game_id": game_id, "state": game.get_state()}
+
+
+@fastapi_app.post("/legacy-game/{game_id}/mindbug-response")
+def legacy_mindbug_response(game_id: str, payload: MindbugResponseRequest) -> dict[str, Any]:
+    game = _get_legacy_game(game_id)
+    try:
+        game.respond_to_mindbug(payload.use_mindbug)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return {"game_id": game_id, "state": game.get_state()}
+
+
+@fastapi_app.post("/legacy-game/{game_id}/attack")
+def legacy_attack(game_id: str, payload: AttackRequest) -> dict[str, Any]:
+    game = _get_legacy_game(game_id)
+    try:
+        game.attack(
+            attacker_index=payload.attacker_index,
+            defender_index=payload.defender_index,
+            hunter_target_override=payload.hunter_target_override,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return {"game_id": game_id, "state": game.get_state()}
+
+
+@fastapi_app.post("/legacy-game/{game_id}/end-turn")
+def legacy_end_turn(game_id: str) -> dict[str, Any]:
+    game = _get_legacy_game(game_id)
+    try:
+        game.end_turn()
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return {"game_id": game_id, "state": game.get_state()}
 
 
 @sio.event
