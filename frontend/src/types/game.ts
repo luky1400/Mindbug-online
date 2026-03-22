@@ -72,7 +72,6 @@ export interface JoinGameRequest {
 export interface AttackRequest {
   attacker_index: number;
   defender_index: number | null;
-  hunter_target_override: boolean;
 }
 
 export interface DefendRequest {

@@ -43,7 +43,6 @@ class MindbugResponseRequest(BaseModel):
 class AttackRequest(BaseModel):
     attacker_index: int = Field(ge=0)
     defender_index: int | None = Field(default=None, ge=0)
-    hunter_target_override: bool = True
 
 
 class DefendRequest(BaseModel):
@@ -356,7 +355,6 @@ def legacy_attack(game_id: str, payload: AttackRequest) -> dict[str, Any]:
         game.attack(
             attacker_index=payload.attacker_index,
             defender_index=payload.defender_index,
-            hunter_target_override=payload.hunter_target_override,
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -472,7 +470,6 @@ async def attack(sid: str, payload: dict[str, Any]) -> dict[str, Any]:
         game.attack(
             attacker_index=int(payload["attacker_index"]),
             defender_index=None if defender_index is None else int(defender_index),
-            hunter_target_override=bool(payload.get("hunter_target_override", True)),
         )
 
     return await _handle_socket_action(sid, action)

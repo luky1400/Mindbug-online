@@ -419,7 +419,6 @@ class Game:
         self,
         attacker_index: int,
         defender_index: Optional[int] = None,
-        hunter_target_override: bool = True,
     ) -> None:
         self._ensure_active()
         self._ensure_no_pending_resolution()

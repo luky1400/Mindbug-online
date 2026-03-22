@@ -317,8 +317,7 @@ export function App() {
       () =>
         socketActions.attack(socketRef.current as Socket, {
           attacker_index: attackerIndex,
-          defender_index: isHunter ? normalizedDefenderIndex : null,
-          hunter_target_override: true
+          defender_index: isHunter ? normalizedDefenderIndex : null
         }),
       isHunter && normalizedDefenderIndex !== null ? "Hunter attack resolved." : "Attack declared."
     );

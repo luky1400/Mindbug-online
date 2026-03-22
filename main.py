@@ -172,17 +172,13 @@ def player_turn_attack(game: Game) -> None:
                 defender_idx = int(hunter_choice)
                 if defender_idx not in hunter_target_indices:
                     raise ValueError("Choose one of the listed target indices or s.")
-                game.attack(
-                    attacker_idx,
-                    defender_idx,
-                    hunter_target_override=True,
-                )
+                game.attack(attacker_idx, defender_idx)
             except ValueError as exc:
                 print(f"Could not attack: {exc}")
             return
 
     try:
-        game.attack(attacker_idx, None, hunter_target_override=False)
+        game.attack(attacker_idx, None)
     except ValueError as exc:
         print(f"Could not attack: {exc}")
         return

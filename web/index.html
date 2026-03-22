@@ -593,8 +593,7 @@
       try {
         const payload = {
           attacker_index: attackerIndex,
-          defender_index: isHunter ? defenderIndex : null,
-          hunter_target_override: true
+          defender_index: isHunter ? defenderIndex : null
         };
         const data = await api(`/legacy-game/${gameId}/attack`, {
           method: "POST",
