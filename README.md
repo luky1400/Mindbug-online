@@ -110,14 +110,15 @@ PYTHONPATH=. pytest tests/tests_mindbug_use.py
 - Improve UI layout
   - dát na rozklikávatko: pravidla, logs, cards in game - rozdělené do tabs podle sets (include also number of copies of each card)
 - UI screens:
-  - sperate create/join room and Game
+  - seperate create/join room and Game
 - UI additonal:
-  - Hide redundant information in UI
-    - text pod kartami
-    - Discard Pile dát nějak nastranu a karty zobrazit, pouze když na to user clickne
   - visualize that TOUGH has 0 tough_charges left
   - možnost zvětšit i cards_laid_out (+ in discard pile)
   - Když defender vybira, jestli a cim bude branit, tak mu ukazat kartu utocnika (nejak ji zvyraznit nebo presunout do prostred).
+  - Hide redundant information in UI
+    - text pod kartami
+    - Discard Pile dát nějak nastranu a karty zobrazit, pouze když na to user clickne
+  - udělat nejakou signalizaci, kteá upozorní hrace, ze je na tahu (play_card/attack, Mindbug, Defend, etc.)
 
 ## TODO - game rules
 
