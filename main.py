@@ -221,8 +221,7 @@ def main() -> None:
     game = Game(
         [p1, p2],
         starting_lives=3,
-        starting_hand_size=5,
-        starting_draw_pile_size=5,
+        starting_draw_pile_size=10,
         players_start_with_mindbugs=2,
         await_mindbug_response=True,
     )

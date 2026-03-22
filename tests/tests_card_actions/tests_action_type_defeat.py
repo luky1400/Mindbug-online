@@ -1,4 +1,4 @@
-from base_classes import Game
+from base_classes import DrawPile, Game
 from unittest.mock import patch
 from cards import (
     Chameleon_sniper,
@@ -18,7 +18,6 @@ from enums import GameState
 def _new_game() -> Game:
     game = Game(
         player_names=["Player 1", "Player 2"],
-        starting_hand_size=0,
         starting_draw_pile_size=0,
     )
     game.start_game(card_pool=[])
@@ -92,6 +91,31 @@ def test_defeated_strange_barrel_steals_up_to_2_cards_from_opponent_hand() -> No
     assert opponent_card_1 in player.hand
     assert opponent_card_2 in player.hand
     assert opponent.hand == []
+
+
+def test_defeated_action_draws_up_to_five_cards_for_any_player_below_five_cards() -> None:
+    game = _new_game()
+    player = game.current_player
+    opponent = game.opponent
+
+    strange_barrel = Strange_barrel()
+    enemy_creature = Luchataur()
+    replacement_cards = [Shield_bugs(), Luchataur(), Explosive_toad()]
+    opponent_card_1 = Chameleon_sniper()
+    opponent_card_2 = Tiger_squirrel()
+    opponent_card_3 = Ferret_bomber()
+    opponent_card_4 = Explosive_toad()
+
+    player.cards_laid_out = [strange_barrel]
+    opponent.cards_laid_out = [enemy_creature]
+    opponent.hand = [opponent_card_1, opponent_card_2, opponent_card_3, opponent_card_4]
+    opponent.draw_pile = DrawPile(replacement_cards.copy())
+
+    with patch("cards.randint", side_effect=[0, 0]):
+        _attack_and_defend(game, attacker_index=0, defender_index=0)
+
+    assert len(opponent.hand) == 5
+    assert all(card in opponent.hand for card in replacement_cards)
     
 
 def test_defeated_harpy_mother_takes_control_of_2_tough_enemy_creatures_without_changing_tough_charges() -> None:

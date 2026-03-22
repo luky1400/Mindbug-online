@@ -8,7 +8,6 @@ from enums import CardSet, GameState
 def _new_game() -> Game:
     game = Game(
         player_names=["Player 1", "Player 2"],
-        starting_hand_size=0,
         starting_draw_pile_size=0,
     )
     game.start_game(card_pool=[])
@@ -18,7 +17,6 @@ def _new_game() -> Game:
 def test_initial_game_state_is_start_turn_before_start_game() -> None:
     game = Game(
         player_names=["Player 1", "Player 2"],
-        starting_hand_size=0,
         starting_draw_pile_size=0,
     )
 
@@ -29,7 +27,6 @@ def test_initial_game_state_is_start_turn_before_start_game() -> None:
 def test_start_game_sets_state_to_active_and_resets_winner() -> None:
     game = Game(
         player_names=["Player 1", "Player 2"],
-        starting_hand_size=0,
         starting_draw_pile_size=0,
     )
     game.winner = game.players[0]
@@ -86,8 +83,7 @@ def test_actions_raise_error_after_game_is_over() -> None:
 def test_start_game_uses_only_selected_card_sets() -> None:
     game = Game(
         player_names=["Player 1", "Player 2"],
-        starting_hand_size=5,
-        starting_draw_pile_size=5,
+        starting_draw_pile_size=10,
     )
 
     game.start_game(card_pool=get_card_pool(), sets=[CardSet.FIRST_CONTACT])
@@ -102,7 +98,6 @@ def test_start_game_uses_only_selected_card_sets() -> None:
 def test_start_game_stores_all_available_sets_when_no_filter_is_passed() -> None:
     game = Game(
         player_names=["Player 1", "Player 2"],
-        starting_hand_size=0,
         starting_draw_pile_size=0,
     )
 

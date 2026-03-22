@@ -1,4 +1,4 @@
-from base_classes import Game
+from base_classes import DrawPile, Game
 from cards import (
     Chameleon_sniper,
     Ferret_bomber,
@@ -13,7 +13,6 @@ from cards import (
 def test_opponent_steals_kangasaurus_rex_with_mindbug_and_activates_its_play_action_to_destroy_all_creatures_with_strength_less_than_or_equal_to_4() -> None:
     game = Game(
         player_names=["Player 1", "Player 2"],
-        starting_hand_size=0,
         starting_draw_pile_size=0,
         await_mindbug_response=True,
     )
@@ -59,7 +58,6 @@ def test_opponent_steals_kangasaurus_rex_with_mindbug_and_activates_its_play_act
 def test_multiplayer_mindbug_steal_does_not_consume_active_players_turn_action() -> None:
     game = Game(
         player_names=["Player 1", "Player 2"],
-        starting_hand_size=0,
         starting_draw_pile_size=0,
         await_mindbug_response=True,
         enforce_turn_action_limit=True,
@@ -90,7 +88,6 @@ def test_multiplayer_mindbug_steal_does_not_consume_active_players_turn_action()
 def test_multiplayer_declined_mindbug_automatically_passes_turn() -> None:
     game = Game(
         player_names=["Player 1", "Player 2"],
-        starting_hand_size=0,
         starting_draw_pile_size=0,
         await_mindbug_response=True,
         enforce_turn_action_limit=True,
@@ -116,7 +113,6 @@ def test_multiplayer_declined_mindbug_automatically_passes_turn() -> None:
 def test_mindbug_bug_makes_opponent_lose_1_life_before_using_mindbug() -> None:
     game = Game(
         player_names=["Player 1", "Player 2"],
-        starting_hand_size=0,
         starting_draw_pile_size=0,
         await_mindbug_response=True,
     )
@@ -140,7 +136,6 @@ def test_mindbug_bug_makes_opponent_lose_1_life_before_using_mindbug() -> None:
 def test_mindbug_bug_can_stop_mindbug_if_opponent_loses_last_life() -> None:
     game = Game(
         player_names=["Player 1", "Player 2"],
-        starting_hand_size=0,
         starting_draw_pile_size=0,
         await_mindbug_response=True,
     )
@@ -161,3 +156,32 @@ def test_mindbug_bug_can_stop_mindbug_if_opponent_loses_last_life() -> None:
     assert game.winner is player
     assert opponent.mindbugs_remaining == 2
     assert not any(isinstance(card, Chameleon_sniper) for card in opponent.cards_laid_out)
+
+
+def test_play_draws_replacement_before_pending_mindbug_response() -> None:
+    game = Game(
+        player_names=["Player 1", "Player 2"],
+        starting_draw_pile_size=0,
+        await_mindbug_response=True,
+    )
+    game.start_game(card_pool=[])
+
+    player = game.current_player
+    opponent = game.opponent
+    replacement_card = Luchataur()
+
+    player.hand = [
+        Chameleon_sniper(),
+        Tiger_squirrel(),
+        Ferret_bomber(),
+        Plated_scorpion(),
+        Kangasaurus_rex(),
+    ]
+    player.draw_pile = DrawPile([replacement_card])
+    opponent.hand = [Mindbug_bug()]
+
+    game.play_card(hand_index=0)
+
+    assert game._pending_mindbug_decision is not None
+    assert len(player.hand) == 5
+    assert replacement_card in player.hand

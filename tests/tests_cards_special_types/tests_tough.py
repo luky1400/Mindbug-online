@@ -5,7 +5,6 @@ from cards import Gorillion, Shield_bugs, Luchataur
 def _new_game() -> Game:
     game = Game(
         player_names=["Player 1", "Player 2"],
-        starting_hand_size=0,
         starting_draw_pile_size=0,
     )
     game.start_game(card_pool=[])

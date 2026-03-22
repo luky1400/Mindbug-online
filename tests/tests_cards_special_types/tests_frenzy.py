@@ -7,7 +7,6 @@ from cards import Brain_fly, Luchataur, Tiger_squirrel
 def _new_game() -> Game:
     game = Game(
         player_names=["Player 1", "Player 2"],
-        starting_hand_size=0,
         starting_draw_pile_size=0,
     )
     game.start_game(card_pool=[])
@@ -60,7 +59,6 @@ def test_frenzy_creature_can_attack_twice_but_not_three_times_per_turn() -> None
 def test_multiplayer_attack_automatically_passes_turn_when_not_frenzy_bonus_case() -> None:
     game = Game(
         player_names=["Player 1", "Player 2"],
-        starting_hand_size=0,
         starting_draw_pile_size=0,
         enforce_turn_action_limit=True,
         auto_end_turn_after_resolved_attack=True,
@@ -83,7 +81,6 @@ def test_multiplayer_attack_automatically_passes_turn_when_not_frenzy_bonus_case
 def test_multiplayer_frenzy_survivor_keeps_turn_for_optional_second_attack() -> None:
     game = Game(
         player_names=["Player 1", "Player 2"],
-        starting_hand_size=0,
         starting_draw_pile_size=0,
         enforce_turn_action_limit=True,
         auto_end_turn_after_resolved_attack=True,
@@ -109,7 +106,6 @@ def test_multiplayer_frenzy_survivor_keeps_turn_for_optional_second_attack() -> 
 def test_manual_end_turn_is_not_available_without_pending_frenzy_attack() -> None:
     game = Game(
         player_names=["Player 1", "Player 2"],
-        starting_hand_size=0,
         starting_draw_pile_size=0,
         enforce_turn_action_limit=True,
         auto_end_turn_after_resolved_attack=True,

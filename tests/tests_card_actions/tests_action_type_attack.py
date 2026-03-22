@@ -1,4 +1,4 @@
-from base_classes import Game
+from base_classes import DrawPile, Game
 from unittest.mock import patch
 from cards import (
     Brain_fly,
@@ -22,7 +22,6 @@ from enums import CardSpecialType
 def _new_game() -> Game:
     game = Game(
         player_names=["Player 1", "Player 2"],
-        starting_hand_size=0,
         starting_draw_pile_size=0,
     )
     game.start_game(card_pool=[])
@@ -144,6 +143,23 @@ def test_attack_count_draculeech_loses_1_life_and_defeats_an_enemy_creature() ->
     assert player.number_of_lives == 4
     assert target_enemy in opponent.discard_pile
     assert target_enemy not in opponent.cards_laid_out
+
+
+def test_attack_action_draws_up_to_five_cards_if_owner_hand_is_below_five() -> None:
+    game = _new_game()
+    player = game.current_player
+    opponent = game.opponent
+    replacement_cards = [Tiger_squirrel(), Brain_fly(), Ferret_bomber()]
+
+    player.hand = [Shield_bugs(), Luchataur()]
+    player.draw_pile = DrawPile(replacement_cards.copy())
+    player.cards_laid_out = [Chameleon_sniper()]
+    opponent.cards_laid_out = [Tiger_squirrel()]
+
+    _attack_and_defend(game, attacker_index=0, defender_index=0)
+
+    assert len(player.hand) == 5
+    assert all(card in player.hand for card in replacement_cards)
 
 
 def test_attack_shark_dog_defeats_enemy_with_power_6_or_more() -> None:

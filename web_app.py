@@ -79,8 +79,7 @@ class GameSession:
             self.game = Game(
                 [self.players[0].name, self.players[1].name],
                 starting_lives=3,
-                starting_hand_size=5,
-                starting_draw_pile_size=5,
+                starting_draw_pile_size=10,
                 players_start_with_mindbugs=2,
                 await_mindbug_response=True,
                 enforce_turn_action_limit=True,
@@ -181,8 +180,7 @@ class LegacyGameStore:
         game = Game(
             [player1, player2],
             starting_lives=3,
-            starting_hand_size=5,
-            starting_draw_pile_size=5,
+            starting_draw_pile_size=10,
             players_start_with_mindbugs=2,
             await_mindbug_response=True,
         )

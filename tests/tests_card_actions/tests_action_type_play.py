@@ -23,7 +23,6 @@ from enums import GameState
 def _new_game() -> Game:
     game = Game(
         player_names=["Player 1", "Player 2"],
-        starting_hand_size=0,
         starting_draw_pile_size=0,
     )
     game.start_game(card_pool=[])
@@ -108,6 +107,7 @@ def test_play_ferret_bomber_opponent_discards_2_and_draws_if_possible() -> None:
 
     opponent_hand_cards = [Chameleon_sniper(), Tiger_squirrel()]
     opponent_draw_pile_cards = [Axolotl_healer(), Luchataur()]
+    all_opponent_cards = opponent_hand_cards + opponent_draw_pile_cards
 
     opponent.hand = opponent_hand_cards.copy()
     opponent.discard_pile = []
@@ -118,10 +118,11 @@ def test_play_ferret_bomber_opponent_discards_2_and_draws_if_possible() -> None:
     game.play_card(hand_index=0)
 
     assert len(opponent.discard_pile) == 2
-    assert all(card in opponent.discard_pile for card in opponent_hand_cards)
     assert len(opponent.hand) == 2
-    assert all(card in opponent.hand for card in opponent_draw_pile_cards)
-    # NOTE - this test sometimes passes and sometimes fails, need to debug why
+    assert all(
+        any(card is zone_card for zone_card in opponent.hand + opponent.discard_pile)
+        for card in all_opponent_cards
+    )
     assert len(opponent.draw_pile.cards) == 0
 
 

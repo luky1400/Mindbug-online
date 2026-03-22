@@ -200,8 +200,7 @@ class Game:
         self,
         player_names: list[str],
         starting_lives: int = 3,
-        starting_hand_size: int = 5,
-        starting_draw_pile_size: int = 5,
+        starting_draw_pile_size: int = 10,
         players_start_with_mindbugs: int = 2,
         await_mindbug_response: bool = False,
         enforce_turn_action_limit: bool = False,
@@ -216,7 +215,6 @@ class Game:
         self.turn: int = 0
         self.game_state: GameState = GameState.START_TURN
         self.starting_lives = starting_lives
-        self.starting_hand_size = starting_hand_size
         self.starting_draw_pile_size = starting_draw_pile_size
         self.players_start_with_mindbugs: int = players_start_with_mindbugs
         self.winner: Optional[Player] = None
@@ -228,13 +226,14 @@ class Game:
         self._pending_defense_decision: PendingDefenseDecision | None = None
         self.number_of_players = len(player_names)
         self.number_of_cards_in_game = (
-            self.starting_draw_pile_size + self.starting_hand_size
-        ) * self.number_of_players
+            self.starting_draw_pile_size * self.number_of_players
+        )
         self.await_mindbug_response = await_mindbug_response
         self.enforce_turn_action_limit = enforce_turn_action_limit
         self.auto_end_turn_after_successful_play = auto_end_turn_after_successful_play
         self.auto_end_turn_after_resolved_attack = auto_end_turn_after_resolved_attack
         self.selected_sets: list[CardSet] = []
+        self.hand_size_limit = 5
 
     @property
     def current_player(self) -> Player:
@@ -273,6 +272,20 @@ class Game:
         game_cards = [card.clone() for card in selected_cards]
         return game_cards
 
+    def _draw_up_to_hand_limit_if_needed(self, player: Player) -> int:
+        cards_drawn = 0
+        while (
+            len(player.hand) < self.hand_size_limit
+            and len(player.draw_pile.cards) > 0
+        ):
+            player.draw(1)
+            cards_drawn += 1
+        return cards_drawn
+
+    def _draw_up_to_hand_limit_for_each_player_if_needed(self) -> None:
+        for player in self.players:
+            self._draw_up_to_hand_limit_if_needed(player)
+
     def start_game(
         self, card_pool: list[Card], sets: list[CardSet] | None = None
     ) -> None:
@@ -289,7 +302,7 @@ class Game:
             player.discard_pile = []
             player.cards_laid_out = []
             player.mindbugs_remaining = self.players_start_with_mindbugs
-            player.draw(amount=self.starting_hand_size)
+        self._draw_up_to_hand_limit_for_each_player_if_needed()
 
         self.turn = random.randrange(self.number_of_players)
         self.game_state = GameState.ACTIVE
@@ -327,6 +340,7 @@ class Game:
         opponent = self.opponent
         if card is None and hand_index is not None:
             card = actor.play_from_hand(hand_index)
+            self._draw_up_to_hand_limit_for_each_player_if_needed()
         if card is None:
             raise ValueError("No card was selected to play.")
 
@@ -392,7 +406,6 @@ class Game:
             self._finalize_played_card(
                 owner_index=responder_index,
                 card=card,
-                draw_for_player_index=actor_index,
                 consume_turn_action=False,
             )
             return
@@ -449,6 +462,7 @@ class Game:
         # Trigger action if attacker has an action type
         if attacker.action_type == CardActionType.ATTACK:
             attacker.trigger_action(self)
+            self._draw_up_to_hand_limit_for_each_player_if_needed()
             self._check_game_over()
             # ATTACK action can remove attacker before combat resolution (e.g. Snail Hydra attacks and destroys Explosive Toad, which then destroys Snail Hydra).
             if attacker not in attacker_owner.cards_laid_out:
@@ -641,6 +655,7 @@ class Game:
         # Trigger action if creature has a DEFEATED action type
         if creature.action_type == CardActionType.DEFEATED:
             creature.trigger_action(self)
+            self._draw_up_to_hand_limit_for_each_player_if_needed()
             self.log.append(
                 f"{owner.name}'s {creature.name} is defeated and triggers its DEFEATED action."
             )
@@ -706,7 +721,6 @@ class Game:
         self,
         owner_index: int,
         card: Card,
-        draw_for_player_index: Optional[int] = None,
         consume_turn_action: bool = True,
     ) -> None:
         owner = self.players[owner_index]
@@ -725,10 +739,6 @@ class Game:
             self._recalculate_ongoing_effects()
 
         self._check_game_over()
-        draw_owner_index = (
-            owner_index if draw_for_player_index is None else draw_for_player_index
-        )
-        self.players[draw_owner_index].draw(1)
         if self.enforce_turn_action_limit and consume_turn_action:
             self._turn_action_taken = True
             self._pending_frenzy_attacker_id = None
