@@ -109,7 +109,7 @@ PYTHONPATH=. pytest tests/tests_mindbug_use.py
   - add tests regularly for things that are not working
 - **Improve UI layout**
   - make Game UI to fit one screen size - user cannot roll up and down
-  - upravit obrazku dle pravidel (+ discard pile se bude rozklikavat)
+  - upravit obrazku dle pravidel (+ když najedu with mouse cursor on any of discard_piles, it will render cards in it)
   - dát na rozklikávatko (vpravo nahoře): pravidla, logs, cards in game - rozdělené do tabs podle sets (include also number of copies of each card)
 - **UI screens:**
   - seperate create/join room and Game
@@ -122,6 +122,7 @@ PYTHONPATH=. pytest tests/tests_mindbug_use.py
     - Discard Pile dát nějak nastranu a karty zobrazit, pouze když na to user clickne
   - udělat nejakou signalizaci, kteá upozorní hrace, ze je na tahu (play_card/attack, Mindbug, Defend, etc.)
   - Kliknout a zvetsit celou ruku najednou - udelat to same, jako 2x klik, ale pro vsechny karty najednou. Dát karty v ruce bliz k sobe a zvetsit.
+  - add icons to buttons - attack, play_card, End turn (lepší by bylo místo click button, přetahovat, ale to by bylo moc tezke)
 
 
 ## TODO - game rules
