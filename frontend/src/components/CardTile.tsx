@@ -9,6 +9,7 @@ interface CardTileProps {
   onClick?: () => void;
   onDoubleClick?: () => void;
   size?: CardTileSize;
+  showStrength?: boolean;
 }
 
 export function CardTile({
@@ -17,7 +18,8 @@ export function CardTile({
   clickable = false,
   onClick,
   onDoubleClick,
-  size = "compact"
+  size = "compact",
+  showStrength = false
 }: CardTileProps) {
   const parsed = parseCardLabel(label);
   const sizeClass = size === "large" ? "card-tile-large" : size === "medium" ? "card-tile-medium" : "";
@@ -31,7 +33,9 @@ export function CardTile({
       onDoubleClick={onDoubleClick}
       type="button"
     >
-      <span className={`strength-tag strength-${strengthClassName(label)}`}>{parsed.strengthText}</span>
+      {showStrength ? (
+        <span className={`strength-tag strength-${strengthClassName(label)}`}>{parsed.strengthText}</span>
+      ) : null}
       <img
         className="card-image"
         src={cardImageUrl(label)}

@@ -46,6 +46,7 @@ export function BoardZone({
                 label={label}
                 selected={selectedBattlefieldIndex === index}
                 clickable={battlefieldClickable}
+                showStrength
                 onClick={battlefieldClickable ? () => onSelectBattlefield?.(index) : undefined}
               />
             ))
