@@ -7,11 +7,13 @@ from cards import (
     Ferret_pacifier,
     Froblin_instigator,
     Kangasaurus_rex,
+    Knightmare,
     Luchataur,
     Plated_scorpion,
     Shield_bugs,
     Tiger_squirrel,
     Urchin_hurler,
+    killer_bee,
 )
 
 
@@ -138,3 +140,31 @@ def test_urchin_hurler_buff_applies_only_during_owner_turn() -> None:
 
     assert ally_1.strength == 1
     assert ally_2.strength == 2
+
+
+def test_knightmare_prevents_its_owner_from_losing_life_from_direct_attack() -> None:
+    game = _new_game()
+    protected_player = game.players[0]
+    attacking_player = game.players[1]
+
+    protected_player.cards_laid_out = [Knightmare()]
+    attacking_player.cards_laid_out = [Luchataur()]
+    game.turn = 1
+
+    game.attack(attacker_index=0)
+
+    assert protected_player.number_of_lives == 3
+
+
+def test_knightmare_prevents_its_owner_from_losing_life_from_card_effects() -> None:
+    game = _new_game()
+    protected_player = game.players[0]
+    attacking_player = game.players[1]
+
+    protected_player.cards_laid_out = [Knightmare()]
+    attacking_player.hand = [killer_bee()]
+    game.turn = 1
+
+    game.play_card(hand_index=0)
+
+    assert protected_player.number_of_lives == 3

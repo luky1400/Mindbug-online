@@ -156,6 +156,8 @@ class Player:
     cards_laid_out: list[Card] = field(default_factory=list)
     mindbugs_remaining: int = 2
     cannot_activate_play_effects: bool = False
+    life_loss_before_using_mindbug: int = 0
+    cannot_lose_life: bool = False
     cannot_block_with_creatures_with_power_4_or_less: bool = False
     cannot_block_with_creatures_with_highest_power: bool = False
     cannot_attack_with_creatures_with_lowest_power: bool = False
@@ -168,8 +170,12 @@ class Player:
             raise ValueError("Invalid hand index.")
         return self.hand.pop(hand_index)
 
-    def lose_life(self, amount: int = 1) -> None:
+    def lose_life(self, amount: int = 1) -> int:
+        if amount <= 0 or self.cannot_lose_life:
+            return 0
+        previous_life = self.number_of_lives
         self.number_of_lives = max(0, self.number_of_lives - amount)
+        return previous_life - self.number_of_lives
 
     def move_to_discard(self, card: Card) -> None:
         self.discard_pile.append(card)
@@ -366,6 +372,20 @@ class Game:
                     f"{responder.name} tried to use Mindbug but has none left."
                 )
                 return
+
+            if responder.life_loss_before_using_mindbug > 0:
+                lost_life = responder.lose_life(responder.life_loss_before_using_mindbug)
+                if lost_life > 0:
+                    self.log.append(
+                        f"{responder.name} loses {lost_life} life before using Mindbug."
+                    )
+                else:
+                    self.log.append(
+                        f"{responder.name} would lose life before using Mindbug, but cannot lose life."
+                    )
+                self._check_game_over()
+                if self.game_state == GameState.GAME_OVER:
+                    return
 
             responder.mindbugs_remaining -= 1
             self.log.append(f"{responder.name} uses Mindbug and steals {card.name}.")
@@ -716,10 +736,15 @@ class Game:
     def _resolve_direct_attack(
         self, attacker_owner: Player, defender_owner: Player, attacker: Card
     ) -> None:
-        defender_owner.lose_life(1)
-        self.log.append(
-            f"{attacker_owner.name}'s {attacker.name} attacks directly for 1 life."
-        )
+        lost_life = defender_owner.lose_life(1)
+        if lost_life > 0:
+            self.log.append(
+                f"{attacker_owner.name}'s {attacker.name} attacks directly for {lost_life} life."
+            )
+        else:
+            self.log.append(
+                f"{attacker_owner.name}'s {attacker.name} attacks directly, but {defender_owner.name} cannot lose life."
+            )
         self._check_game_over()
         self._finalize_attack_action(attacker_owner, attacker)
 
@@ -874,6 +899,8 @@ class Game:
     def _recalculate_ongoing_effects(self) -> None:
         for player in self.players:
             player.cannot_activate_play_effects = False
+            player.life_loss_before_using_mindbug = 0
+            player.cannot_lose_life = False
             player.cannot_block_with_creatures_with_power_4_or_less = False
             player.cannot_block_with_creatures_with_highest_power = False
             player.cannot_attack_with_creatures_with_lowest_power = False

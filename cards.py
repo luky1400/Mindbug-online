@@ -71,8 +71,12 @@ def get_card_pool(sets: list[CardSet] | None = None) -> list[Card]:
         
         # CardSet.PROMO_CARDS
         (Battle_beetle, 1),
-        (Evilcat, 1),
+        (Board_zooka, 1),
+        # (Evilcat, 1), # NOTE - this is 3rd evolution
+        (Knightmare, 1),
         (Macaw_dagon, 1),
+        (Mindbug_bug, 1),
+        (Ram_hopper, 1),
         (Steamforger, 1),
         (Unigon, 1),
     ])
@@ -103,8 +107,11 @@ class Battle_beetle(Card):
     
     def trigger_action(self, game: Game) -> None:
         if game.current_player.mindbugs_remaining == game.opponent.mindbugs_remaining:
-            game.opponent.lose_life(2)
-            game.log.append(f"{game.opponent.name} loses 2 lives because {game.current_player.name} plays Battle Beetle.")
+            lost_life = game.opponent.lose_life(2)
+            if lost_life > 0:
+                game.log.append(f"{game.opponent.name} loses {lost_life} lives because {game.current_player.name} plays Battle Beetle.")
+            else:
+                game.log.append(f"{game.opponent.name} cannot lose life.")
         else:
             game.log.append(f"{game.opponent.name} does not loses 2 lives because you have different number of Mindbugs.")
 
@@ -116,6 +123,24 @@ class Bee_bear(Card):
     min_blocker_strength: int = 7
     set: CardSet = CardSet.FIRST_CONTACT
     # NOTE - read more above attack() method - it is connected to the that
+
+
+class Board_zooka(Card):
+    name: str = "Board-Zooka"
+    strength: int = 6
+    special_types: list[CardSpecialType] = []
+    action_type: CardActionType = CardActionType.DEFEATED
+    action_description: str = "Defeat all enemy creatures."
+    description: str = "Cannot block."
+    set: CardSet = CardSet.PROMO_CARDS
+
+    def trigger_action(self, game: Game) -> None:
+        for card in game.opponent.cards_laid_out:
+            game._destroy_creature(game.opponent, card)
+        game.log.append(f"{game.current_player.name}'s {game.current_player.cards_laid_out[0].name} defeats all enemy creatures.")
+
+    def apply_ongoing_effect(self, game: Game, owner, opponent) -> None:
+        self.cannot_block = True
 
 
 class Brain_fly(Card):
@@ -163,10 +188,15 @@ class Chameleon_sniper(Card):
     set: CardSet = CardSet.FIRST_CONTACT
 
     def trigger_action(self, game: Game) -> None:
-        game.opponent.lose_life(1)
-        game.log.append(
-            f"{game.current_player.name}'s {game.current_player.cards_laid_out[0].name} attacks {game.opponent.name} for 1 life."
-        )
+        lost_life = game.opponent.lose_life(1)
+        if lost_life > 0:
+            game.log.append(
+                f"{game.current_player.name}'s {game.current_player.cards_laid_out[0].name} attacks {game.opponent.name} for {lost_life} life."
+            )
+        else:
+            game.log.append(
+                f"{game.current_player.name}'s {game.current_player.cards_laid_out[0].name} attacks {game.opponent.name}, but they cannot lose life."
+            )
 
 
 class Compost_dragon(Card):
@@ -197,10 +227,15 @@ class Count_draculeech(Card):
     set: CardSet = CardSet.NEW_SERVANTS
 
     def trigger_action(self, game: Game) -> None:
-        game.current_player.lose_life(1)
-        game.log.append(
-            f"{game.current_player.name}'s {game.current_player.cards_laid_out[0].name} attacks {game.opponent.name} for 1 life."
-        )
+        lost_life = game.current_player.lose_life(1)
+        if lost_life > 0:
+            game.log.append(
+                f"{game.current_player.name}'s {game.current_player.cards_laid_out[0].name} causes {game.current_player.name} to lose {lost_life} life."
+            )
+        else:
+            game.log.append(
+                f"{game.current_player.name}'s {game.current_player.cards_laid_out[0].name} would make its owner lose life, but they cannot lose life."
+            )
         # TODO - implement player card choice, instead of random
         card = game.opponent.cards_laid_out[
             randint(0, len(game.opponent.cards_laid_out) - 1)
@@ -400,10 +435,15 @@ class Goreagle_alpha(Card):
     set: CardSet = CardSet.NEW_SERVANTS
 
     def trigger_action(self, game: Game) -> None:
-        game.current_player.lose_life(1)
-        game.log.append(
-            f"{game.current_player.name}'s {game.current_player.cards_laid_out[0].name} loses 1 life."
-        )
+        lost_life = game.current_player.lose_life(1)
+        if lost_life > 0:
+            game.log.append(
+                f"{game.current_player.name}'s {game.current_player.cards_laid_out[0].name} causes {game.current_player.name} to lose {lost_life} life."
+            )
+        else:
+            game.log.append(
+                f"{game.current_player.name}'s {game.current_player.cards_laid_out[0].name} would make its owner lose life, but they cannot lose life."
+            )
 
 
 class Grave_robber(Card):
@@ -555,10 +595,33 @@ class killer_bee(Card):
     set: CardSet = CardSet.FIRST_CONTACT
 
     def trigger_action(self, game: Game) -> None:
-        game.opponent.lose_life(1)
-        game.log.append(
-            f"{game.opponent.name} loses 1 life because {game.current_player.name} plays Killer Bee."
-        )
+        lost_life = game.opponent.lose_life(1)
+        if lost_life > 0:
+            game.log.append(
+                f"{game.opponent.name} loses {lost_life} life because {game.current_player.name} plays Killer Bee."
+            )
+        else:
+            game.log.append(
+                f"{game.opponent.name} cannot lose life."
+            )
+
+
+class Knightmare(Card):
+    name: str = "Knightmare"
+    strength: int = 5
+    special_types: list[CardSpecialType] = [CardSpecialType.TOUGH]
+    action_type: CardActionType = CardActionType.DEFEATED
+    action_description: str = "You lose the game."
+    description: str = "You cannot lose life."
+    set: CardSet = CardSet.PROMO_CARDS
+
+    def trigger_action(self, game: Game) -> None:
+        game.game_state = GameState.GAME_OVER
+        game.winner = game.opponent
+        game.log.append(f"{game.opponent.name} wins the game because {game.current_player.name}'s {self.name} was defeated.")
+
+    def apply_ongoing_effect(self, game: Game, owner, opponent) -> None:
+        owner.cannot_lose_life = True
 
 
 class Lone_yeti(Card):
@@ -618,6 +681,17 @@ class Majestic_manticore(Card):
         )
 
 
+class Mindbug_bug(Card):
+    name: str = "Mindbug Bug"
+    strength: int = 7
+    special_types: list[CardSpecialType] = [CardSpecialType.TOUGH]
+    description: str = "When the opponent uses a Mindbug, they first lose 1 life."
+    set: CardSet = CardSet.PROMO_CARDS
+
+    def apply_ongoing_effect(self, game: Game, owner, opponent) -> None:
+        opponent.life_loss_before_using_mindbug += 1
+
+
 class Mysterious_mermaid(Card):
     name: str = "Mysterious Mermaid"
     strength: int = 7
@@ -642,6 +716,19 @@ class Plated_scorpion(Card):
     ]
     description: str = "That sting sticks."
     set: CardSet = CardSet.FIRST_CONTACT
+
+
+class Ram_hopper(Card):
+    name: str = "Ram Hopper"
+    strength: int = 7
+    special_types: list[CardSpecialType] = [CardSpecialType.FRENZY]
+    description: str = f"Other allied creatures have {CardSpecialType.FRENZY.value}."
+    set: CardSet = CardSet.PROMO_CARDS
+
+    def apply_ongoing_effect(self, game: Game, owner, opponent) -> None:
+        for card in owner.cards_laid_out:
+            if card is not self:
+                card.special_types.append(CardSpecialType.FRENZY)
 
 
 class Rhino_turtle(Card):
@@ -814,6 +901,24 @@ class Strange_barrel(Card):
                 )
 
 
+# NOTE - I will need to do list for action_type and action_description, and make function: trigger_play_effect, trigger_attack_effect and trigger_defeated_effect
+# class Suspicious_gift(Card):
+#     name: str = "Suspicious Gift"
+#     strength: int = 1
+#     special_types: list[CardSpecialType] = []
+#     action_types: list[CardActionType] = [CardActionType.PLAY, CardActionType.DEFEATED]
+#     action_description: list[str] = ["An opponent takes control of this card.", "Lose 2 lives."]
+#     set: CardSet = CardSet.PROMO_CARDS
+    
+#     def trigger_play_effect(self, game: Game) -> None:
+#         game.opponent.cards_laid_out.append(self)
+#         game.log.append(f"{game.opponent.name} takes control of {self.name}.")
+    
+#     def trigger_defeated_effect(self, game: Game) -> None:
+#         game.opponent.lose_life(2)
+#         game.log.append(f"{game.opponent.name} loses 2 lives.")
+    
+
 class The_lurker(Card):
     name: str = "The Lurker"
     strength: int = 4
@@ -891,10 +996,15 @@ class Turbo_bug(Card):
     set: CardSet = CardSet.FIRST_CONTACT
 
     def trigger_action(self, game: Game) -> None:
-        game.opponent.lose_life(game.opponent.number_of_lives - 1)
-        game.log.append(
-            f"{game.current_player.name}'s {game.current_player.cards_laid_out[0].name} attacks {game.opponent.name} for {game.opponent.number_of_lives - 1} life."
-        )
+        lost_life = game.opponent.lose_life(game.opponent.number_of_lives - 1)
+        if lost_life > 0:
+            game.log.append(
+                f"{game.current_player.name}'s {game.current_player.cards_laid_out[0].name} attacks {game.opponent.name} for {lost_life} life."
+            )
+        else:
+            game.log.append(
+                f"{game.current_player.name}'s {game.current_player.cards_laid_out[0].name} attacks {game.opponent.name}, but they cannot lose life."
+            )
 
 
 class Turf_the_surfer(Card):

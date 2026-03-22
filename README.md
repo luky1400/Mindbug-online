@@ -141,15 +141,18 @@ vyhodnocování jednoho efektu předtím, než začnete vyhodnocovat další."
 - add other sets
 - "Začínajícího hráče určíte tak, že si každý hráč náhodně vylosuje jednu kartu z hromádky nepoužitých karet nestvůr a poté si hráči porovnají sílu těchto karet. Hráč, jehož karta má vyšší hodnotu síly, bude začínajícím hráčem.
 V případě shody tento proces opakujte."
+- make all images the same resolution size
 - [QA](https://www.zatrolene-hry.cz/spolecenska-hra/mozkozrout-12630/otazky/)
 
 ## Bugs
 
-- 
+- when MindBUG WAS USED FOR composed DRAGON, it resurected creature from Discard pile but opponent had a chnace to use MindBug. It should not be allowed for that - only for cards played from hand.
+  - Related: after decline, wrong player was chosen to be on turn.
 
 ## Documentation notes
 
 - resolved plays and attacks automatically trigger end_turn()
+- apply_ongoing_effect() - effect is being recalculated - in the beginning of the turn?
 - App.tsx: the multiplayer client clears selections immediately when a defense response is sent
 - Create room now lets the host choose which sets are used for that room. First Contact is always selected and cannot be unchecked, while the remaining CardSet values can be enabled. The selected sets are sent in the create-room request, stored on the room, used when the game starts, and shown in the UI in both the room metadata and room status area.
 

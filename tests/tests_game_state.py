@@ -108,4 +108,8 @@ def test_start_game_stores_all_available_sets_when_no_filter_is_passed() -> None
 
     game.start_game(card_pool=get_card_pool())
 
-    assert game.selected_sets == [CardSet.FIRST_CONTACT, CardSet.NEW_SERVANTS]
+    assert game.selected_sets == [
+        CardSet.FIRST_CONTACT,
+        CardSet.NEW_SERVANTS,
+        CardSet.PROMO_CARDS,
+    ]
