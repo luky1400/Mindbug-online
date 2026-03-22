@@ -1,12 +1,12 @@
 # Mindbug Python Prototype
 
-This project contains a playable terminal prototype of a Mindbug-style card game.
+This project replicates of a Mindbug-style card game.
 
 - [Czech rules](https://www.rexhry.cz/storage/instructions/mb.rulebook.v3.cze_.web_.pdf), [English rules](https://mindbug.me/wp-content/uploads/2023/08/mindbug-rulebook-ENGLISH-small.pdf)
 
 ## Run
 
-### 1) Terminal version
+### 1) Terminal (CLI) version
 
 ```bash
 python3 main.py
@@ -80,7 +80,7 @@ PYTHONPATH=. pytest tests/tests_mindbug_use.py
 
 - 2-player turn-based game loop
 - Play a creature or attack each turn
-- Mindbug steal mechanic (1 use per player)
+- Mindbug steal mechanic
 - Realtime multiplayer rooms with FastAPI + Socket.IO
 - Separate player sessions with hidden opponent hands
 - Creature combat with `TOUGH`, `POISONOUS`, `HUNTER`, `FRENZY`, and `SNEAKY` creature types
@@ -106,9 +106,9 @@ PYTHONPATH=. pytest tests/tests_mindbug_use.py
 - finish backend to work well
   - handle that player or opponent can choose which cards to play or discard
   - add tests regularly for things that are not working
-  - investigate bug: random cards appear in discard pile
+  - (investigate bug: random cards appear in discard pile)
 - Improve UI layout
-  - dát na rozklikávatko: pravidla, logs
+  - dát na rozklikávatko: pravidla, logs, cards in game - rozdělené do tabs podle sets (include also number of copies of each card)
 - UI screens:
   - sperate create/join room and Game
 - UI additonal:
