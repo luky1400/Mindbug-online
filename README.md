@@ -101,19 +101,19 @@ PYTHONPATH=. pytest tests/tests_mindbug_use.py
 - `frontend/` - React + TypeScript multiplayer frontend
 - `requirements.txt` - Python dependencies
 
+
 ## TODO
 
 - finish backend to work well
   - handle that player or opponent can choose which cards to play or discard
-  - refactor attack function - remove defender_index
   - add tests regularly for things that are not working
-- Improve UI layout
+- **Improve UI layout**
   - make Game UI to fit one screen size - user cannot roll up and down
-  - upravit dle obrazku v pravidlec ( + discard pile se bude rozklikavat)
-  - dát na rozklikávatko: pravidla, logs, cards in game - rozdělené do tabs podle sets (include also number of copies of each card)
-- UI screens:
+  - upravit obrazku dle pravidel (+ discard pile se bude rozklikavat)
+  - dát na rozklikávatko (vpravo nahoře): pravidla, logs, cards in game - rozdělené do tabs podle sets (include also number of copies of each card)
+- **UI screens:**
   - seperate create/join room and Game
-- UI additonal:
+- **UI additonal:**
   - visualize that TOUGH has 0 tough_charges left (2 options: odlisit, když má 1 nebo 2 nabití?)
   - možnost zvětšit i cards_laid_out (+ in discard pile)
   - Když defender vybira, jestli a cim bude branit, tak mu ukazat kartu utocnika (nejak ji zvyraznit nebo presunout do prostred).
@@ -123,19 +123,18 @@ PYTHONPATH=. pytest tests/tests_mindbug_use.py
   - udělat nejakou signalizaci, kteá upozorní hrace, ze je na tahu (play_card/attack, Mindbug, Defend, etc.)
   - Kliknout a zvetsit celou ruku najednou - udelat to same, jako 2x klik, ale pro vsechny karty najednou. Dát karty v ruce bliz k sobe a zvetsit.
 
+
 ## TODO - game rules
 
-- (Síla nestvůry nemůže mít nikdy nižší hodnotu než 1, a to ani v případě, že by některé efekty hodnotu síly upravovaly.)
+- "Pokud probíhá více efektů současně (například pokud se dvě nestvůry porazí navzájem), rozhoduje o pořadí vyhodnocení efektů hráč, jenž je na tahu. Vždy dokončete vyhodnocování jednoho efektu předtím, než začnete vyhodnocovat další."
 - Jiný naming:
   - efekty schopnosti: Příchod, ..
   - Stálé schopnosti (př. Zesnovačka)
   - do své herní oblasti
   - support i Češtinu
 - udělat funkce pro tyhle termíny: Odložit, Ovládnout nestvůru
-- "Současně probíhající efekty:
-Pokud probíhá více efektů současně (například pokud se
-dvě nestvůry porazí navzájem), rozhoduje o pořadí vyhodnocení efektů hráč, jenž je na tahu. Vždy dokončete
-vyhodnocování jednoho efektu předtím, než začnete vyhodnocovat další."
+- (Síla nestvůry nemůže mít nikdy nižší hodnotu než 1, a to ani v případě, že by některé efekty hodnotu síly upravovaly.)
+
 
 ## Nice to have
 
@@ -148,14 +147,15 @@ V případě shody tento proces opakujte."
 - make all images the same resolution size
 - [QA](https://www.zatrolene-hry.cz/spolecenska-hra/mozkozrout-12630/otazky/)
 
+
 ## Bugs
 
-- when MindBUG WAS USED FOR composed DRAGON, it resurected creature from Discard pile but opponent had a chnace to use MindBug. It should not be allowed for that - only for cards played from hand.
-  - Related: after decline, wrong player was chosen to be on turn.
+- 
 
 ## Documentation notes
 
-- resolved plays and attacks automatically trigger end_turn()
+- 2 main action function: play_card, attack
+  - resolved plays and attacks automatically trigger end_turn()
 - apply_ongoing_effect() - effect is being recalculated - in the beginning of the turn?
 - App.tsx: the multiplayer client clears selections immediately when a defense response is sent
 - Create room now lets the host choose which sets are used for that room. First Contact is always selected and cannot be unchecked, while the remaining CardSet values can be enabled. The selected sets are sent in the create-room request, stored on the room, used when the game starts, and shown in the UI in both the room metadata and room status area.
