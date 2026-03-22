@@ -115,6 +115,7 @@ class Battle_beetle(Card):
         else:
             game.log.append(f"{game.opponent.name} does not loses 2 lives because you have different number of Mindbugs.")
 
+
 class Bee_bear(Card):
     name: str = "Bee Bear"
     strength: int = 8
@@ -122,7 +123,6 @@ class Bee_bear(Card):
     description: str = "Cannot be blocked by creatures with power 6 or less."
     min_blocker_strength: int = 7
     set: CardSet = CardSet.FIRST_CONTACT
-    # NOTE - read more above attack() method - it is connected to the that
 
 
 class Board_zooka(Card):

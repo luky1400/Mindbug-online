@@ -700,6 +700,7 @@ class Game:
                 f"Waiting for {defender.name} to choose a blocker or lose 1 life."
             )
 
+    # TODO - refactor - do not allow to select not eligible blockers
     def _ensure_legal_blocker(self, attacker: Card, defender: Card) -> None:
         if defender.cannot_block:
             raise ValueError(f"{defender.name} cannot block right now.")
