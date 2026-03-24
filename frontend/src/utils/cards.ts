@@ -73,6 +73,17 @@ const nativeAbilityTagsByName: Record<string, string[]> = {
   "Urchin Hurler": ["HUNTER"]
 };
 
+const highlightedBattlefieldCards = new Set([
+  "Bee Bear",
+  "Board-Zooka",
+  "Deathweaver",
+  "Elephantopus",
+  "Ferret Pacifier",
+  "Hamster Lion",
+  "Knightmare",
+  "Mindbug Bug"
+]);
+
 export interface ParsedCard {
   raw: string;
   name: string;
@@ -160,4 +171,8 @@ export function getActiveAbilityBadges(cardLabel: string): string[] {
   return effectGrantedVisibleTags.filter(
     (tag) => parsed.activeTags.includes(tag) && !nativeTags.includes(tag)
   );
+}
+
+export function isHighlightedBattlefieldCard(cardLabel: string): boolean {
+  return highlightedBattlefieldCards.has(parseCardLabel(cardLabel).name);
 }

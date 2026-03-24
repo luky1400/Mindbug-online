@@ -49,6 +49,7 @@ export function BoardZone({
                 showStrength
                 showToughCharge
                 showAbilityBadges
+                showBattlefieldHighlight
                 onClick={battlefieldClickable ? () => onSelectBattlefield?.(index) : undefined}
               />
             ))

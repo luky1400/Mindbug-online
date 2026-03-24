@@ -191,6 +191,11 @@ body {
   box-shadow: 0 0 0 2px color-mix(in oklab, var(--accent), transparent 65%);
 }
 
+.card-tile-battlefield-highlight {
+  border-color: #8a7dff;
+  box-shadow: 0 0 0 2px rgba(138, 125, 255, 0.34), 0 0 20px rgba(73, 144, 255, 0.24);
+}
+
 .card-image {
   width: 100%;
   height: 138px;

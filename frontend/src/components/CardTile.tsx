@@ -1,4 +1,4 @@
-import { cardImageUrl, getActiveAbilityBadges, hasActiveToughCharge, parseCardLabel, strengthClassName } from "../utils/cards";
+import { cardImageUrl, getActiveAbilityBadges, hasActiveToughCharge, isHighlightedBattlefieldCard, parseCardLabel, strengthClassName } from "../utils/cards";
 
 type CardTileSize = "compact" | "medium" | "large";
 
@@ -12,6 +12,7 @@ interface CardTileProps {
   showStrength?: boolean;
   showToughCharge?: boolean;
   showAbilityBadges?: boolean;
+  showBattlefieldHighlight?: boolean;
 }
 
 export function CardTile({
@@ -23,18 +24,20 @@ export function CardTile({
   size = "compact",
   showStrength = false,
   showToughCharge = false,
-  showAbilityBadges = false
+  showAbilityBadges = false,
+  showBattlefieldHighlight = false
 }: CardTileProps) {
   const parsed = parseCardLabel(label);
   const sizeClass = size === "large" ? "card-tile-large" : size === "medium" ? "card-tile-medium" : "";
   const selectableClass = clickable ? "card-tile-selectable" : "";
   const selectedClass = selected ? "card-tile-selected" : "";
+  const highlightClass = showBattlefieldHighlight && isHighlightedBattlefieldCard(label) ? "card-tile-battlefield-highlight" : "";
   const activeToughCharge = showToughCharge && hasActiveToughCharge(label);
   const activeAbilityBadges = showAbilityBadges ? getActiveAbilityBadges(label) : [];
 
   return (
     <button
-      className={`card-tile ${sizeClass} ${selectableClass} ${selectedClass}`}
+      className={`card-tile ${sizeClass} ${selectableClass} ${selectedClass} ${highlightClass}`}
       onClick={onClick}
       onDoubleClick={onDoubleClick}
       type="button"
