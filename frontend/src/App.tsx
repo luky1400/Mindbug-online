@@ -6,6 +6,8 @@ import { CardPreviewModal } from "./components/CardPreviewModal";
 import { GameLog } from "./components/GameLog";
 import { GameOverModal } from "./components/GameOverModal";
 import { HandPanel } from "./components/HandPanel";
+import { PendingCardActionModal } from "./components/PendingCardActionModal";
+import { PendingMindbugModal } from "./components/PendingMindbugModal";
 import { CARD_SET_OPTIONS, REQUIRED_CARD_SET, type CardSet, type MultiplayerState } from "./types/game";
 import { cardHasTag } from "./utils/cards";
 
@@ -29,6 +31,9 @@ export function App() {
   const [selectedHandIndex, setSelectedHandIndex] = useState<number | null>(null);
   const [selectedAttackerIndex, setSelectedAttackerIndex] = useState<number | null>(null);
   const [selectedDefenderIndex, setSelectedDefenderIndex] = useState<number | null>(null);
+  const [selectedChoiceIndices, setSelectedChoiceIndices] = useState<number[]>([]);
+  const [isMindbugModalHidden, setIsMindbugModalHidden] = useState(false);
+  const [isChoiceModalHidden, setIsChoiceModalHidden] = useState(false);
   const [statusText, setStatusText] = useState("");
   const [errorText, setErrorText] = useState("");
   const [showGameOver, setShowGameOver] = useState(false);
@@ -41,6 +46,9 @@ export function App() {
   const gameOver = state?.game_state === "GAME_OVER";
   const canAnswerMindbug = Boolean(state?.pending_mindbug?.response_required_from_viewer);
   const canAnswerDefense = Boolean(state?.pending_defense?.response_required_from_viewer);
+  const canAnswerCardAction = Boolean(state?.pending_card_action?.response_required_from_viewer);
+  const hasBlockingMindbugModal = canAnswerMindbug && !isMindbugModalHidden;
+  const hasBlockingChoiceModal = canAnswerCardAction && !isChoiceModalHidden;
   const canAct = Boolean(
     state &&
     viewer &&
@@ -48,7 +56,8 @@ export function App() {
     state.is_viewer_turn &&
     !gameOver &&
     !state.pending_mindbug &&
-    !state.pending_defense
+    !state.pending_defense &&
+    !state.pending_card_action
   );
   const hasPendingFrenzyAttack = state?.pending_frenzy_attacker_index !== null && state?.pending_frenzy_attacker_index !== undefined;
   const canManuallyEndTurn = Boolean(
@@ -57,6 +66,7 @@ export function App() {
     !gameOver &&
     !canAnswerMindbug &&
     !canAnswerDefense &&
+    !state.pending_card_action &&
     hasPendingFrenzyAttack
   );
 
@@ -69,6 +79,12 @@ export function App() {
   }, [gameId, isWaitingForOpponent, state]);
 
   const selectionText = `Hand: ${selectedHandIndex ?? "-"} | Attacker: ${selectedAttackerIndex ?? "-"} | Target/Blocker: ${selectedDefenderIndex ?? "-"}`;
+  const pendingCardActionIdentity = state?.pending_card_action
+    ? `${state.pending_card_action.action_key}|${state.pending_card_action.source_card_label}|${state.pending_card_action.selection_zone}|${state.pending_card_action.selection_owner_name}|${state.pending_card_action.responding_player_name}`
+    : null;
+  const pendingMindbugIdentity = state?.pending_mindbug
+    ? `${state.pending_mindbug.acting_player_name}|${state.pending_mindbug.card_label}|${state.pending_mindbug.responding_player_name}`
+    : null;
 
   function persistSession(nextSession: StoredSession) {
     localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(nextSession));
@@ -85,6 +101,7 @@ export function App() {
     setSelectedHandIndex(null);
     setSelectedAttackerIndex(null);
     setSelectedDefenderIndex(null);
+    setSelectedChoiceIndices([]);
   }
 
   function toggleCreateRoomSet(cardSet: CardSet) {
@@ -103,13 +120,25 @@ export function App() {
       : sourceState.opponent?.battlefield || [];
   }
 
+  function getPendingCardActionPool(sourceState: MultiplayerState | null) {
+    const pending = sourceState?.pending_card_action;
+    if (!pending) return [];
+    const owner = pending.selection_owner === "viewer" ? sourceState?.viewer : sourceState?.opponent;
+    if (!owner) return [];
+    if (pending.selection_zone === "hand") return owner.hand || [];
+    if (pending.selection_zone === "discard") return owner.discard || [];
+    return owner.battlefield || [];
+  }
+
   function normalizeSelections(nextState: MultiplayerState) {
     const previousHand = state?.viewer?.hand || [];
     const previousBoard = state?.viewer?.battlefield || [];
     const previousDefenderPool = getDefenderSelectionPool(state);
+    const previousChoicePool = getPendingCardActionPool(state);
     const nextHand = nextState.viewer?.hand || [];
     const nextBoard = nextState.viewer?.battlefield || [];
     const defenderSelectionPool = getDefenderSelectionPool(nextState);
+    const choiceSelectionPool = getPendingCardActionPool(nextState);
 
     if (
       selectedHandIndex !== null &&
@@ -141,6 +170,15 @@ export function App() {
     ) {
       setSelectedDefenderIndex(null);
     }
+    const normalizedChoiceIndices = selectedChoiceIndices.filter(
+      (index) =>
+        index >= 0 &&
+        index < choiceSelectionPool.length &&
+        previousChoicePool[index] === choiceSelectionPool[index]
+    );
+    if (normalizedChoiceIndices.length !== selectedChoiceIndices.length) {
+      setSelectedChoiceIndices(normalizedChoiceIndices);
+    }
     if (
       nextState.pending_frenzy_attacker_index !== null &&
       nextState.pending_frenzy_attacker_index !== undefined
@@ -153,11 +191,13 @@ export function App() {
     const turnChanged = state?.turn_player !== nextState.turn_player;
     const defenseStepEnded = Boolean(state?.pending_defense) && !nextState.pending_defense;
     const mindbugStepEnded = Boolean(state?.pending_mindbug) && !nextState.pending_mindbug;
+    const cardActionStepEnded = Boolean(state?.pending_card_action) && !nextState.pending_card_action;
 
     if (turnChanged) {
       clearSelections();
-    } else if (defenseStepEnded || mindbugStepEnded) {
+    } else if (defenseStepEnded || mindbugStepEnded || cardActionStepEnded) {
       setSelectedDefenderIndex(null);
+      setSelectedChoiceIndices([]);
     }
 
     normalizeSelections(nextState);
@@ -219,6 +259,14 @@ export function App() {
     };
   }, []);
 
+  useEffect(() => {
+    setIsChoiceModalHidden(false);
+  }, [pendingCardActionIdentity]);
+
+  useEffect(() => {
+    setIsMindbugModalHidden(false);
+  }, [pendingMindbugIdentity]);
+
   async function createGame() {
     setErrorText("");
     try {
@@ -231,6 +279,22 @@ export function App() {
     } catch (error) {
       setErrorText((error as Error).message);
     }
+  }
+
+  function hideChoiceModal() {
+    setIsChoiceModalHidden(true);
+  }
+
+  function reopenChoiceModal() {
+    setIsChoiceModalHidden(false);
+  }
+
+  function hideMindbugModal() {
+    setIsMindbugModalHidden(true);
+  }
+
+  function reopenMindbugModal() {
+    setIsMindbugModalHidden(false);
   }
 
   async function joinGame() {
@@ -363,6 +427,30 @@ export function App() {
     );
   }
 
+  async function resolveCardActionChoice() {
+    if (!socketRef.current) return setErrorText("Create or join a room first.");
+    if (!state?.pending_card_action) return setErrorText("No card action choice is waiting.");
+    if (!canAnswerCardAction) return setErrorText("Waiting for the other player to resolve this card action.");
+    const pending = state.pending_card_action;
+    if (
+      selectedChoiceIndices.length < pending.min_choices ||
+      selectedChoiceIndices.length > pending.max_choices
+    ) {
+      const message =
+        pending.min_choices === pending.max_choices
+          ? `Select exactly ${pending.min_choices} card${pending.min_choices === 1 ? "" : "s"}.`
+          : `Select between ${pending.min_choices} and ${pending.max_choices} cards.`;
+      return setErrorText(message);
+    }
+    await emitAction(
+      () =>
+        socketActions.resolveCardActionChoice(socketRef.current as Socket, {
+          selected_indices: selectedChoiceIndices
+        }),
+      "Card action resolved."
+    );
+  }
+
   function leaveSession() {
     socketRef.current?.disconnect();
     socketRef.current = null;
@@ -382,6 +470,25 @@ export function App() {
     if (type === "attacker") setSelectedAttackerIndex((current) => (current === index ? null : index));
     if (type === "defender") setSelectedDefenderIndex((current) => (current === index ? null : index));
   }
+
+  function toggleChoiceIndex(index: number) {
+    const pending = state?.pending_card_action;
+    if (!pending) return;
+    setSelectedChoiceIndices((current) => {
+      if (pending.max_choices === 1) {
+        return current[0] === index ? [] : [index];
+      }
+      if (current.includes(index)) {
+        return current.filter((value) => value !== index);
+      }
+      if (current.length >= pending.max_choices) {
+        return current;
+      }
+      return [...current, index];
+    });
+  }
+
+  const pendingCardActionPool = getPendingCardActionPool(state);
 
   return (
     <main className="app-shell container-xl py-3">
@@ -481,6 +588,10 @@ export function App() {
                             ? state.pending_defense.response_required_from_viewer
                               ? `Defend against ${state.pending_defense.attacking_player_name}'s ${state.pending_defense.attacker_label}.`
                               : `Waiting for ${state.pending_defense.defending_player_name} to choose a blocker or lose 1 life.`
+                          : state.pending_card_action
+                            ? state.pending_card_action.response_required_from_viewer
+                              ? `Resolve ${state.pending_card_action.source_card_label}.`
+                              : `Waiting for ${state.pending_card_action.responding_player_name} to resolve ${state.pending_card_action.source_card_label}.`
                           : state.is_viewer_turn
                             ? "Your turn."
                             : `Waiting for ${state.turn_player}.`}
@@ -493,16 +604,7 @@ export function App() {
                       ))}
                     </div>
                   </div>
-                  {state.pending_mindbug?.response_required_from_viewer ? (
-                    <div className="d-flex gap-2">
-                      <button className="btn btn-warning" onClick={() => void answerMindbug(true)} type="button">
-                        Use Mindbug
-                      </button>
-                      <button className="btn btn-outline-light" onClick={() => void answerMindbug(false)} type="button">
-                        Decline
-                      </button>
-                    </div>
-                  ) : state.pending_defense?.response_required_from_viewer ? (
+                  {state.pending_defense?.response_required_from_viewer ? (
                     <div className="d-flex gap-2">
                       <button className="btn btn-outline-light" onClick={() => void defendWithSelectedBlocker()} type="button">
                         Block with selected creature
@@ -556,9 +658,9 @@ export function App() {
             <BoardZone
               title={opponent?.name || state.opponent_player_name || "Opponent"}
               player={opponent || { player_index: 1, name: state.opponent_player_name || "Opponent", lives: 0, mindbugs_remaining: 0, hand_count: 0, draw_count: 0, discard_count: 0, battlefield: [], discard: [], hand: [] }}
-              battlefieldMode={canAnswerDefense ? "readonly" : "defender"}
-              selectedBattlefieldIndex={canAnswerDefense ? null : selectedDefenderIndex}
-              onSelectBattlefield={canAnswerDefense ? undefined : (index) => toggleSelected("defender", index)}
+              battlefieldMode={canAnswerDefense || hasBlockingChoiceModal ? "readonly" : "defender"}
+              selectedBattlefieldIndex={canAnswerDefense && !hasBlockingChoiceModal ? selectedDefenderIndex : null}
+              onSelectBattlefield={canAnswerDefense || hasBlockingChoiceModal ? undefined : (index) => toggleSelected("defender", index)}
             />
           </div>
           <div className="col-12">
@@ -566,9 +668,9 @@ export function App() {
               title={`${viewer.name}${state.is_viewer_turn ? " (your turn)" : ""}`}
               player={viewer}
               active={state.is_viewer_turn}
-              battlefieldMode={canAnswerDefense ? "defender" : "attacker"}
-              selectedBattlefieldIndex={canAnswerDefense ? selectedDefenderIndex : selectedAttackerIndex}
-              onSelectBattlefield={(index) => toggleSelected(canAnswerDefense ? "defender" : "attacker", index)}
+              battlefieldMode={hasBlockingChoiceModal ? "readonly" : canAnswerDefense ? "defender" : "attacker"}
+              selectedBattlefieldIndex={hasBlockingChoiceModal ? null : canAnswerDefense ? selectedDefenderIndex : selectedAttackerIndex}
+              onSelectBattlefield={hasBlockingChoiceModal ? undefined : (index) => toggleSelected(canAnswerDefense ? "defender" : "attacker", index)}
             />
           </div>
           <div className="col-12">
@@ -576,7 +678,8 @@ export function App() {
               <div className="card-body">
                 <HandPanel
                   cards={hand}
-                  selectedIndex={selectedHandIndex}
+                  selectedIndex={hasBlockingChoiceModal ? null : selectedHandIndex}
+                  selectable={!hasBlockingChoiceModal}
                   onSelect={(index) => toggleSelected("hand", index)}
                   onPreview={(label) => setPreviewCardLabel(label)}
                 />
@@ -594,6 +697,44 @@ export function App() {
 
       <GameLog logLines={state?.log || []} />
 
+      {canAnswerMindbug && isMindbugModalHidden ? (
+        <div className="choice-modal-toggle">
+          <div className="choice-modal-toggle-text">
+            Mindbug: {state?.pending_mindbug?.card_label}
+          </div>
+          <button className="btn btn-outline-light btn-sm" onClick={reopenMindbugModal} type="button">
+            Show prompt
+          </button>
+        </div>
+      ) : null}
+      {canAnswerCardAction && isChoiceModalHidden ? (
+        <div className="choice-modal-toggle">
+          <div className="choice-modal-toggle-text">
+            Resolve {state?.pending_card_action?.source_card_label}
+          </div>
+          <button className="btn btn-outline-light btn-sm" onClick={reopenChoiceModal} type="button">
+            Show choice
+          </button>
+        </div>
+      ) : null}
+      {hasBlockingMindbugModal ? (
+        <PendingMindbugModal
+          cardLabel={state?.pending_mindbug?.card_label || ""}
+          onUseMindbug={() => void answerMindbug(true)}
+          onDecline={() => void answerMindbug(false)}
+          onHide={hideMindbugModal}
+        />
+      ) : null}
+      {hasBlockingChoiceModal ? (
+        <PendingCardActionModal
+          pending={state?.pending_card_action || null}
+          cards={pendingCardActionPool}
+          selectedIndices={selectedChoiceIndices}
+          onToggle={toggleChoiceIndex}
+          onConfirm={() => void resolveCardActionChoice()}
+          onHide={hideChoiceModal}
+        />
+      ) : null}
       <CardPreviewModal label={previewCardLabel} onClose={() => setPreviewCardLabel(null)} />
       <GameOverModal
         visible={showGameOver && Boolean(gameOver)}

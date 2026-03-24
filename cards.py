@@ -152,19 +152,7 @@ class Brain_fly(Card):
     set: CardSet = CardSet.FIRST_CONTACT
 
     def trigger_action(self, game: Game) -> None:
-        # TODO - implement player card choice, instead of random
-        eligible = [card for card in game.opponent.cards_laid_out if card.strength >= 6]
-        if len(eligible) == 0:
-            game.log.append(
-                f"{game.current_player.name}'s {game.current_player.cards_laid_out[0].name} does not take control of a creature."
-            )
-            return
-        card = eligible[randint(0, len(eligible) - 1)]
-        game.opponent.cards_laid_out.remove(card)
-        game.current_player.cards_laid_out.append(card)
-        game.log.append(
-            f"{game.current_player.name}'s {game.current_player.cards_laid_out[0].name} takes control of {card.name}."
-        )
+        game.resolve_brain_fly_action(self)
 
 
 class Bugserker(Card):
@@ -208,14 +196,7 @@ class Compost_dragon(Card):
     set: CardSet = CardSet.FIRST_CONTACT
 
     def trigger_action(self, game: Game) -> None:
-        # TODO - implement player card choice, instead of random
-        card = game.current_player.discard_pile.pop(
-            randint(0, len(game.current_player.discard_pile) - 1)
-        )
-        game.play_card(card=card)
-        game.log.append(
-            f"{game.current_player.name} plays {card.name} from their discard pile."
-        )
+        game.resolve_compost_dragon_action(self)
 
 
 class Count_draculeech(Card):
@@ -301,29 +282,7 @@ class Explosive_toad(Card):
     set: CardSet = CardSet.FIRST_CONTACT
 
     def trigger_action(self, game: Game) -> None:
-        # Resolve owner from board/discard context so this works both when
-        # Explosive Toad is defeated as attacker or as defender.
-        owner = next(
-            (
-                player
-                for player in game.players
-                if self in player.cards_laid_out or self in player.discard_pile
-            ),
-            None,
-        )
-        if owner is None:
-            game.log.append(f"{self.name} cannot resolve DEFEATED action.")
-            return
-
-        enemy = game.players[0] if game.players[1] is owner else game.players[1]
-        if len(enemy.cards_laid_out) == 0:
-            game.log.append(f"{owner.name}'s {self.name} has no target to defeat.")
-            return
-
-        # TODO - implement player card choice, instead of random
-        card = enemy.cards_laid_out[randint(0, len(enemy.cards_laid_out) - 1)]
-        game._destroy_creature(enemy, card)
-        game.log.append(f"{owner.name}'s {self.name} defeats {card.name}.")
+        game.resolve_explosive_toad_action(self)
 
 
 class Ferret_bomber(Card):
@@ -335,16 +294,7 @@ class Ferret_bomber(Card):
     set: CardSet = CardSet.FIRST_CONTACT
 
     def trigger_action(self, game: Game) -> None:
-        discarded_cards = 0
-        for _ in range(min(2, len(game.opponent.hand))):
-            # TODO - implement player card choice, instead of random
-            card = game.opponent.hand.pop(randint(0, len(game.opponent.hand) - 1))
-            game.opponent.move_to_discard(card)
-            discarded_cards += 1
-        game.opponent.draw(discarded_cards)
-        game.log.append(
-            f"{game.current_player.name}'s {game.current_player.cards_laid_out[0].name} makes {game.opponent.name} discard 2 cards."
-        )
+        game.resolve_ferret_bomber_action(self)
 
 
 class Ferret_pacifier(Card):

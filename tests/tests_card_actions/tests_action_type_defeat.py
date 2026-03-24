@@ -39,13 +39,37 @@ def test_defeated_explosive_toad_defeats_an_enemy_creature() -> None:
 
     player.cards_laid_out = [explosive_toad]
     opponent.cards_laid_out = [enemy_creature]
+    player.hand = [Chameleon_sniper()]
+    opponent.hand = [Tiger_squirrel()]
 
-    _attack_and_defend(game, attacker_index=0, defender_index=0)
+    game._destroy_creature(player, explosive_toad)
 
     assert explosive_toad in player.discard_pile
     assert explosive_toad not in player.cards_laid_out
     assert enemy_creature in opponent.discard_pile
     assert enemy_creature not in opponent.cards_laid_out
+
+
+def test_defeated_explosive_toad_lets_owner_choose_enemy_creature_to_defeat() -> None:
+    game = _new_game()
+    player = game.current_player
+    opponent = game.opponent
+
+    explosive_toad = Explosive_toad()
+    enemy_creature_1 = Luchataur()
+    enemy_creature_2 = Shield_bugs()
+
+    player.cards_laid_out = [explosive_toad]
+    opponent.cards_laid_out = [enemy_creature_1, enemy_creature_2]
+    player.hand = [Chameleon_sniper()]
+    opponent.hand = [Tiger_squirrel()]
+
+    game._destroy_creature(player, explosive_toad)
+    game.resolve_pending_card_action([0])
+
+    assert enemy_creature_1 in opponent.discard_pile
+    assert enemy_creature_1 not in opponent.cards_laid_out
+    assert enemy_creature_2 in opponent.cards_laid_out
 
 
 def test_defeated_harpy_mother_takes_control_of_up_to_2_weak_enemy_creatures() -> None:

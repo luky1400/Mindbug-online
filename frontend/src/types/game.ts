@@ -32,6 +32,19 @@ export interface PendingDefenseState {
   eligible_defender_indices: number[];
 }
 
+export interface PendingCardActionState {
+  action_key: string;
+  source_card_label: CardLabel;
+  responding_player_name: string;
+  selection_owner_name: string;
+  selection_zone: "hand" | "battlefield" | "discard";
+  selection_owner: "viewer" | "opponent";
+  response_required_from_viewer: boolean;
+  eligible_indices: number[];
+  min_choices: number;
+  max_choices: number;
+}
+
 export interface MultiplayerState {
   room_status: string;
   game_state: string;
@@ -47,6 +60,7 @@ export interface MultiplayerState {
   opponent: PlayerState | null;
   pending_mindbug: PendingMindbugState | null;
   pending_defense: PendingDefenseState | null;
+  pending_card_action: PendingCardActionState | null;
   pending_frenzy_attacker_index: number | null;
   connected_players: number;
   max_players: number;
@@ -76,4 +90,8 @@ export interface AttackRequest {
 
 export interface DefendRequest {
   defender_index: number | null;
+}
+
+export interface ResolveCardActionChoiceRequest {
+  selected_indices: number[];
 }

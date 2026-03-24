@@ -195,6 +195,21 @@ class PendingDefenseDecision:
     attacker: Card
 
 
+@dataclass
+class PendingCardActionChoice:
+    action_key: str
+    source_card: Card
+    responding_player_index: int
+    selection_owner_index: int
+    selection_zone: str
+    eligible_indices: list[int]
+    min_choices: int
+    max_choices: int
+    draw_up_to_hand_limit_after_resolution: bool = False
+    auto_end_after_play: bool = False
+    auto_end_after_attack: bool = False
+
+
 class Game:
     def __init__(
         self,
@@ -223,6 +238,7 @@ class Game:
         self._pending_frenzy_attacker_id: int | None = None
         self._pending_mindbug_decision: PendingMindbugDecision | None = None
         self._pending_defense_decision: PendingDefenseDecision | None = None
+        self._pending_card_action_choice: PendingCardActionChoice | None = None
         self.number_of_players = len(player_names)
         self.number_of_cards_in_game = (
             self.starting_draw_pile_size * self.number_of_players
@@ -312,6 +328,7 @@ class Game:
         self._pending_frenzy_attacker_id = None
         self._pending_mindbug_decision = None
         self._pending_defense_decision = None
+        self._pending_card_action_choice = None
         self._recalculate_ongoing_effects()
 
     # NOTe - mabe beter to split: play_card and play_card_from_hand functions?
@@ -329,12 +346,12 @@ class Game:
         """
         self._ensure_active()
         self._ensure_no_pending_resolution()
-        if self.enforce_turn_action_limit and self._turn_action_taken:
-            raise ValueError("You already took your action this turn.")
         self._recalculate_ongoing_effects()
         card_to_play, played_from_hand = self._resolve_card_to_play(
             hand_index=hand_index, card=card
         )
+        if self.enforce_turn_action_limit and self._turn_action_taken and played_from_hand:
+            raise ValueError("You already took your action this turn.")
         actor = self.current_player
 
         self.log.append(f"{actor.name} plays {card_to_play.name}.")
@@ -444,6 +461,176 @@ class Game:
                 self.log.append(f"{opponent.name} has no Mindbug left.")
         self._auto_end_turn_after_play_if_needed()
 
+    def _set_pending_card_action_choice(
+        self,
+        action_key: str,
+        source_card: Card,
+        responding_player_index: int,
+        selection_owner_index: int,
+        selection_zone: str,
+        eligible_indices: list[int],
+        min_choices: int,
+        max_choices: int,
+        draw_up_to_hand_limit_after_resolution: bool = False,
+        auto_end_after_play: bool = False,
+        auto_end_after_attack: bool = False,
+    ) -> None:
+        pending = PendingCardActionChoice(
+            action_key=action_key,
+            source_card=source_card,
+            responding_player_index=responding_player_index,
+            selection_owner_index=selection_owner_index,
+            selection_zone=selection_zone,
+            eligible_indices=eligible_indices,
+            min_choices=min_choices,
+            max_choices=max_choices,
+            draw_up_to_hand_limit_after_resolution=draw_up_to_hand_limit_after_resolution,
+            auto_end_after_play=auto_end_after_play,
+            auto_end_after_attack=auto_end_after_attack,
+        )
+        auto_selected_indices = self._get_auto_selected_card_action_indices(pending)
+        if auto_selected_indices is not None:
+            self._resolve_card_action_choice(
+                pending, auto_selected_indices, apply_post_resolution_effects=False
+            )
+            return
+
+        self._pending_card_action_choice = pending
+        self.log.append(self._build_pending_card_action_prompt(pending))
+
+    def _get_auto_selected_card_action_indices(
+        self, pending: PendingCardActionChoice
+    ) -> list[int] | None:
+        eligible_count = len(pending.eligible_indices)
+        if eligible_count == 0:
+            return []
+        if pending.min_choices == pending.max_choices == eligible_count:
+            return list(pending.eligible_indices)
+        if pending.min_choices == pending.max_choices == 1 and eligible_count == 1:
+            return [pending.eligible_indices[0]]
+        return None
+
+    def _build_pending_card_action_prompt(
+        self, pending: PendingCardActionChoice
+    ) -> str:
+        responder_name = self.players[pending.responding_player_index].name
+        if pending.action_key == "brain_fly":
+            return f"Waiting for {responder_name} to choose a creature to steal with Brain Fly."
+        if pending.action_key == "compost_dragon":
+            return f"Waiting for {responder_name} to choose a card to play from the discard pile."
+        if pending.action_key == "ferret_bomber":
+            return f"Waiting for {responder_name} to choose cards to discard for Ferret Bomber."
+        if pending.action_key == "explosive_toad":
+            return f"Waiting for {responder_name} to choose a creature to defeat with Explosive Toad."
+        return f"Waiting for {responder_name} to resolve a card action choice."
+
+    def resolve_pending_card_action(self, selected_indices: list[int]) -> None:
+        self._ensure_active()
+        if self._pending_card_action_choice is None:
+            raise ValueError("There is no pending card action choice.")
+
+        pending = self._pending_card_action_choice
+        self._pending_card_action_choice = None
+        self._resolve_card_action_choice(pending, selected_indices)
+
+    def _resolve_card_action_choice(
+        self,
+        pending: PendingCardActionChoice,
+        selected_indices: list[int],
+        apply_post_resolution_effects: bool = True,
+    ) -> None:
+        self._validate_pending_card_action_selection(pending, selected_indices)
+
+        if pending.action_key == "brain_fly":
+            self._apply_brain_fly_choice(pending, selected_indices)
+        elif pending.action_key == "compost_dragon":
+            self._apply_compost_dragon_choice(pending, selected_indices)
+        elif pending.action_key == "ferret_bomber":
+            self._apply_ferret_bomber_choice(pending, selected_indices)
+        elif pending.action_key == "explosive_toad":
+            self._apply_explosive_toad_choice(pending, selected_indices)
+        else:
+            raise ValueError("Unsupported pending card action choice.")
+
+        if apply_post_resolution_effects:
+            if pending.draw_up_to_hand_limit_after_resolution:
+                self._draw_up_to_hand_limit_for_each_player_if_needed()
+            self._recalculate_ongoing_effects()
+            self._check_game_over()
+            if pending.auto_end_after_play:
+                self._auto_end_turn_after_play_if_needed()
+            if pending.auto_end_after_attack:
+                self._auto_end_turn_after_attack_if_needed()
+
+    def _validate_pending_card_action_selection(
+        self, pending: PendingCardActionChoice, selected_indices: list[int]
+    ) -> None:
+        if len(selected_indices) != len(set(selected_indices)):
+            raise ValueError("Selected indices must be unique.")
+        if not pending.min_choices <= len(selected_indices) <= pending.max_choices:
+            if pending.min_choices == pending.max_choices:
+                raise ValueError(
+                    f"You must choose exactly {pending.min_choices} card(s)."
+                )
+            raise ValueError(
+                f"You must choose between {pending.min_choices} and {pending.max_choices} cards."
+            )
+        invalid_indices = [
+            index for index in selected_indices if index not in pending.eligible_indices
+        ]
+        if invalid_indices:
+            raise ValueError("One or more selected cards are not eligible.")
+
+    def _apply_brain_fly_choice(
+        self, pending: PendingCardActionChoice, selected_indices: list[int]
+    ) -> None:
+        owner = self.players[pending.responding_player_index]
+        opponent = self.players[pending.selection_owner_index]
+        if not selected_indices:
+            self.log.append(f"{owner.name}'s Brain Fly does not take control of a creature.")
+            return
+        stolen_creature = opponent.cards_laid_out[selected_indices[0]]
+        opponent.cards_laid_out.remove(stolen_creature)
+        owner.cards_laid_out.append(stolen_creature)
+        self.log.append(f"{owner.name}'s Brain Fly takes control of {stolen_creature.name}.")
+
+    def _apply_compost_dragon_choice(
+        self, pending: PendingCardActionChoice, selected_indices: list[int]
+    ) -> None:
+        owner = self.players[pending.responding_player_index]
+        if not selected_indices:
+            self.log.append(f"{owner.name}'s Compost Dragon has no card to play from the discard pile.")
+            return
+        card = owner.discard_pile.pop(selected_indices[0])
+        self.play_card(card=card)
+        self.log.append(f"{owner.name} plays {card.name} from their discard pile.")
+
+    def _apply_ferret_bomber_choice(
+        self, pending: PendingCardActionChoice, selected_indices: list[int]
+    ) -> None:
+        responder = self.players[pending.responding_player_index]
+        discarded_cards = [responder.hand[index] for index in sorted(selected_indices)]
+        for card in discarded_cards:
+            responder.hand.remove(card)
+            responder.move_to_discard(card)
+        responder.draw(len(discarded_cards))
+        source_owner = self.players[1 - pending.responding_player_index]
+        self.log.append(
+            f"{source_owner.name}'s Ferret Bomber makes {responder.name} discard {len(discarded_cards)} cards."
+        )
+
+    def _apply_explosive_toad_choice(
+        self, pending: PendingCardActionChoice, selected_indices: list[int]
+    ) -> None:
+        owner = self.players[pending.responding_player_index]
+        enemy = self.players[pending.selection_owner_index]
+        if not selected_indices:
+            self.log.append(f"{owner.name}'s Explosive Toad has no target to defeat.")
+            return
+        defeated_creature = enemy.cards_laid_out[selected_indices[0]]
+        self._destroy_creature(enemy, defeated_creature)
+        self.log.append(f"{owner.name}'s Explosive Toad defeats {defeated_creature.name}.")
+
     # TODO - do not put defender_index as argument to attack function, instead create defend function that takes attacker and defender and is used inside attack function
     def attack(
         self,
@@ -491,7 +678,8 @@ class Game:
         # Trigger action if attacker has an action type
         if attacker.action_type == CardActionType.ATTACK:
             attacker.trigger_action(self)
-            self._draw_up_to_hand_limit_for_each_player_if_needed()
+            if self._pending_card_action_choice is None:
+                self._draw_up_to_hand_limit_for_each_player_if_needed()
             self._check_game_over()
             # ATTACK action can remove attacker before combat resolution (e.g. Snail Hydra attacks and destroys Explosive Toad, which then destroys Snail Hydra).
             if attacker not in attacker_owner.cards_laid_out:
@@ -534,6 +722,93 @@ class Game:
         self.game_state = GameState.AWAITING_DEFENSE
         self.log.append(
             f"Waiting for {defender_owner.name} to choose a blocker or lose 1 life."
+        )
+
+    def resolve_brain_fly_action(self, source_card: Card) -> None:
+        eligible_indices = [
+            index
+            for index, card in enumerate(self.opponent.cards_laid_out)
+            if card.strength >= 6
+        ]
+        if not eligible_indices:
+            self.log.append(
+                f"{self.current_player.name}'s Brain Fly does not take control of a creature."
+            )
+            return
+        self._set_pending_card_action_choice(
+            action_key="brain_fly",
+            source_card=source_card,
+            responding_player_index=self.turn,
+            selection_owner_index=1 - self.turn,
+            selection_zone="battlefield",
+            eligible_indices=eligible_indices,
+            min_choices=1,
+            max_choices=1,
+            auto_end_after_play=True,
+        )
+
+    def resolve_compost_dragon_action(self, source_card: Card) -> None:
+        eligible_indices = list(range(len(self.current_player.discard_pile)))
+        if not eligible_indices:
+            self.log.append(
+                f"{self.current_player.name}'s Compost Dragon has no card to play from the discard pile."
+            )
+            return
+        self._set_pending_card_action_choice(
+            action_key="compost_dragon",
+            source_card=source_card,
+            responding_player_index=self.turn,
+            selection_owner_index=self.turn,
+            selection_zone="discard",
+            eligible_indices=eligible_indices,
+            min_choices=1,
+            max_choices=1,
+        )
+
+    def resolve_ferret_bomber_action(self, source_card: Card) -> None:
+        discard_count = min(2, len(self.opponent.hand))
+        self._set_pending_card_action_choice(
+            action_key="ferret_bomber",
+            source_card=source_card,
+            responding_player_index=1 - self.turn,
+            selection_owner_index=1 - self.turn,
+            selection_zone="hand",
+            eligible_indices=list(range(len(self.opponent.hand))),
+            min_choices=discard_count,
+            max_choices=discard_count,
+            auto_end_after_play=True,
+        )
+
+    def resolve_explosive_toad_action(self, source_card: Card) -> None:
+        owner = next(
+            (
+                player_index
+                for player_index, player in enumerate(self.players)
+                if source_card in player.cards_laid_out or source_card in player.discard_pile
+            ),
+            None,
+        )
+        if owner is None:
+            self.log.append(f"{source_card.name} cannot resolve DEFEATED action.")
+            return
+
+        enemy = 1 - owner
+        if len(self.players[enemy].cards_laid_out) == 0:
+            self.log.append(
+                f"{self.players[owner].name}'s Explosive Toad has no target to defeat."
+            )
+            return
+        self._set_pending_card_action_choice(
+            action_key="explosive_toad",
+            source_card=source_card,
+            responding_player_index=owner,
+            selection_owner_index=enemy,
+            selection_zone="battlefield",
+            eligible_indices=list(range(len(self.players[enemy].cards_laid_out))),
+            min_choices=1,
+            max_choices=1,
+            draw_up_to_hand_limit_after_resolution=True,
+            auto_end_after_attack=True,
         )
 
     def defend(self, defender_index: Optional[int] = None) -> None:
@@ -615,6 +890,7 @@ class Game:
             self.game_state != GameState.GAME_OVER
             and self._pending_mindbug_decision is None
             and self._pending_defense_decision is None
+            and self._pending_card_action_choice is None
             and self._pending_frenzy_attacker_id is not None
         )
 
@@ -645,6 +921,7 @@ class Game:
             "players": players_state,
             "log": list(self.log[-10:]),
             "pending_defense": self._serialize_pending_defense(),
+            "pending_card_action": self._serialize_pending_card_action(),
         }
 
     def _serialize_player(
@@ -684,7 +961,8 @@ class Game:
         # Trigger action if creature has a DEFEATED action type
         if creature.action_type == CardActionType.DEFEATED:
             creature.trigger_action(self)
-            self._draw_up_to_hand_limit_for_each_player_if_needed()
+            if self._pending_card_action_choice is None:
+                self._draw_up_to_hand_limit_for_each_player_if_needed()
             self.log.append(
                 f"{owner.name}'s {creature.name} is defeated and triggers its DEFEATED action."
             )
@@ -728,6 +1006,13 @@ class Game:
             ]
             raise ValueError(
                 f"Waiting for {defender.name} to choose a blocker or lose 1 life."
+            )
+        if self._pending_card_action_choice is not None:
+            responder = self.players[
+                self._pending_card_action_choice.responding_player_index
+            ]
+            raise ValueError(
+                f"Waiting for {responder.name} to resolve a card action choice."
             )
 
     # TODO - refactor - do not allow to select not eligible blockers
@@ -862,6 +1147,9 @@ class Game:
                 == viewer_index,
                 "eligible_defender_indices": self._get_pending_defense_eligible_indices(),
             }
+        pending_card_action = self._serialize_pending_card_action_for_viewer(
+            viewer_index
+        )
 
         return {
             "game_state": self.game_state.value,
@@ -877,6 +1165,7 @@ class Game:
             "log": list(self.log[-10:]),
             "pending_mindbug": pending_mindbug,
             "pending_defense": pending_defense,
+            "pending_card_action": pending_card_action,
             "pending_frenzy_attacker_index": self._get_pending_frenzy_attacker_index(
                 viewer_index
             ),
@@ -895,6 +1184,36 @@ class Game:
             "attacker_label": self._pending_defense_decision.attacker.short_label(),
             "eligible_defender_indices": self._get_pending_defense_eligible_indices(),
         }
+
+    def _serialize_pending_card_action(self) -> dict[str, Any] | None:
+        if self._pending_card_action_choice is None:
+            return None
+        pending = self._pending_card_action_choice
+        return {
+            "action_key": pending.action_key,
+            "source_card_label": pending.source_card.short_label(),
+            "responding_player_name": self.players[pending.responding_player_index].name,
+            "selection_owner_name": self.players[pending.selection_owner_index].name,
+            "selection_zone": pending.selection_zone,
+            "eligible_indices": list(pending.eligible_indices),
+            "min_choices": pending.min_choices,
+            "max_choices": pending.max_choices,
+        }
+
+    def _serialize_pending_card_action_for_viewer(
+        self, viewer_index: int
+    ) -> dict[str, Any] | None:
+        serialized = self._serialize_pending_card_action()
+        if serialized is None or self._pending_card_action_choice is None:
+            return None
+        pending = self._pending_card_action_choice
+        serialized["response_required_from_viewer"] = (
+            pending.responding_player_index == viewer_index
+        )
+        serialized["selection_owner"] = (
+            "viewer" if pending.selection_owner_index == viewer_index else "opponent"
+        )
+        return serialized
 
     def _get_pending_defense_eligible_indices(self) -> list[int]:
         if self._pending_defense_decision is None:
@@ -916,12 +1235,16 @@ class Game:
             return
         if self.game_state == GameState.GAME_OVER:
             return
+        if self._pending_card_action_choice is not None:
+            return
         self.end_turn()
 
     def _auto_end_turn_after_attack_if_needed(self) -> None:
         if not self.auto_end_turn_after_resolved_attack:
             return
         if self.game_state == GameState.GAME_OVER:
+            return
+        if self._pending_card_action_choice is not None:
             return
         if self._pending_frenzy_attacker_id is not None:
             return

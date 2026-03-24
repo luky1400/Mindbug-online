@@ -3,6 +3,7 @@ import type {
   CreateGameRequest,
   DefendRequest,
   JoinGameRequest,
+  ResolveCardActionChoiceRequest,
   SessionResponse
 } from "../types/game";
 import { io, type Socket } from "socket.io-client";
@@ -114,6 +115,9 @@ export const socketActions = {
   },
   defend(socket: Socket, payload: DefendRequest) {
     return emitWithAck<SocketAckResponse>(socket, "defend", payload);
+  },
+  resolveCardActionChoice(socket: Socket, payload: ResolveCardActionChoiceRequest) {
+    return emitWithAck<SocketAckResponse>(socket, "resolve_card_action_choice", payload);
   },
   endTurn(socket: Socket) {
     return emitWithAck<SocketAckResponse>(socket, "end_turn");

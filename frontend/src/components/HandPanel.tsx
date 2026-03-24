@@ -4,11 +4,12 @@ import { CardTile } from "./CardTile";
 interface HandPanelProps {
   cards: string[];
   selectedIndex: number | null;
+  selectable?: boolean;
   onSelect: (index: number) => void;
   onPreview: (label: string) => void;
 }
 
-export function HandPanel({ cards, selectedIndex, onSelect, onPreview }: HandPanelProps) {
+export function HandPanel({ cards, selectedIndex, selectable = true, onSelect, onPreview }: HandPanelProps) {
   const [expanded, setExpanded] = useState(false);
   const handTitle = useMemo(() => (expanded ? "Hand (expanded)" : "Hand (compact)"), [expanded]);
 
@@ -25,7 +26,9 @@ export function HandPanel({ cards, selectedIndex, onSelect, onPreview }: HandPan
         </button>
       </div>
       <p className="section-help">
-        Click to select a card for play. Double click card for larger readable preview.
+        {selectable
+          ? "Click to select a card for play. Double click card for larger readable preview."
+          : "Card selection is temporarily locked while you resolve the current prompt."}
       </p>
       <div className={`hand-grid ${expanded ? "hand-grid-expanded" : "hand-grid-compact"}`}>
         {cards.length === 0 ? (
@@ -36,9 +39,9 @@ export function HandPanel({ cards, selectedIndex, onSelect, onPreview }: HandPan
               key={`${label}-${index}`}
               label={label}
               selected={selectedIndex === index}
-              clickable
+              clickable={selectable}
               size={expanded ? "large" : "medium"}
-              onClick={() => onSelect(index)}
+              onClick={selectable ? () => onSelect(index) : undefined}
               onDoubleClick={() => onPreview(label)}
             />
           ))

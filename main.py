@@ -64,6 +64,73 @@ def choose_int(prompt: str, min_value: int, max_value: int) -> int:
         print(f"Please enter a number between {min_value} and {max_value}.")
 
 
+def choose_multiple_ints(
+    prompt: str, eligible_indices: list[int], required_count: int
+) -> list[int]:
+    eligible_set = set(eligible_indices)
+    while True:
+        raw = input(prompt).strip()
+        parts = [part.strip() for part in raw.split(",") if part.strip()]
+        if len(parts) != required_count:
+            print(f"Please enter exactly {required_count} comma-separated indices.")
+            continue
+        if not all(part.isdigit() for part in parts):
+            print("Please enter only numbers.")
+            continue
+        values = [int(part) for part in parts]
+        if len(values) != len(set(values)):
+            print("Indices must be unique.")
+            continue
+        if not all(value in eligible_set for value in values):
+            print("Choose only from the listed indices.")
+            continue
+        return values
+
+
+def resolve_pending_card_action_cli(game: Game) -> None:
+    while (
+        game.game_state != GameState.GAME_OVER
+        and game._pending_card_action_choice is not None
+    ):
+        pending = game._pending_card_action_choice
+        responder = game.players[pending.responding_player_index]
+        selection_owner = game.players[pending.selection_owner_index]
+
+        if pending.selection_zone == "hand":
+            selection_pool = selection_owner.hand
+        elif pending.selection_zone == "discard":
+            selection_pool = selection_owner.discard_pile
+        else:
+            selection_pool = selection_owner.cards_laid_out
+
+        print(f"\n{responder.name}, resolve {pending.source_card.name}:")
+        for index in pending.eligible_indices:
+            print(f"  [{index}] {selection_pool[index].short_label()}")
+
+        if pending.max_choices == 1:
+            selected_indices = [
+                choose_int(
+                    "Choose card index: ",
+                    min(pending.eligible_indices),
+                    max(pending.eligible_indices),
+                )
+            ]
+            if selected_indices[0] not in pending.eligible_indices:
+                print("Choose one of the listed indices.")
+                continue
+        else:
+            selected_indices = choose_multiple_ints(
+                "Choose comma-separated indices: ",
+                pending.eligible_indices,
+                pending.max_choices,
+            )
+
+        try:
+            game.resolve_pending_card_action(selected_indices)
+        except ValueError as exc:
+            print(f"Could not resolve card action: {exc}")
+
+
 def player_turn(game: Game) -> None:
     current = game.current_player
     opponent = game.opponent
@@ -97,6 +164,7 @@ def player_turn(game: Game) -> None:
             game.play_card(hand_idx)
             if game.game_state == GameState.AWAITING_MINDBUG:
                 game.respond_to_mindbug(use_mindbug)
+            resolve_pending_card_action_cli(game)
             if use_mindbug and game.game_state != GameState.GAME_OVER:
                 print("Mindbug used. Current player chooses action again.")
                 print_game_state(game)
@@ -151,6 +219,7 @@ def player_turn_attack(game: Game) -> None:
             game.attack(attacker_idx, None)
         except ValueError as exc:
             print(f"Could not attack: {exc}")
+        resolve_pending_card_action_cli(game)
         return
 
     if CardSpecialType.HUNTER in attacker.special_types:
@@ -173,6 +242,7 @@ def player_turn_attack(game: Game) -> None:
                 if defender_idx not in hunter_target_indices:
                     raise ValueError("Choose one of the listed target indices or s.")
                 game.attack(attacker_idx, defender_idx)
+                resolve_pending_card_action_cli(game)
             except ValueError as exc:
                 print(f"Could not attack: {exc}")
             return
@@ -182,6 +252,8 @@ def player_turn_attack(game: Game) -> None:
     except ValueError as exc:
         print(f"Could not attack: {exc}")
         return
+
+    resolve_pending_card_action_cli(game)
 
     if game.game_state != GameState.AWAITING_DEFENSE:
         return

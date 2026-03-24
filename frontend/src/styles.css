@@ -290,6 +290,50 @@ body {
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
 }
 
+.overlay-choice {
+  z-index: 60;
+}
+
+.choice-overlay-card {
+  width: min(920px, 94vw);
+  text-align: left;
+}
+
+.prompt-overlay-card {
+  width: min(680px, 92vw);
+}
+
+.mindbug-overlay-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.mindbug-overlay-image {
+  width: min(460px, 92vw);
+  max-height: none;
+}
+
+.choice-modal-toggle {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 55;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #111c31;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+}
+
+.choice-modal-toggle-text {
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
 .winner-name {
   color: var(--ok);
   font-weight: 700;

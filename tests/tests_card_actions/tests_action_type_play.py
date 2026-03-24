@@ -116,6 +116,7 @@ def test_play_ferret_bomber_opponent_discards_2_and_draws_if_possible() -> None:
     player.hand = [Ferret_bomber()]
 
     game.play_card(hand_index=0)
+    game.resolve_pending_card_action([0, 1])
 
     assert len(opponent.discard_pile) == 2
     assert len(opponent.hand) == 2
@@ -124,6 +125,31 @@ def test_play_ferret_bomber_opponent_discards_2_and_draws_if_possible() -> None:
         for card in all_opponent_cards
     )
     assert len(opponent.draw_pile.cards) == 0
+
+
+def test_play_ferret_bomber_lets_opponent_choose_discarded_cards_when_more_than_two_are_in_hand() -> None:
+    game = _new_game()
+    player = game.current_player
+    opponent = game.opponent
+
+    hand_card_1 = Chameleon_sniper()
+    hand_card_2 = Tiger_squirrel()
+    hand_card_3 = Axolotl_healer()
+    draw_card_1 = Luchataur()
+    draw_card_2 = Giraffodile()
+
+    opponent.hand = [hand_card_1, hand_card_2, hand_card_3]
+    opponent.draw_pile = DrawPile([draw_card_1, draw_card_2])
+    player.hand = [Ferret_bomber()]
+
+    game.play_card(hand_index=0)
+    game.resolve_pending_card_action([0, 2])
+
+    assert hand_card_1 in opponent.discard_pile
+    assert hand_card_3 in opponent.discard_pile
+    assert hand_card_2 in opponent.hand
+    assert draw_card_1 in opponent.hand
+    assert draw_card_2 in opponent.hand
 
 
 def test_play_killer_bee_opponent_loses_1_life() -> None:
@@ -214,9 +240,8 @@ def test_play_brain_fly_takes_control_of_creature_with_power_6_or_more() -> None
     player.hand = [Brain_fly()]
     opponent.cards_laid_out = [stolen_creature, other_eligible_creature, weak_creature]
 
-    # Eligible list order is [stolen_creature, other_eligible_creature].
-    with patch("cards.randint", return_value=0):
-        game.play_card(hand_index=0)
+    game.play_card(hand_index=0)
+    game.resolve_pending_card_action([0])
 
     assert stolen_creature in player.cards_laid_out
     assert stolen_creature not in opponent.cards_laid_out
@@ -242,6 +267,56 @@ def test_play_compost_dragon_plays_card_from_discard_and_triggers_its_play_actio
     assert any(isinstance(card, Compost_dragon) for card in player.cards_laid_out)
     assert discard_card in player.cards_laid_out
     assert discard_card not in player.discard_pile
+
+
+def test_play_compost_dragon_lets_player_choose_card_from_discard_pile() -> None:
+    game = _new_game()
+    player = game.current_player
+    opponent = game.opponent
+
+    ignored_card = Chameleon_sniper()
+    chosen_card = Axolotl_healer()
+    starting_turn = game.turn
+    player.number_of_lives = 3
+    player.discard_pile = [ignored_card, chosen_card]
+    player.hand = [Compost_dragon()]
+    opponent.hand = [Tiger_squirrel()]
+
+    game.play_card(hand_index=0)
+    game.resolve_pending_card_action([1])
+
+    assert chosen_card in player.cards_laid_out
+    assert chosen_card not in player.discard_pile
+    assert ignored_card in player.discard_pile
+    assert player.number_of_lives == 5
+
+
+def test_play_compost_dragon_resolves_discard_choice_with_turn_limit_enabled() -> None:
+    game = Game(
+        player_names=["Player 1", "Player 2"],
+        starting_draw_pile_size=0,
+        enforce_turn_action_limit=True,
+        auto_end_turn_after_successful_play=True,
+    )
+    game.start_game(card_pool=[])
+
+    player = game.current_player
+    opponent = game.opponent
+
+    ignored_card = Chameleon_sniper()
+    chosen_card = Axolotl_healer()
+    starting_turn = game.turn
+    player.number_of_lives = 3
+    player.discard_pile = [ignored_card, chosen_card]
+    player.hand = [Compost_dragon()]
+    opponent.hand = [Tiger_squirrel()]
+
+    game.play_card(hand_index=0)
+    game.resolve_pending_card_action([1])
+
+    assert chosen_card in player.cards_laid_out
+    assert ignored_card in player.discard_pile
+    assert game.turn != starting_turn
 
 
 def test_play_grave_robber_plays_card_from_opponent_discard_and_triggers_its_play_action() -> None:

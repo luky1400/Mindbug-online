@@ -101,7 +101,6 @@ PYTHONPATH=. pytest tests/tests_mindbug_use.py
 - `frontend/` - React + TypeScript multiplayer frontend
 - `requirements.txt` - Python dependencies
 
-
 ## TODO
 
 - finish backend to work well
@@ -111,6 +110,7 @@ PYTHONPATH=. pytest tests/tests_mindbug_use.py
   - make Game UI to fit one screen size - user cannot roll up and down
   - upravit obrazku dle pravidel (+ když najedu with mouse cursor on any of discard_piles, it will render cards in it)
   - dát na rozklikávatko (vpravo nahoře): pravidla, logs, cards in game - rozdělené do tabs podle sets (include also number of copies of each card)
+  - 
 - **UI screens:**
   - seperate create/join room and Game
 - **UI additonal:**
@@ -124,7 +124,6 @@ PYTHONPATH=. pytest tests/tests_mindbug_use.py
   - Kliknout a zvetsit celou ruku najednou - udelat to same, jako 2x klik, ale pro vsechny karty najednou. Dát karty v ruce bliz k sobe a zvetsit.
   - add icons to buttons - attack, play_card, End turn (lepší by bylo místo click button, přetahovat, ale to by bylo moc tezke)
 
-
 ## TODO - game rules
 
 - "Pokud probíhá více efektů současně (například pokud se dvě nestvůry porazí navzájem), rozhoduje o pořadí vyhodnocení efektů hráč, jenž je na tahu. Vždy dokončete vyhodnocování jednoho efektu předtím, než začnete vyhodnocovat další."
@@ -136,7 +135,6 @@ PYTHONPATH=. pytest tests/tests_mindbug_use.py
 - udělat funkce pro tyhle termíny: Odložit, Ovládnout nestvůru
 - (Síla nestvůry nemůže mít nikdy nižší hodnotu než 1, a to ani v případě, že by některé efekty hodnotu síly upravovaly.)
 
-
 ## Nice to have
 
 - add persistent database-backed sessions so rooms survive server restarts.
@@ -147,7 +145,6 @@ PYTHONPATH=. pytest tests/tests_mindbug_use.py
 V případě shody tento proces opakujte."
 - make all images the same resolution size
 - [QA](https://www.zatrolene-hry.cz/spolecenska-hra/mozkozrout-12630/otazky/)
-
 
 ## Bugs
 
