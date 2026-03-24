@@ -148,7 +148,8 @@ V případě shody tento proces opakujte."
 
 ## Bugs
 
-- 
+- After current player used Ferret and opponent used Mindbug to steal it and triggered PLAY action, current player had to choose 2 cards to discard, current player should have played again, but opponent was on turn. This is wrong.
+- Opponents cards laid out can be selected for target attack but they have no blue border when selected.
 
 ## Documentation notes
 
