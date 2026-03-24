@@ -208,7 +208,6 @@ class Game:
         auto_end_turn_after_resolved_attack: bool = False,
 
     ):
-        # TODO - Later implement for 4 players
         if len(player_names) != 2:
             raise ValueError("Mindbug supports exactly 2 players.")
         self.players: list[Player] = [Player(name=n) for n in player_names]
