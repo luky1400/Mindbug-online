@@ -114,12 +114,12 @@ PYTHONPATH=. pytest tests/tests_mindbug_use.py
 - **UI screens:**
   - seperate create/join room and Game
 - **UI additonal:**
-  - možnost zvětšit i cards_laid_out (+ in discard pile)
+  - možnost zvětšit i cards_laid_out 
   - Když defender vybira, jestli a cim bude branit, tak mu ukazat kartu utocnika (nejak ji zvyraznit nebo presunout do prostred).
   - Hide redundant information in UI
     - text pod kartami
-    - Discard Pile dát nějak nastranu a karty zobrazit, pouze když na to user clickne
-  - udělat nejakou signalizaci, kteá upozorní hrace, ze je na tahu (play_card/attack, Mindbug, Defend, etc.)
+    - Discard Pile dát nějak nastranu a karty zobrazit, pouze když na to user klikne - zobrazi se stejne modal window a user muze kliknout na hide.
+  - udělat nejakou signalizaci, která upozorní hrace, ze je na tahu (play_card/attack, Mindbug, Defend, etc.)
   - Kliknout a zvetsit celou ruku najednou - udelat to same, jako 2x klik, ale pro vsechny karty najednou. Dát karty v ruce bliz k sobe a zvetsit.
   - add icons to buttons - attack, play_card, End turn (lepší by bylo místo click button, přetahovat, ale to by bylo moc tezke)
 
@@ -157,4 +157,6 @@ V případě shody tento proces opakujte."
 - App.tsx: the multiplayer client clears selections immediately when a defense response is sent
 - Create room now lets the host choose which sets are used for that room. First Contact is always selected and cannot be unchecked, while the remaining CardSet values can be enabled. The selected sets are sent in the create-room request, stored on the room, used when the game starts, and shown in the UI in both the room metadata and room status area.
 - TOUGH cards have `TOUGH` badge in the top-right.
+- Dynamic badges of special effects only appear when the is actually gained from an effect, not when it is native on the card (e.g. Lone Yeti, Mummy Cat, Snail Thrower effect, Ram Hopper ).
+- 
 

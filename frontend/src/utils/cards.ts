@@ -46,6 +46,33 @@ const baseStrengthByName: Record<string, number> = {
   "Urchin Hurler": 5
 };
 
+const nativeAbilityTagsByName: Record<string, string[]> = {
+  "Axolotl Healer": ["POISONOUS"],
+  "Chameleon Sniper": ["SNEAKY"],
+  "Compost Dragon": ["HUNTER"],
+  "Creep from the Deep": ["HUNTER", "POISONOUS"],
+  Deathweaver: ["POISONOUS"],
+  "Explosive Toad": ["FRENZY"],
+  "Ferret Bomber": ["SNEAKY"],
+  "Froblin Instigator": ["HUNTER"],
+  "Goblin Werewolf": ["HUNTER"],
+  "Goreagle Alpha": ["FRENZY", "HUNTER"],
+  "Hamster Lion": ["FRENZY"],
+  Hyenix: ["FRENZY"],
+  "Hungry Hungry Hamster": ["SNEAKY"],
+  "Killer Bee": ["HUNTER"],
+  Luchataur: ["FRENZY"],
+  "Majestic Manticore": ["POISONOUS"],
+  "Plated Scorpion": ["POISONOUS"],
+  "Ram Hopper": ["FRENZY"],
+  "Rhino Turtle": ["FRENZY"],
+  "Shark Dog": ["HUNTER"],
+  "Snail Thrower": ["POISONOUS"],
+  "Spider Owl": ["SNEAKY", "POISONOUS"],
+  "Tiger Squirrel": ["SNEAKY"],
+  "Urchin Hurler": ["HUNTER"]
+};
+
 export interface ParsedCard {
   raw: string;
   name: string;
@@ -128,5 +155,9 @@ export function getActiveAbilityBadges(cardLabel: string): string[] {
     const supportedTags = ["FRENZY", "HUNTER", "POISONOUS", "SNEAKY"];
     return supportedTags.filter((tag) => parsed.activeTags.includes(tag));
   }
-  return [];
+  const nativeTags = nativeAbilityTagsByName[parsed.name] || [];
+  const effectGrantedVisibleTags = ["FRENZY", "HUNTER", "POISONOUS"];
+  return effectGrantedVisibleTags.filter(
+    (tag) => parsed.activeTags.includes(tag) && !nativeTags.includes(tag)
+  );
 }
