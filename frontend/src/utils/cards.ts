@@ -52,6 +52,8 @@ export interface ParsedCard {
   strengthText: string;
   details: string;
   currentStrength: number | null;
+  toughCharges: number | null;
+  activeTags: string[];
 }
 
 export function parseCardLabel(label: string): ParsedCard {
@@ -63,16 +65,28 @@ export function parseCardLabel(label: string): ParsedCard {
       name: raw,
       strengthText: "?",
       details: "",
-      currentStrength: null
+      currentStrength: null,
+      toughCharges: null,
+      activeTags: []
     };
   }
   const currentStrength = Number(match[2].trim());
+  const details = match[3].trim();
+  const toughMatch = details.match(/tough:(\d+)/i);
+  const tagsMatch = details.match(/<([^>]+)>/);
   return {
     raw,
     name: match[1].trim(),
     strengthText: match[2].trim(),
-    details: match[3].trim(),
-    currentStrength: Number.isFinite(currentStrength) ? currentStrength : null
+    details,
+    currentStrength: Number.isFinite(currentStrength) ? currentStrength : null,
+    toughCharges: toughMatch ? Number(toughMatch[1]) : null,
+    activeTags: tagsMatch
+      ? tagsMatch[1]
+          .split(",")
+          .map((tag) => tag.trim().toUpperCase())
+          .filter(Boolean)
+      : []
   };
 }
 
@@ -98,4 +112,21 @@ export function strengthClassName(cardLabel: string): "buff" | "debuff" | "neutr
   if (parsed.currentStrength > base) return "buff";
   if (parsed.currentStrength < base) return "debuff";
   return "neutral";
+}
+
+export function hasActiveToughCharge(cardLabel: string): boolean {
+  const parsed = parseCardLabel(cardLabel);
+  return Boolean(parsed.toughCharges && parsed.toughCharges > 0);
+}
+
+export function getActiveAbilityBadges(cardLabel: string): string[] {
+  const parsed = parseCardLabel(cardLabel);
+  if (parsed.name === "Lone Yeti") {
+    return parsed.activeTags.includes("FRENZY") ? ["FRENZY"] : [];
+  }
+  if (parsed.name === "Sharky Crab Dog Mummypus") {
+    const supportedTags = ["FRENZY", "HUNTER", "POISONOUS", "SNEAKY"];
+    return supportedTags.filter((tag) => parsed.activeTags.includes(tag));
+  }
+  return [];
 }

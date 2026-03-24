@@ -1,4 +1,4 @@
-import { cardImageUrl, parseCardLabel, strengthClassName } from "../utils/cards";
+import { cardImageUrl, getActiveAbilityBadges, hasActiveToughCharge, parseCardLabel, strengthClassName } from "../utils/cards";
 
 type CardTileSize = "compact" | "medium" | "large";
 
@@ -10,6 +10,8 @@ interface CardTileProps {
   onDoubleClick?: () => void;
   size?: CardTileSize;
   showStrength?: boolean;
+  showToughCharge?: boolean;
+  showAbilityBadges?: boolean;
 }
 
 export function CardTile({
@@ -19,12 +21,16 @@ export function CardTile({
   onClick,
   onDoubleClick,
   size = "compact",
-  showStrength = false
+  showStrength = false,
+  showToughCharge = false,
+  showAbilityBadges = false
 }: CardTileProps) {
   const parsed = parseCardLabel(label);
   const sizeClass = size === "large" ? "card-tile-large" : size === "medium" ? "card-tile-medium" : "";
   const selectableClass = clickable ? "card-tile-selectable" : "";
   const selectedClass = selected ? "card-tile-selected" : "";
+  const activeToughCharge = showToughCharge && hasActiveToughCharge(label);
+  const activeAbilityBadges = showAbilityBadges ? getActiveAbilityBadges(label) : [];
 
   return (
     <button
@@ -35,6 +41,19 @@ export function CardTile({
     >
       {showStrength ? (
         <span className={`strength-tag strength-${strengthClassName(label)}`}>{parsed.strengthText}</span>
+      ) : null}
+      {activeToughCharge || activeAbilityBadges.length > 0 ? (
+        <div className="card-status-badges">
+          {activeToughCharge ? <span className="card-status-badge tough-tag">TOUGH</span> : null}
+          {activeAbilityBadges.map((badge) => (
+            <span
+              key={badge}
+              className={`card-status-badge ${badge === "FRENZY" ? "frenzy-tag" : ""} ${badge === "HUNTER" ? "hunter-tag" : ""} ${badge === "POISONOUS" ? "poisonous-tag" : ""} ${badge === "SNEAKY" ? "sneaky-tag" : ""}`}
+            >
+              {badge}
+            </span>
+          ))}
+        </div>
       ) : null}
       <img
         className="card-image"

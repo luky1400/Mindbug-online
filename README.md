@@ -104,7 +104,7 @@ PYTHONPATH=. pytest tests/tests_mindbug_use.py
 ## TODO
 
 - finish backend to work well
-  - handle that player or opponent can choose which cards to play or discard
+  - handle that player or opponent can choose which cards to play or discard - do for all (First Contact) cards
   - add tests regularly for things that are not working
 - **Improve UI layout**
   - make Game UI to fit one screen size - user cannot roll up and down
@@ -114,7 +114,6 @@ PYTHONPATH=. pytest tests/tests_mindbug_use.py
 - **UI screens:**
   - seperate create/join room and Game
 - **UI additonal:**
-  - visualize that TOUGH has 0 tough_charges left (2 options: odlisit, když má 1 nebo 2 nabití?)
   - možnost zvětšit i cards_laid_out (+ in discard pile)
   - Když defender vybira, jestli a cim bude branit, tak mu ukazat kartu utocnika (nejak ji zvyraznit nebo presunout do prostred).
   - Hide redundant information in UI
@@ -157,4 +156,5 @@ V případě shody tento proces opakujte."
 - apply_ongoing_effect() - effect is being recalculated - in the beginning of the turn?
 - App.tsx: the multiplayer client clears selections immediately when a defense response is sent
 - Create room now lets the host choose which sets are used for that room. First Contact is always selected and cannot be unchecked, while the remaining CardSet values can be enabled. The selected sets are sent in the create-room request, stored on the room, used when the game starts, and shown in the UI in both the room metadata and room status area.
+- TOUGH cards have `TOUGH` badge in the top-right.
 

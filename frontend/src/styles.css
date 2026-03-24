@@ -240,6 +240,54 @@ body {
   text-align: center;
 }
 
+.card-status-badges {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.card-status-badge {
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  letter-spacing: 0.04em;
+}
+
+.tough-tag {
+  background: rgba(56, 42, 10, 0.92);
+  border: 1px solid #f0c96b;
+  color: #ffe39b;
+}
+
+.frenzy-tag {
+  background: rgba(78, 16, 16, 0.92);
+  border: 1px solid #ff7b7b;
+  color: #ffd0d0;
+}
+
+.hunter-tag {
+  background: rgba(35, 39, 46, 0.92);
+  border: 1px solid #a6adb8;
+  color: #e7ebf0;
+}
+
+.poisonous-tag {
+  background: rgba(18, 62, 28, 0.92);
+  border: 1px solid #69d17d;
+  color: #d5ffe0;
+}
+
+.sneaky-tag {
+  background: rgba(21, 36, 84, 0.92);
+  border: 1px solid #74a3ff;
+  color: #d8e6ff;
+}
+
 .strength-buff {
   color: #8ff1ad;
   border-color: #2f8a58;
