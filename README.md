@@ -115,7 +115,8 @@ PYTHONPATH=. pytest tests/tests_mindbug_use.py
   - seperate create/join room and Game
 - **UI additonal:**
   - možnost zvětšit i cards_laid_out 
-  - Když defender vybira, jestli a cim bude branit, tak mu ukazat kartu utocnika (nejak ji zvyraznit nebo presunout do prostred).
+  - Když defender vybira, jestli a cim bude branit, tak mu ukazat kartu utocnika - zvyrznit ji:
+    - Prompt_ can you make orange/red border/glow to card that was selected as attacker. This border should only apply until defender is selected.
   - Hide redundant information in UI
     - text pod kartami
     - Discard Pile dát nějak nastranu a karty zobrazit, pouze když na to user klikne - zobrazi se stejne modal window a user muze kliknout na hide.
@@ -151,7 +152,7 @@ V případě shody tento proces opakujte."
 
 ## Documentation notes
 
-- 2 main action function: play_card, attack
+- 2 main action functions: play_card, attack
   - resolved plays and attacks automatically trigger end_turn()
 - apply_ongoing_effect() - effect is being recalculated - in the beginning of the turn?
 - App.tsx: the multiplayer client clears selections immediately when a defense response is sent
