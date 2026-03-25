@@ -1,10 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Socket } from "socket.io-client";
 import { createGameSocket, gameApi, socketActions } from "./api/client";
 import { BoardZone } from "./components/BoardZone";
 import { CardPreviewModal } from "./components/CardPreviewModal";
 import { GameLog } from "./components/GameLog";
-import { GameOverModal } from "./components/GameOverModal";
 import { HandPanel } from "./components/HandPanel";
 import { PendingCardActionModal } from "./components/PendingCardActionModal";
 import { PendingMindbugModal } from "./components/PendingMindbugModal";
@@ -36,14 +35,15 @@ export function App() {
   const [isChoiceModalHidden, setIsChoiceModalHidden] = useState(false);
   const [statusText, setStatusText] = useState("");
   const [errorText, setErrorText] = useState("");
-  const [showGameOver, setShowGameOver] = useState(false);
   const [previewCardLabel, setPreviewCardLabel] = useState<string | null>(null);
 
   const viewer = state?.viewer || null;
   const opponent = state?.opponent || null;
   const hand = viewer?.hand || [];
+  const inSession = Boolean(gameId && state);
   const isWaitingForOpponent = state?.room_status === "WAITING_FOR_PLAYER";
   const gameOver = state?.game_state === "GAME_OVER";
+  const screen = !inSession ? "lobby" : gameOver ? "gameover" : "game";
   const canAnswerMindbug = Boolean(state?.pending_mindbug?.response_required_from_viewer);
   const canAnswerDefense = Boolean(state?.pending_defense?.response_required_from_viewer);
   const canAnswerCardAction = Boolean(state?.pending_card_action?.response_required_from_viewer);
@@ -69,14 +69,6 @@ export function App() {
     !state.pending_card_action &&
     hasPendingFrenzyAttack
   );
-
-  const metaText = useMemo(() => {
-    if (!state || !gameId) return "Create or join a multiplayer room.";
-    if (isWaitingForOpponent) {
-      return `Room ${gameId} | Invite code: ${state.invite_code} | Players: ${state.connected_players}/${state.max_players} | Sets: ${state.selected_sets.join(", ")}`;
-    }
-    return `Room ${gameId} | You: ${state.viewer_player_name} | Turn: ${state.turn_player ?? "-"} | State: ${state.game_state} | Sets: ${state.selected_sets.join(", ")}${state.winner ? ` | Winner: ${state.winner}` : ""}`;
-  }, [gameId, isWaitingForOpponent, state]);
 
   const selectionText = `Hand: ${selectedHandIndex ?? "-"} | Attacker: ${selectedAttackerIndex ?? "-"} | Target/Blocker: ${selectedDefenderIndex ?? "-"}`;
   const pendingCardActionIdentity = state?.pending_card_action
@@ -202,9 +194,6 @@ export function App() {
 
     normalizeSelections(nextState);
     setState(nextState);
-    if (nextState.game_state === "GAME_OVER") {
-      setShowGameOver(true);
-    }
   }
 
   function connectSocket(nextGameId: string, nextPlayerId: string) {
@@ -226,7 +215,6 @@ export function App() {
     setPlayerId(nextPlayerId);
     setJoinCode(nextGameId);
     clearSelections();
-    setShowGameOver(false);
     applyState(nextState);
     persistSession({ gameId: nextGameId, playerId: nextPlayerId });
     connectSocket(nextGameId, nextPlayerId);
@@ -315,10 +303,7 @@ export function App() {
   }
 
   async function refreshState() {
-    if (!gameId || !playerId) {
-      setErrorText("Create or join a room first.");
-      return;
-    }
+    if (!gameId || !playerId) return;
     setErrorText("");
     try {
       const response = await gameApi.getState(gameId, playerId);
@@ -459,7 +444,8 @@ export function App() {
     setPlayerId(null);
     setState(null);
     clearSelections();
-    setStatusText("Session cleared on this device.");
+    setStatusText("");
+    setErrorText("");
     const url = new URL(window.location.href);
     url.searchParams.delete("game");
     window.history.replaceState({}, "", url);
@@ -490,136 +476,171 @@ export function App() {
 
   const pendingCardActionPool = getPendingCardActionPool(state);
 
+  // ── Lobby screen ──────────────────────────────────────────────────────────
+  if (screen === "lobby") {
+    return (
+      <main className="app-shell container-xl py-3">
+        <section className="card border-0 bg-panel">
+          <div className="card-body">
+            <h1 className="app-title mb-4">Mindbug Multiplayer</h1>
+
+            <div className="setup-grid">
+              <div className="setup-panel">
+                <h2 className="section-title">Create room</h2>
+                <label className="text-light w-100">
+                  Your name
+                  <input
+                    className="form-control mt-1"
+                    value={hostName}
+                    onChange={(event) => setHostName(event.target.value)}
+                  />
+                </label>
+                <div className="mt-3">
+                  <div className="section-title mb-2">Card sets</div>
+                  <div className="set-options">
+                    {CARD_SET_OPTIONS.map((cardSet) => {
+                      const isRequired = cardSet === REQUIRED_CARD_SET;
+                      return (
+                        <label className="set-option" key={cardSet}>
+                          <input
+                            checked={createRoomSets.includes(cardSet)}
+                            disabled={isRequired}
+                            onChange={() => toggleCreateRoomSet(cardSet)}
+                            type="checkbox"
+                          />
+                          <span>{cardSet}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+                <button className="btn btn-primary mt-2" onClick={() => void createGame()} type="button">
+                  Create room
+                </button>
+              </div>
+
+              <div className="setup-panel">
+                <h2 className="section-title">Join room</h2>
+                <label className="text-light w-100">
+                  Invite code
+                  <input
+                    className="form-control mt-1"
+                    value={joinCode}
+                    onChange={(event) => setJoinCode(event.target.value)}
+                  />
+                </label>
+                <label className="text-light w-100 mt-2">
+                  Your name
+                  <input
+                    className="form-control mt-1"
+                    value={joinName}
+                    onChange={(event) => setJoinName(event.target.value)}
+                  />
+                </label>
+                <button className="btn btn-success mt-2" onClick={() => void joinGame()} type="button">
+                  Join room
+                </button>
+              </div>
+            </div>
+
+            {statusText ? <div className="status-text mt-3">{statusText}</div> : null}
+            {errorText ? <div className="error-text mt-2">{errorText}</div> : null}
+          </div>
+        </section>
+      </main>
+    );
+  }
+
+  // ── Game-over screen ───────────────────────────────────────────────────────
+  if (screen === "gameover") {
+    return (
+      <main className="app-shell container-xl py-3">
+        <section className="card border-0 bg-panel">
+          <div className="card-body text-center py-5">
+            <h1 className="app-title mb-3">Game over</h1>
+            <p className="turn-banner mb-4">
+              <span className="winner-name">{state?.winner || "Unknown player"}</span> wins!
+            </p>
+            <div className="d-flex justify-content-center gap-3">
+              <button className="btn btn-primary" onClick={() => void createGame()} type="button">
+                Play again
+              </button>
+              <button className="btn btn-outline-light" onClick={leaveSession} type="button">
+                Return to lobby
+              </button>
+            </div>
+            {errorText ? <div className="error-text mt-3">{errorText}</div> : null}
+          </div>
+        </section>
+        <GameLog logLines={state?.log || []} />
+      </main>
+    );
+  }
+
+  // ── Game screen ────────────────────────────────────────────────────────────
   return (
     <main className="app-shell container-xl py-3">
-      <section className="card border-0 bg-panel">
-        <div className="card-body">
-          <div className="d-flex flex-wrap align-items-end gap-3 mb-3">
-            <h1 className="app-title m-0 me-auto">Mindbug Multiplayer</h1>
-            <button className="btn btn-outline-light" onClick={refreshState} type="button">
-              Refresh state
-            </button>
-            <button className="btn btn-outline-danger" onClick={leaveSession} type="button">
-              Leave local session
-            </button>
-          </div>
-
-          <div className="setup-grid">
-            <div className="setup-panel">
-              <h2 className="section-title">Create room</h2>
-              <label className="text-light w-100">
-                Your name
-                <input
-                  className="form-control mt-1"
-                  value={hostName}
-                  onChange={(event) => setHostName(event.target.value)}
-                />
-              </label>
-              <div className="mt-3">
-                <div className="section-title mb-2">Card sets</div>
-                <div className="set-options">
-                  {CARD_SET_OPTIONS.map((cardSet) => {
-                    const isRequired = cardSet === REQUIRED_CARD_SET;
-                    return (
-                      <label className="set-option" key={cardSet}>
-                        <input
-                          checked={createRoomSets.includes(cardSet)}
-                          disabled={isRequired}
-                          onChange={() => toggleCreateRoomSet(cardSet)}
-                          type="checkbox"
-                        />
-                        <span>{cardSet}</span>
-                      </label>
-                    );
-                  })}
-                </div>
-              </div>
-              <button className="btn btn-primary mt-2" onClick={createGame} type="button">
-                Create room
-              </button>
-            </div>
-
-            <div className="setup-panel">
-              <h2 className="section-title">Join room</h2>
-              <label className="text-light w-100">
-                Invite code
-                <input
-                  className="form-control mt-1"
-                  value={joinCode}
-                  onChange={(event) => setJoinCode(event.target.value)}
-                />
-              </label>
-              <label className="text-light w-100 mt-2">
-                Your name
-                <input
-                  className="form-control mt-1"
-                  value={joinName}
-                  onChange={(event) => setJoinName(event.target.value)}
-                />
-              </label>
-              <button className="btn btn-success mt-2" onClick={joinGame} type="button">
-                Join room
-              </button>
-            </div>
-          </div>
-
-          <div className="meta-text mt-3">{metaText}</div>
-          {statusText ? <div className="status-text">{statusText}</div> : null}
-          {errorText ? <div className="error-text">{errorText}</div> : null}
-        </div>
-      </section>
-
-      {state && viewer ? (
-        <div className="row g-3">
-          <div className="col-12">
-            <section className="card border-0 bg-panel">
-              <div className="card-body">
-                <div className="d-flex flex-wrap gap-2 align-items-center justify-content-between">
-                  <div>
-                    <div className="section-title mb-1">Game status</div>
-                    <div className="turn-banner">
-                      {isWaitingForOpponent
-                        ? `Waiting for second player. Share code ${state.invite_code}.`
-                        : state.pending_mindbug
-                          ? state.pending_mindbug.response_required_from_viewer
-                            ? `Respond to ${state.pending_mindbug.acting_player_name}'s ${state.pending_mindbug.card_label}.`
-                            : `Waiting for ${state.pending_mindbug.responding_player_name} to answer the Mindbug prompt.`
-                          : state.pending_defense
-                            ? state.pending_defense.response_required_from_viewer
-                              ? `Defend against ${state.pending_defense.attacking_player_name}'s ${state.pending_defense.attacker_label}.`
-                              : `Waiting for ${state.pending_defense.defending_player_name} to choose a blocker or lose 1 life.`
-                          : state.pending_card_action
-                            ? state.pending_card_action.response_required_from_viewer
-                              ? `Resolve ${state.pending_card_action.source_card_label}.`
-                              : `Waiting for ${state.pending_card_action.responding_player_name} to resolve ${state.pending_card_action.source_card_label}.`
-                          : state.is_viewer_turn
-                            ? "Your turn."
-                            : `Waiting for ${state.turn_player}.`}
-                    </div>
-                    <div className="set-summary mt-2">
-                      {state.selected_sets.map((cardSet) => (
-                        <span className="chip" key={cardSet}>
-                          {cardSet}
-                        </span>
-                      ))}
-                    </div>
+      <div className="row g-3">
+        <div className="col-12">
+          <section className="card border-0 bg-panel">
+            <div className="card-body">
+              <div className="d-flex flex-wrap gap-2 align-items-center justify-content-between">
+                <div>
+                  <div className="section-title mb-1">Game status</div>
+                  <div className="turn-banner">
+                    {isWaitingForOpponent
+                      ? `Waiting for second player. Share code ${state!.invite_code}.`
+                      : state!.pending_mindbug
+                        ? state!.pending_mindbug.response_required_from_viewer
+                          ? `Respond to ${state!.pending_mindbug.acting_player_name}'s ${state!.pending_mindbug.card_label}.`
+                          : `Waiting for ${state!.pending_mindbug.responding_player_name} to answer the Mindbug prompt.`
+                        : state!.pending_defense
+                          ? state!.pending_defense.response_required_from_viewer
+                            ? `Defend against ${state!.pending_defense.attacking_player_name}'s ${state!.pending_defense.attacker_label}.`
+                            : `Waiting for ${state!.pending_defense.defending_player_name} to choose a blocker or lose 1 life.`
+                          : state!.pending_card_action
+                            ? state!.pending_card_action.response_required_from_viewer
+                              ? `Resolve ${state!.pending_card_action.source_card_label}.`
+                              : `Waiting for ${state!.pending_card_action.responding_player_name} to resolve ${state!.pending_card_action.source_card_label}.`
+                            : state!.is_viewer_turn
+                              ? "Your turn."
+                              : `Waiting for ${state!.turn_player}.`}
                   </div>
-                  {state.pending_defense?.response_required_from_viewer ? (
-                    <div className="d-flex gap-2">
+                  <div className="set-summary mt-2">
+                    {state!.selected_sets.map((cardSet) => (
+                      <span className="chip" key={cardSet}>
+                        {cardSet}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <div className="d-flex flex-wrap gap-2 align-items-center">
+                  {state!.pending_defense?.response_required_from_viewer ? (
+                    <>
                       <button className="btn btn-outline-light" onClick={() => void defendWithSelectedBlocker()} type="button">
                         Block with selected creature
                       </button>
                       <button className="btn btn-warning" onClick={() => void takeLifeLoss()} type="button">
                         Lose 1 life
                       </button>
-                    </div>
+                    </>
                   ) : null}
+                  <button className="btn btn-outline-secondary btn-sm" onClick={() => void refreshState()} type="button">
+                    Refresh
+                  </button>
+                  <button className="btn btn-outline-danger btn-sm" onClick={leaveSession} type="button">
+                    Leave
+                  </button>
                 </div>
               </div>
-            </section>
-          </div>
+              {statusText ? <div className="status-text mt-2">{statusText}</div> : null}
+              {errorText ? <div className="error-text mt-2">{errorText}</div> : null}
+            </div>
+          </section>
+        </div>
 
-          {!isWaitingForOpponent ? (
+        {!isWaitingForOpponent && viewer ? (
+          <>
             <div className="col-12">
               <section className="card border-0 bg-panel">
                 <div className="card-body">
@@ -652,50 +673,44 @@ export function App() {
                 </div>
               </section>
             </div>
-          ) : null}
 
-          <div className="col-12">
-            <BoardZone
-              title={opponent?.name || state.opponent_player_name || "Opponent"}
-              player={opponent || { player_index: 1, name: state.opponent_player_name || "Opponent", lives: 0, mindbugs_remaining: 0, hand_count: 0, draw_count: 0, discard_count: 0, battlefield: [], discard: [], hand: [] }}
-              battlefieldMode={canAnswerDefense || hasBlockingChoiceModal ? "readonly" : "defender"}
-              selectedBattlefieldIndex={canAnswerDefense && !hasBlockingChoiceModal ? selectedDefenderIndex : null}
-              onSelectBattlefield={canAnswerDefense || hasBlockingChoiceModal ? undefined : (index) => toggleSelected("defender", index)}
-              onPreview={(label) => setPreviewCardLabel(label)}
-            />
-          </div>
-          <div className="col-12">
-            <BoardZone
-              title={`${viewer.name}${state.is_viewer_turn ? " (your turn)" : ""}`}
-              player={viewer}
-              active={state.is_viewer_turn}
-              battlefieldMode={hasBlockingChoiceModal ? "readonly" : canAnswerDefense ? "defender" : "attacker"}
-              selectedBattlefieldIndex={hasBlockingChoiceModal ? null : canAnswerDefense ? selectedDefenderIndex : selectedAttackerIndex}
-              onSelectBattlefield={hasBlockingChoiceModal ? undefined : (index) => toggleSelected(canAnswerDefense ? "defender" : "attacker", index)}
-              onPreview={(label) => setPreviewCardLabel(label)}
-            />
-          </div>
-          <div className="col-12">
-            <section className="card border-0 bg-panel">
-              <div className="card-body">
-                <HandPanel
-                  cards={hand}
-                  selectedIndex={hasBlockingChoiceModal ? null : selectedHandIndex}
-                  selectable={!hasBlockingChoiceModal}
-                  onSelect={(index) => toggleSelected("hand", index)}
-                  onPreview={(label) => setPreviewCardLabel(label)}
-                />
-              </div>
-            </section>
-          </div>
-        </div>
-      ) : (
-        <section className="card border-0 bg-panel">
-          <div className="card-body">
-            <div className="placeholder">Create a room or join with an invite code to start multiplayer.</div>
-          </div>
-        </section>
-      )}
+            <div className="col-12">
+              <BoardZone
+                title={opponent?.name || state!.opponent_player_name || "Opponent"}
+                player={opponent || { player_index: 1, name: state!.opponent_player_name || "Opponent", lives: 0, mindbugs_remaining: 0, hand_count: 0, draw_count: 0, discard_count: 0, battlefield: [], discard: [], hand: [] }}
+                battlefieldMode={canAnswerDefense || hasBlockingChoiceModal ? "readonly" : "defender"}
+                selectedBattlefieldIndex={canAnswerDefense && !hasBlockingChoiceModal ? selectedDefenderIndex : null}
+                onSelectBattlefield={canAnswerDefense || hasBlockingChoiceModal ? undefined : (index) => toggleSelected("defender", index)}
+                onPreview={(label) => setPreviewCardLabel(label)}
+              />
+            </div>
+            <div className="col-12">
+              <BoardZone
+                title={`${viewer.name}${state!.is_viewer_turn ? " (your turn)" : ""}`}
+                player={viewer}
+                active={state!.is_viewer_turn}
+                battlefieldMode={hasBlockingChoiceModal ? "readonly" : canAnswerDefense ? "defender" : "attacker"}
+                selectedBattlefieldIndex={hasBlockingChoiceModal ? null : canAnswerDefense ? selectedDefenderIndex : selectedAttackerIndex}
+                onSelectBattlefield={hasBlockingChoiceModal ? undefined : (index) => toggleSelected(canAnswerDefense ? "defender" : "attacker", index)}
+                onPreview={(label) => setPreviewCardLabel(label)}
+              />
+            </div>
+            <div className="col-12">
+              <section className="card border-0 bg-panel">
+                <div className="card-body">
+                  <HandPanel
+                    cards={hand}
+                    selectedIndex={hasBlockingChoiceModal ? null : selectedHandIndex}
+                    selectable={!hasBlockingChoiceModal}
+                    onSelect={(index) => toggleSelected("hand", index)}
+                    onPreview={(label) => setPreviewCardLabel(label)}
+                  />
+                </div>
+              </section>
+            </div>
+          </>
+        ) : null}
+      </div>
 
       <GameLog logLines={state?.log || []} />
 
@@ -735,12 +750,6 @@ export function App() {
         />
       ) : null}
       <CardPreviewModal label={previewCardLabel} onClose={() => setPreviewCardLabel(null)} />
-      <GameOverModal
-        visible={showGameOver && Boolean(gameOver)}
-        winner={state?.winner || ""}
-        onNewGame={createGame}
-        onClose={() => setShowGameOver(false)}
-      />
     </main>
   );
 }
