@@ -214,3 +214,31 @@ def test_attack_the_lurker_gains_sneaky_when_owner_controls_more_creatures() -> 
     game.attack(attacker_index=0)
 
     assert CardSpecialType.SNEAKY in lurker.special_types
+
+
+def test_shark_dog_attack_action_choice_resolves_without_error_when_pending_defense_also_exists() -> None:
+    game = Game(
+        player_names=["Player 1", "Player 2"],
+        starting_draw_pile_size=0,
+        auto_end_turn_after_resolved_attack=True,
+    )
+    game.start_game(card_pool=[])
+    player = game.current_player
+    opponent = game.opponent
+
+    strong_enemy_1 = Luchataur()
+    strong_enemy_2 = Majestic_manticore()
+    player.cards_laid_out = [Shark_dog()]
+    # Two strong enemies (both ≥6) so auto-selection is not triggered.
+    opponent.cards_laid_out = [strong_enemy_1, strong_enemy_2]
+
+    # Shark Dog ATTACK action creates a pending choice AND a pending defense simultaneously.
+    # With auto_end_turn_after_resolved_attack=True, resolving the choice used to call
+    # end_turn() while _pending_defense_decision was still set, raising a ValueError.
+    game.attack(attacker_index=0)
+    game.resolve_pending_card_action([0])  # destroy strong_enemy_1
+
+    # Pending defense should still be set (not auto-ended).
+    assert game._pending_defense_decision is not None
+    assert strong_enemy_1 in opponent.discard_pile
+    game.defend(defender_index=None)  # direct attack

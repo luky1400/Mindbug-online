@@ -226,6 +226,39 @@ def test_mindbug_stolen_ferret_bomber_original_player_retains_turn_after_choice_
     assert card_to_keep in player.hand
 
 
+def test_mindbug_stolen_compost_dragon_original_player_retains_turn_after_choice_resolves() -> None:
+    game = Game(
+        player_names=["Player 1", "Player 2"],
+        starting_draw_pile_size=0,
+        await_mindbug_response=True,
+        enforce_turn_action_limit=True,
+        auto_end_turn_after_successful_play=True,
+    )
+    game.start_game(card_pool=[])
+
+    player = game.current_player
+    opponent = game.opponent
+
+    card_from_discard = Axolotl_healer()
+    other_discard_card = Tiger_squirrel()
+    player.hand = [Compost_dragon()]
+    player.cards_laid_out = [Luchataur()]  # Keep game active while choice is pending.
+    opponent.hand = [Chameleon_sniper()]
+    # Two cards in discard so auto-selection is not triggered (eligible count 2 > required 1).
+    opponent.discard_pile = [card_from_discard, other_discard_card]
+
+    game.play_card(hand_index=0)
+    game.respond_to_mindbug(True)
+
+    # Compost Dragon's PLAY action: opponent (who stole it) selects from their discard.
+    game.resolve_pending_card_action([0])
+
+    # Mindbug steal does not consume the original player's turn.
+    assert game.current_player is player
+    assert game._turn_action_taken is False
+    assert card_from_discard in opponent.cards_laid_out
+
+
 def test_stolen_compost_dragon_resurrected_card_cannot_be_mindbugged_again() -> None:
     game = Game(
         player_names=["Player 1", "Player 2"],

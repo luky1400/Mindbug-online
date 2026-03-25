@@ -224,7 +224,7 @@ class Game:
 
     ):
         if len(player_names) != 2:
-            raise ValueError("Mindbug supports exactly 2 players.")
+            raise ValueError("Mindbug game supports exactly 2 players.")
         self.players: list[Player] = [Player(name=n) for n in player_names]
         self.turn: int = 0
         self.game_state: GameState = GameState.START_TURN
@@ -641,8 +641,13 @@ class Game:
             self.log.append(f"{owner.name}'s Compost Dragon has no card to play from the discard pile.")
             return
         card = owner.discard_pile.pop(selected_indices[0])
-        self.play_card(card=card)
         self.log.append(f"{owner.name} plays {card.name} from their discard pile.")
+        is_mindbug_stolen = not pending.auto_end_after_play
+        self._finalize_played_card(
+            owner_index=pending.responding_player_index,
+            card=card,
+            consume_turn_action=not is_mindbug_stolen,
+        )
 
     def _apply_ferret_bomber_choice(
         self, pending: PendingCardActionChoice, selected_indices: list[int]
@@ -697,8 +702,13 @@ class Game:
         owner = self.players[pending.responding_player_index]
         opponent = self.players[pending.selection_owner_index]
         card = opponent.discard_pile.pop(selected_indices[0])
-        self.play_card(card=card)
         self.log.append(f"{owner.name} plays {card.name} from {opponent.name}'s discard pile.")
+        is_mindbug_stolen = not pending.auto_end_after_play
+        self._finalize_played_card(
+            owner_index=pending.responding_player_index,
+            card=card,
+            consume_turn_action=not is_mindbug_stolen,
+        )
 
     def _apply_harpy_mother_choice(
         self, pending: PendingCardActionChoice, selected_indices: list[int]
@@ -877,6 +887,7 @@ class Game:
             eligible_indices=eligible_indices,
             min_choices=1,
             max_choices=1,
+            auto_end_after_play=True,
         )
 
     def resolve_ferret_bomber_action(self, source_card: Card) -> None:
@@ -1525,6 +1536,8 @@ class Game:
         if self.game_state == GameState.GAME_OVER:
             return
         if self._pending_card_action_choice is not None:
+            return
+        if self._pending_defense_decision is not None:
             return
         if self._pending_frenzy_attacker_id is not None:
             return
