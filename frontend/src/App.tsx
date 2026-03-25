@@ -20,7 +20,6 @@ const SESSION_STORAGE_KEY = "mindbug-multiplayer-session";
 export function App() {
   const socketRef = useRef<Socket | null>(null);
   const [gameId, setGameId] = useState<string | null>(null);
-  const [playerId, setPlayerId] = useState<string | null>(null);
   const [state, setState] = useState<MultiplayerState | null>(null);
   const [hostName, setHostName] = useState("Player 1");
   const [joinName, setJoinName] = useState("Player 2");
@@ -213,7 +212,6 @@ export function App() {
 
   function activateSession(nextGameId: string, nextPlayerId: string, nextState: MultiplayerState) {
     setGameId(nextGameId);
-    setPlayerId(nextPlayerId);
     setJoinCode(nextGameId);
     clearSelections();
     applyState(nextState);
@@ -298,17 +296,6 @@ export function App() {
       });
       activateSession(response.game_id, response.player_id, response.state);
       setStatusText(`Joined room ${response.game_id}.`);
-    } catch (error) {
-      setErrorText((error as Error).message);
-    }
-  }
-
-  async function refreshState() {
-    if (!gameId || !playerId) return;
-    setErrorText("");
-    try {
-      const response = await gameApi.getState(gameId, playerId);
-      applyState(response.state);
     } catch (error) {
       setErrorText((error as Error).message);
     }
@@ -442,7 +429,6 @@ export function App() {
     socketRef.current = null;
     clearPersistedSession();
     setGameId(null);
-    setPlayerId(null);
     setState(null);
     clearSelections();
     setStatusText("");
@@ -573,9 +559,14 @@ export function App() {
             {errorText ? <div className="error-text mt-3">{errorText}</div> : null}
           </div>
         </section>
-        <button className="log-icon-btn" onClick={() => setShowLog(true)} title="Game logs" type="button">
-          🗒
-        </button>
+        <div className="top-icon-btns">
+          <button className="log-icon-btn" onClick={() => setShowLog(true)} title="Game log" type="button">
+            🗒
+          </button>
+          <button className="leave-icon-btn" onClick={leaveSession} title="Leave game" type="button">
+            🚪
+          </button>
+        </div>
         {showLog ? <GameLog logLines={state?.log || []} onClose={() => setShowLog(false)} /> : null}
       </main>
     );
@@ -618,24 +609,16 @@ export function App() {
                     ))}
                   </div>
                 </div>
-                <div className="d-flex flex-wrap gap-2 align-items-center">
-                  {state!.pending_defense?.response_required_from_viewer ? (
-                    <>
-                      <button className="btn btn-outline-light" onClick={() => void defendWithSelectedBlocker()} type="button">
-                        Block with selected creature
-                      </button>
-                      <button className="btn btn-warning" onClick={() => void takeLifeLoss()} type="button">
-                        Lose 1 life
-                      </button>
-                    </>
-                  ) : null}
-                  <button className="btn btn-outline-secondary btn-sm" onClick={() => void refreshState()} type="button">
-                    Refresh
-                  </button>
-                  <button className="btn btn-outline-danger btn-sm" onClick={leaveSession} type="button">
-                    Leave
-                  </button>
-                </div>
+                {state!.pending_defense?.response_required_from_viewer ? (
+                  <div className="d-flex flex-wrap gap-2 align-items-center">
+                    <button className="btn btn-outline-light" onClick={() => void defendWithSelectedBlocker()} type="button">
+                      Block with selected creature
+                    </button>
+                    <button className="btn btn-warning" onClick={() => void takeLifeLoss()} type="button">
+                      Lose 1 life
+                    </button>
+                  </div>
+                ) : null}
               </div>
               {statusText ? <div className="status-text mt-2">{statusText}</div> : null}
               {errorText ? <div className="error-text mt-2">{errorText}</div> : null}
@@ -753,9 +736,14 @@ export function App() {
         />
       ) : null}
       <CardPreviewModal label={previewCardLabel} onClose={() => setPreviewCardLabel(null)} />
-      <button className="log-icon-btn" onClick={() => setShowLog(true)} title="Game logs" type="button">
-        🗒
-      </button>
+      <div className="top-icon-btns">
+        <button className="log-icon-btn" onClick={() => setShowLog(true)} title="Game log" type="button">
+          🗒
+        </button>
+        <button className="leave-icon-btn" onClick={leaveSession} title="Leave game" type="button">
+          🚪
+        </button>
+      </div>
       {showLog ? <GameLog logLines={state?.log || []} onClose={() => setShowLog(false)} /> : null}
     </main>
   );
