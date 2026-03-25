@@ -142,6 +142,41 @@ body {
   font-size: 0.88rem;
 }
 
+.info-icon-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.info-icon {
+  cursor: help;
+  font-size: 1rem;
+  color: var(--muted);
+  line-height: 1;
+  user-select: none;
+}
+
+.info-tooltip-popup {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 220px;
+  background: #0e1a30;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 0.82rem;
+  color: var(--text);
+  z-index: 100;
+  pointer-events: none;
+}
+
+.info-icon-wrapper:hover .info-tooltip-popup {
+  display: block;
+}
+
 .selection-box {
   border: 1px solid var(--border);
   border-radius: 8px;

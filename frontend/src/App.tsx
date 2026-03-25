@@ -651,12 +651,17 @@ export function App() {
                       </button>
                     </div>
                     <div className="col-md-4">
-                      <button className="btn btn-outline-light w-100" disabled={!canAct} onClick={() => void attackSelected()} type="button">
-                        Attack with selected board card
-                      </button>
-                      <p className="section-help mt-2 mb-0">
-                          When your attacker has <span className="chip">HUNTER</span>, you can select a target.
-                      </p>
+                      <div className="d-flex gap-2 align-items-center">
+                        <button className="btn btn-outline-light flex-grow-1" disabled={!canAct} onClick={() => void attackSelected()} type="button">
+                          Attack with selected board card
+                        </button>
+                        <div className="info-icon-wrapper">
+                          <span className="info-icon">ⓘ</span>
+                          <div className="info-tooltip-popup">
+                            When your attacker has <span className="chip">HUNTER</span>, you can select a target.
+                          </div>
+                        </div>
+                      </div>
                     </div>
                     <div className="col-md-4">
                       {canManuallyEndTurn ? (
