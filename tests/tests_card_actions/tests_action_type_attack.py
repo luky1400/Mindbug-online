@@ -173,9 +173,10 @@ def test_attack_shark_dog_defeats_enemy_with_power_6_or_more() -> None:
     player.cards_laid_out = [Shark_dog()]
     opponent.cards_laid_out = [weak_enemy, strong_enemy_1, strong_enemy_2]
 
-    # Eligible list is [strong_enemy_1, strong_enemy_2], pick index 1.
-    with patch("cards.randint", return_value=1):
-        _attack_and_defend(game, attacker_index=0, defender_index=0)
+    # Eligible indices are [1, 2] (strong_enemy_1 and strong_enemy_2); choose index 2 (strong_enemy_2).
+    game.attack(attacker_index=0)
+    game.resolve_pending_card_action([2])
+    game.defend(defender_index=0)
 
     assert strong_enemy_2 in opponent.discard_pile
     assert strong_enemy_2 not in opponent.cards_laid_out

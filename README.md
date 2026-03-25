@@ -104,7 +104,7 @@ PYTHONPATH=. pytest tests/tests_mindbug_use.py
 ## TODO
 
 - finish backend to work well
-  - handle that player or opponent can choose which cards to play or discard - do for all (First Contact) cards
+  - handle that player or opponent can choose which cards to play or discard - do for all cards
   - add tests regularly for things that are not working
 - **Improve UI layout**
   - make Game UI to fit one screen size - user cannot roll up and down
@@ -149,7 +149,7 @@ V případě shody tento proces opakujte."
 
 ## Bugs
 
-- After current player used Ferret and opponent used Mindbug to steal it and triggered PLAY action, current player had to choose 2 cards to discard, current player should have played again, but opponent was on turn. This is wrong.
+- **After current player used Ferret and opponent used Mindbug to steal it and triggered PLAY action, current player had to choose 2 cards to discard, current player should have played again, but opponent was on turn. This is wrong.**
 - Opponents cards laid out can be selected for target attack but they have no blue border when selected.
 
 ## Documentation notes

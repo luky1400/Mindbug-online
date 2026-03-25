@@ -405,19 +405,7 @@ class Grave_robber(Card):
     set: CardSet = CardSet.FIRST_CONTACT
 
     def trigger_action(self, game: Game) -> None:
-        if len(game.opponent.discard_pile) == 0:
-            game.log.append(
-                f"{game.current_player.name}'s {game.current_player.cards_laid_out[0].name} does not play a card from {game.opponent.name}'s discard pile because they have no cards in their discard pile."
-            )
-            return
-        # TODO - implement player card choice, instead of random
-        card = game.opponent.discard_pile.pop(
-            randint(0, len(game.opponent.discard_pile) - 1)
-        )
-        game.play_card(card=card)
-        game.log.append(
-            f"{game.current_player.name} plays {card.name} from {game.opponent.name}'s discard pile."
-        )
+        game.resolve_grave_robber_action(self)
 
 
 class Hamster_lion(Card):
@@ -443,21 +431,7 @@ class Harpy_mother(Card):
     set: CardSet = CardSet.FIRST_CONTACT
 
     def trigger_action(self, game: Game) -> None:
-        # Find all enemy creatures with power 5 or less
-        eligible = [card for card in game.opponent.cards_laid_out if card.strength <= 5]
-        # Take control of up to 2 enemy creatures with power 5 or less
-        if len(eligible) > 0:
-            # TODO - implement player card choice, instead of random
-            for card in random.sample(eligible, min(2, len(eligible))):
-                game.opponent.cards_laid_out.remove(card)
-                game.current_player.cards_laid_out.append(card)
-                game.log.append(
-                    f"{game.current_player.name}'s {game.current_player.cards_laid_out[0].name} takes control of {card.name}."
-                )
-        else:
-            game.log.append(
-                f"{game.current_player.name}'s {game.current_player.cards_laid_out[0].name} does not take control of any enemy creatures with power 5 or less."
-            )
+        game.resolve_harpy_mother_action(self)
 
 
 class Hungry_hungry_hamster(Card):
@@ -703,21 +677,9 @@ class Shark_dog(Card):
     set: CardSet = CardSet.FIRST_CONTACT
 
     def trigger_action(self, game: Game) -> None:
-        eligible = [card for card in game.opponent.cards_laid_out if card.strength >= 6]
-        if not eligible:
-            game.log.append(
-                f"{game.current_player.name}'s {game.current_player.cards_laid_out[0].name} does not defeat a creature."
-            )
-            return
-        # TODO - implement player card choice, instead of random
-        card_to_defeat = eligible[randint(0, len(eligible) - 1)]
-        game._destroy_creature(game.opponent, card_to_defeat)
-        game.log.append(
-            f"{game.current_player.name}'s {game.current_player.cards_laid_out[0].name} defeats {card_to_defeat.name} with power 6 or more."
-        )
+        game.resolve_shark_dog_action(self)
 
 
-# NOTE - hard one
 class Sharky_crab_dog_mummypus(Card):
     name: str = "Sharky Crab Dog Mummypus"
     strength: int = 5
@@ -762,15 +724,7 @@ class Short_neck_giraffodile(Card):
     set: CardSet = CardSet.FIRST_CONTACT
 
     def trigger_action(self, game: Game) -> None:
-        for _ in range(2):
-            # TODO - implement player card choice, instead of random
-            card = game.current_player.discard_pile.pop(
-                randint(0, len(game.current_player.discard_pile) - 1)
-            )
-            game.current_player.hand.append(card)
-        game.log.append(
-            f"{game.current_player.name} draws 2 cards from their discard pile."
-        )
+        game.resolve_short_neck_giraffodile_action(self)
 
 
 class Snail_hydra(Card):
@@ -785,14 +739,7 @@ class Snail_hydra(Card):
 
     def trigger_action(self, game: Game) -> None:
         if len(game.current_player.cards_laid_out) < len(game.opponent.cards_laid_out):
-            # TODO - implement player card choice, instead of random
-            card = game.opponent.cards_laid_out[
-                randint(0, len(game.opponent.cards_laid_out) - 1)
-            ]
-            game._destroy_creature(game.opponent, card)
-            game.log.append(
-                f"{game.current_player.name}'s {self.name} defeats {card.name}."
-            )
+            game.resolve_snail_hydra_action(self)
         else:
             game.log.append(
                 f"{game.current_player.name}'s {self.name} does not defeat a creature."
@@ -920,21 +867,7 @@ class Tiger_squirrel(Card):
     set: CardSet = CardSet.FIRST_CONTACT
 
     def trigger_action(self, game: Game) -> None:
-        # Find all eligible enemy creatures (power 7 or more)
-        eligible = [card for card in game.opponent.cards_laid_out if card.strength >= 7]
-        if not eligible:
-            game.log.append(
-                f"{game.current_player.name}'s {game.current_player.cards_laid_out[0].name} does not defeat a creature."
-            )
-            return
-
-        # TODO: Replace this placeholder with actual player selection logic
-        # For now, defeat the first eligible creature (simulate player choice)
-        card_to_defeat = eligible[0]
-        game._destroy_creature(game.opponent, card_to_defeat)
-        game.log.append(
-            f"{game.current_player.name}'s {game.current_player.cards_laid_out[0].name} defeats {card_to_defeat.name}."
-        )
+        game.resolve_tiger_squirrel_action(self)
 
 
 class Turbo_bug(Card):
@@ -985,11 +918,7 @@ class Tusked_extorter(Card):
     set: CardSet = CardSet.FIRST_CONTACT
 
     def trigger_action(self, game: Game) -> None:
-        card = game.opponent.hand.pop(randint(0, len(game.opponent.hand) - 1))
-        game.opponent.move_to_discard(card)
-        game.log.append(
-            f"{game.current_player.name}'s {game.current_player.cards_laid_out[0].name} attacks {game.opponent.name} and makes them discard {card.name}."
-        )
+        game.resolve_tusked_extorter_action(self)
 
 
 class Unigon(Card):

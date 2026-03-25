@@ -83,9 +83,12 @@ def test_defeated_harpy_mother_takes_control_of_up_to_2_weak_enemy_creatures() -
     strong_enemy = Luchataur()
 
     player.cards_laid_out = [harpy_mother]
+    player.hand = [Chameleon_sniper()]  # Keep game active while choice is pending.
     opponent.cards_laid_out = [weak_enemy_1, weak_enemy_2, strong_enemy]
 
     _attack_and_defend(game, attacker_index=0, defender_index=2)
+    # Eligible indices are [0, 1] (weak_enemy_1 and weak_enemy_2); choose both.
+    game.resolve_pending_card_action([0, 1])
 
     assert harpy_mother in player.discard_pile
     assert weak_enemy_1 in player.cards_laid_out
@@ -154,9 +157,12 @@ def test_defeated_harpy_mother_takes_control_of_2_tough_enemy_creatures_without_
     strong_enemy = Luchataur()
 
     player.cards_laid_out = [harpy_mother]
+    player.hand = [Chameleon_sniper()]  # Keep game active while choice is pending.
     opponent.cards_laid_out = [tough_enemy_with_zero, tough_enemy_with_one, strong_enemy]
 
     _attack_and_defend(game, attacker_index=0, defender_index=2)
+    # Eligible indices are [0, 1] (tough_enemy_with_zero and tough_enemy_with_one); choose both.
+    game.resolve_pending_card_action([0, 1])
 
     assert harpy_mother in player.discard_pile
     assert tough_enemy_with_zero in player.cards_laid_out
@@ -182,10 +188,10 @@ def test_snail_hydra_attacks_and_by_action_attack_destroys_explosive_toad_and_ex
     # 1 < 2 so Snail Hydra ATTACK action is active.
     opponent.cards_laid_out = [weak_enemy, explosive_toad]
 
-    # First random pick: Snail Hydra ATTACK action destroys Explosive Toad (index 1).
-    # Second random pick: Explosive Toad DEFEATED action destroys Snail Hydra (index 0).
-    with patch("cards.randint", side_effect=[1, 0]):
-        game.attack(attacker_index=0)
+    game.attack(attacker_index=0)
+    # Snail Hydra's ATTACK action: eligible [0, 1]; select explosive_toad (index 1).
+    # Explosive Toad's DEFEATED action auto-selects Snail Hydra (only target), cancelling the pending attack.
+    game.resolve_pending_card_action([1])
 
     assert snail_hydra in player.discard_pile
     assert explosive_toad in opponent.discard_pile

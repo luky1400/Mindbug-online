@@ -522,6 +522,20 @@ class Game:
             return f"Waiting for {responder_name} to choose cards to discard for Ferret Bomber."
         if pending.action_key == "explosive_toad":
             return f"Waiting for {responder_name} to choose a creature to defeat with Explosive Toad."
+        if pending.action_key == "short_neck_giraffodile":
+            return f"Waiting for {responder_name} to choose 2 cards to draw from their discard pile."
+        if pending.action_key == "snail_hydra":
+            return f"Waiting for {responder_name} to choose a creature to defeat with Snail Hydra."
+        if pending.action_key == "grave_robber":
+            return f"Waiting for {responder_name} to choose a card to play from the opponent's discard pile."
+        if pending.action_key == "harpy_mother":
+            return f"Waiting for {responder_name} to choose enemy creatures to take control of with Harpy Mother."
+        if pending.action_key == "shark_dog":
+            return f"Waiting for {responder_name} to choose a creature with power 6 or more to defeat with Shark Dog."
+        if pending.action_key == "tiger_squirrel":
+            return f"Waiting for {responder_name} to choose a creature with power 7 or more to defeat with Tiger Squirrel."
+        if pending.action_key == "tusked_extorter":
+            return f"Waiting for {responder_name} to choose a card to discard for Tusked Extorter."
         return f"Waiting for {responder_name} to resolve a card action choice."
 
     def resolve_pending_card_action(self, selected_indices: list[int]) -> None:
@@ -549,6 +563,20 @@ class Game:
             self._apply_ferret_bomber_choice(pending, selected_indices)
         elif pending.action_key == "explosive_toad":
             self._apply_explosive_toad_choice(pending, selected_indices)
+        elif pending.action_key == "short_neck_giraffodile":
+            self._apply_short_neck_giraffodile_choice(pending, selected_indices)
+        elif pending.action_key == "snail_hydra":
+            self._apply_snail_hydra_choice(pending, selected_indices)
+        elif pending.action_key == "grave_robber":
+            self._apply_grave_robber_choice(pending, selected_indices)
+        elif pending.action_key == "harpy_mother":
+            self._apply_harpy_mother_choice(pending, selected_indices)
+        elif pending.action_key == "shark_dog":
+            self._apply_shark_dog_choice(pending, selected_indices)
+        elif pending.action_key == "tiger_squirrel":
+            self._apply_tiger_squirrel_choice(pending, selected_indices)
+        elif pending.action_key == "tusked_extorter":
+            self._apply_tusked_extorter_choice(pending, selected_indices)
         else:
             raise ValueError("Unsupported pending card action choice.")
 
@@ -561,6 +589,17 @@ class Game:
                 self._auto_end_turn_after_play_if_needed()
             if pending.auto_end_after_attack:
                 self._auto_end_turn_after_attack_if_needed()
+            if self._pending_defense_decision is not None:
+                attacker = self._pending_defense_decision.attacker
+                attacker_player = self.players[self._pending_defense_decision.attacking_player_index]
+                if attacker not in attacker_player.cards_laid_out:
+                    self.log.append(
+                        f"{attacker_player.name}'s {attacker.name} is no longer on the battlefield. Attack is cancelled."
+                    )
+                    self._pending_defense_decision = None
+                    self.game_state = GameState.ACTIVE
+                    self._turn_action_taken = True
+                    self._auto_end_turn_after_attack_if_needed()
 
     def _validate_pending_card_action_selection(
         self, pending: PendingCardActionChoice, selected_indices: list[int]
@@ -613,6 +652,7 @@ class Game:
         for card in discarded_cards:
             responder.hand.remove(card)
             responder.move_to_discard(card)
+        # NOTE - Is this needed? Players should always draw anyway.
         responder.draw(len(discarded_cards))
         source_owner = self.players[1 - pending.responding_player_index]
         self.log.append(
@@ -630,6 +670,80 @@ class Game:
         defeated_creature = enemy.cards_laid_out[selected_indices[0]]
         self._destroy_creature(enemy, defeated_creature)
         self.log.append(f"{owner.name}'s Explosive Toad defeats {defeated_creature.name}.")
+
+    def _apply_short_neck_giraffodile_choice(
+        self, pending: PendingCardActionChoice, selected_indices: list[int]
+    ) -> None:
+        owner = self.players[pending.responding_player_index]
+        if not selected_indices:
+            self.log.append(f"{owner.name}'s Short Neck Giraffodile has no card to play from the discard pile.")
+            return
+        drawn_cards = [owner.discard_pile.pop(index) for index in sorted(selected_indices, reverse=True)]
+        owner.hand.extend(drawn_cards)
+        self.log.append(f"{owner.name} draws {len(drawn_cards)} cards from their discard pile.")
+
+    def _apply_snail_hydra_choice(
+        self, pending: PendingCardActionChoice, selected_indices: list[int]
+    ) -> None:
+        enemy = self.players[pending.selection_owner_index]
+        source_owner = self.players[1 - pending.selection_owner_index]
+        defeated_creature = enemy.cards_laid_out[selected_indices[0]]
+        self._destroy_creature(enemy, defeated_creature)
+        self.log.append(f"{source_owner.name}'s Snail Hydra defeats {defeated_creature.name}.")
+
+    def _apply_grave_robber_choice(
+        self, pending: PendingCardActionChoice, selected_indices: list[int]
+    ) -> None:
+        owner = self.players[pending.responding_player_index]
+        opponent = self.players[pending.selection_owner_index]
+        card = opponent.discard_pile.pop(selected_indices[0])
+        self.play_card(card=card)
+        self.log.append(f"{owner.name} plays {card.name} from {opponent.name}'s discard pile.")
+
+    def _apply_harpy_mother_choice(
+        self, pending: PendingCardActionChoice, selected_indices: list[int]
+    ) -> None:
+        owner = self.players[pending.responding_player_index]
+        enemy = self.players[pending.selection_owner_index]
+        stolen_creatures = [enemy.cards_laid_out[i] for i in selected_indices]
+        for creature in stolen_creatures:
+            enemy.cards_laid_out.remove(creature)
+            owner.cards_laid_out.append(creature)
+            self.log.append(f"{owner.name}'s Harpy Mother takes control of {creature.name}.")
+
+    def _apply_shark_dog_choice(
+        self, pending: PendingCardActionChoice, selected_indices: list[int]
+    ) -> None:
+        owner = self.players[pending.responding_player_index]
+        enemy = self.players[pending.selection_owner_index]
+        defeated_creature = enemy.cards_laid_out[selected_indices[0]]
+        self._destroy_creature(enemy, defeated_creature)
+        self.log.append(
+            f"{owner.name}'s Shark Dog defeats {defeated_creature.name} with power 6 or more."
+        )
+
+    def _apply_tiger_squirrel_choice(
+        self, pending: PendingCardActionChoice, selected_indices: list[int]
+    ) -> None:
+        owner = self.players[pending.responding_player_index]
+        enemy = self.players[pending.selection_owner_index]
+        defeated_creature = enemy.cards_laid_out[selected_indices[0]]
+        self._destroy_creature(enemy, defeated_creature)
+        self.log.append(
+            f"{owner.name}'s Tiger Squirrel defeats {defeated_creature.name} with power 7 or more."
+        )
+
+    def _apply_tusked_extorter_choice(
+        self, pending: PendingCardActionChoice, selected_indices: list[int]
+    ) -> None:
+        responder = self.players[pending.responding_player_index]
+        source_owner = self.players[1 - pending.responding_player_index]
+        card = responder.hand[selected_indices[0]]
+        responder.hand.remove(card)
+        responder.move_to_discard(card)
+        self.log.append(
+            f"{source_owner.name}'s Tusked Extorter attacks {responder.name} and makes them discard {card.name}."
+        )
 
     # TODO - do not put defender_index as argument to attack function, instead create defend function that takes attacker and defender and is used inside attack function
     def attack(
@@ -767,6 +881,11 @@ class Game:
 
     def resolve_ferret_bomber_action(self, source_card: Card) -> None:
         discard_count = min(2, len(self.opponent.hand))
+        if discard_count == 0:
+            self.log.append(
+                f"{self.opponent.name}'s Ferret Bomber does not make {self.current_player.name} discard because they have no cards in their hand."
+            )
+            return
         self._set_pending_card_action_choice(
             action_key="ferret_bomber",
             source_card=source_card,
@@ -805,6 +924,163 @@ class Game:
             selection_owner_index=enemy,
             selection_zone="battlefield",
             eligible_indices=list(range(len(self.players[enemy].cards_laid_out))),
+            min_choices=1,
+            max_choices=1,
+            draw_up_to_hand_limit_after_resolution=True,
+            auto_end_after_attack=True,
+        )
+
+    def resolve_short_neck_giraffodile_action(self, source_card: Card) -> None:
+        eligible_indices = list(range(len(self.current_player.discard_pile)))
+        if not eligible_indices:
+            self.log.append(
+                f"{self.current_player.name}'s Short Neck Giraffodile has no card to play from the discard pile."
+            )
+            return
+        self._set_pending_card_action_choice(
+            action_key="short_neck_giraffodile",
+            source_card=source_card,
+            responding_player_index=self.turn,
+            selection_owner_index=self.turn,
+            selection_zone="discard",
+            eligible_indices=eligible_indices,
+            min_choices=min(2, len(eligible_indices)),
+            max_choices=min(2, len(eligible_indices)),
+            auto_end_after_play=True,
+        )
+
+    def resolve_snail_hydra_action(self, source_card: Card) -> None:
+        eligible_indices = list(range(len(self.opponent.cards_laid_out)))
+        if not eligible_indices:
+            self.log.append(
+                f"{self.opponent.name}'s Snail Hydra has no creature to defeat."
+            )
+            return
+        self._set_pending_card_action_choice(
+            action_key="snail_hydra",
+            source_card=source_card,
+            responding_player_index=1 - self.turn,
+            selection_owner_index=1 - self.turn,
+            selection_zone="battlefield",
+            eligible_indices=eligible_indices,
+            min_choices=1,
+            max_choices=1,
+            draw_up_to_hand_limit_after_resolution=True,
+            auto_end_after_attack=True,
+        )
+
+    def resolve_grave_robber_action(self, source_card: Card) -> None:
+        eligible_indices = list(range(len(self.opponent.discard_pile)))
+        if not eligible_indices:
+            self.log.append(
+                f"{self.current_player.name}'s Grave Robber does not play a card from {self.opponent.name}'s discard pile because they have no cards in their discard pile."
+            )
+            return
+        self._set_pending_card_action_choice(
+            action_key="grave_robber",
+            source_card=source_card,
+            responding_player_index=self.turn,
+            selection_owner_index=1 - self.turn,
+            selection_zone="discard",
+            eligible_indices=eligible_indices,
+            min_choices=1,
+            max_choices=1,
+            auto_end_after_play=True,
+        )
+
+    def resolve_harpy_mother_action(self, source_card: Card) -> None:
+        owner = next(
+            (
+                player_index
+                for player_index, player in enumerate(self.players)
+                if source_card in player.cards_laid_out or source_card in player.discard_pile
+            ),
+            None,
+        )
+        if owner is None:
+            self.log.append(f"{source_card.name} cannot resolve DEFEATED action.")
+            return
+        enemy = 1 - owner
+        eligible_indices = [
+            i for i, card in enumerate(self.players[enemy].cards_laid_out)
+            if card.strength <= 5
+        ]
+        if not eligible_indices:
+            self.log.append(
+                f"{self.players[owner].name}'s Harpy Mother does not take control of any enemy creatures with power 5 or less."
+            )
+            return
+        max_choices = min(2, len(eligible_indices))
+        self._set_pending_card_action_choice(
+            action_key="harpy_mother",
+            source_card=source_card,
+            responding_player_index=owner,
+            selection_owner_index=enemy,
+            selection_zone="battlefield",
+            eligible_indices=eligible_indices,
+            min_choices=1,
+            max_choices=max_choices,
+        )
+
+    def resolve_shark_dog_action(self, source_card: Card) -> None:
+        eligible_indices = [
+            i for i, card in enumerate(self.opponent.cards_laid_out)
+            if card.strength >= 6
+        ]
+        if not eligible_indices:
+            self.log.append(
+                f"{self.current_player.name}'s Shark Dog does not defeat a creature."
+            )
+            return
+        self._set_pending_card_action_choice(
+            action_key="shark_dog",
+            source_card=source_card,
+            responding_player_index=self.turn,
+            selection_owner_index=1 - self.turn,
+            selection_zone="battlefield",
+            eligible_indices=eligible_indices,
+            min_choices=1,
+            max_choices=1,
+            draw_up_to_hand_limit_after_resolution=True,
+            auto_end_after_attack=True,
+        )
+
+    def resolve_tiger_squirrel_action(self, source_card: Card) -> None:
+        eligible_indices = [
+            i for i, card in enumerate(self.opponent.cards_laid_out)
+            if card.strength >= 7
+        ]
+        if not eligible_indices:
+            self.log.append(
+                f"{self.current_player.name}'s Tiger Squirrel does not defeat a creature."
+            )
+            return
+        self._set_pending_card_action_choice(
+            action_key="tiger_squirrel",
+            source_card=source_card,
+            responding_player_index=self.turn,
+            selection_owner_index=1 - self.turn,
+            selection_zone="battlefield",
+            eligible_indices=eligible_indices,
+            min_choices=1,
+            max_choices=1,
+            auto_end_after_play=True,
+        )
+
+    def resolve_tusked_extorter_action(self, source_card: Card) -> None:
+        eligible_indices = list(range(len(self.opponent.hand)))
+        if not eligible_indices:
+            self.log.append(
+                f"{self.current_player.name}'s Tusked Extorter does not make {self.opponent.name} discard because they have no cards in their hand."
+            )
+            return
+        self._set_pending_card_action_choice(
+            action_key="tusked_extorter",
+            source_card=source_card,
+            responding_player_index=1 - self.turn,
+            selection_owner_index=1 - self.turn,
+            selection_zone="hand",
+            eligible_indices=eligible_indices,
             min_choices=1,
             max_choices=1,
             draw_up_to_hand_limit_after_resolution=True,
@@ -1051,6 +1327,10 @@ class Game:
                 card.trigger_action(self)
             finally:
                 self.turn = original_turn
+            # When stolen by Mindbug (consume_turn_action=False), the original player
+            # retains their turn after the pending choice resolves — do not auto-end it.
+            if not consume_turn_action and self._pending_card_action_choice is not None:
+                self._pending_card_action_choice.auto_end_after_play = False
             self._recalculate_ongoing_effects()
 
         self._check_game_over()

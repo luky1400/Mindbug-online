@@ -332,8 +332,9 @@ def test_play_grave_robber_plays_card_from_opponent_discard_and_triggers_its_pla
     # Keep game active.
     opponent.hand = [Tiger_squirrel()]
 
-    with patch("cards.randint", return_value=0):
-        game.play_card(hand_index=0)
+    game.play_card(hand_index=0)
+    # Eligible indices are [0, 1]; choose stolen_card (index 0 = Axolotl_healer).
+    game.resolve_pending_card_action([0])
 
     assert player.number_of_lives == 5
     assert any(isinstance(card, Grave_robber) for card in player.cards_laid_out)

@@ -189,6 +189,43 @@ def test_play_draws_replacement_before_pending_mindbug_response() -> None:
     assert replacement_card in player.hand
 
 
+def test_mindbug_stolen_ferret_bomber_original_player_retains_turn_after_choice_resolves() -> None:
+    game = Game(
+        player_names=["Player 1", "Player 2"],
+        starting_draw_pile_size=0,
+        await_mindbug_response=True,
+        enforce_turn_action_limit=True,
+        auto_end_turn_after_successful_play=True,
+    )
+    game.start_game(card_pool=[])
+
+    player = game.current_player
+    opponent = game.opponent
+
+    card_to_discard_1 = Chameleon_sniper()
+    card_to_discard_2 = Tiger_squirrel()
+    card_to_keep = Plated_scorpion()
+    # Player A has 3 cards after playing Ferret Bomber so the choice is not auto-resolved
+    # (eligible count 3 > required 2, meaning a real choice must be made).
+    player.hand = [Ferret_bomber(), card_to_discard_1, card_to_discard_2, card_to_keep]
+    player.cards_laid_out = [Luchataur()]  # keep game active while choice is pending
+    opponent.hand = [Chameleon_sniper()]
+
+    game.play_card(hand_index=0)
+    game.respond_to_mindbug(True)
+
+    # Ferret Bomber's PLAY action: player (opponent of B) must discard 2 from their 3 remaining cards.
+    # Select indices 0 and 1 (card_to_discard_1 and card_to_discard_2).
+    game.resolve_pending_card_action([0, 1])
+
+    # Mindbug steal does not consume the original player's turn — they should still be on turn.
+    assert game.current_player is player
+    assert game._turn_action_taken is False
+    assert card_to_discard_1 in player.discard_pile
+    assert card_to_discard_2 in player.discard_pile
+    assert card_to_keep in player.hand
+
+
 def test_stolen_compost_dragon_resurrected_card_cannot_be_mindbugged_again() -> None:
     game = Game(
         player_names=["Player 1", "Player 2"],
