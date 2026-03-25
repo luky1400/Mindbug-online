@@ -36,6 +36,7 @@ export function App() {
   const [statusText, setStatusText] = useState("");
   const [errorText, setErrorText] = useState("");
   const [previewCardLabel, setPreviewCardLabel] = useState<string | null>(null);
+  const [showLog, setShowLog] = useState(false);
 
   const viewer = state?.viewer || null;
   const opponent = state?.opponent || null;
@@ -572,7 +573,10 @@ export function App() {
             {errorText ? <div className="error-text mt-3">{errorText}</div> : null}
           </div>
         </section>
-        <GameLog logLines={state?.log || []} />
+        <button className="log-icon-btn" onClick={() => setShowLog(true)} title="Game logs" type="button">
+          🗒
+        </button>
+        {showLog ? <GameLog logLines={state?.log || []} onClose={() => setShowLog(false)} /> : null}
       </main>
     );
   }
@@ -713,8 +717,6 @@ export function App() {
         ) : null}
       </div>
 
-      <GameLog logLines={state?.log || []} />
-
       {canAnswerMindbug && isMindbugModalHidden ? (
         <div className="choice-modal-toggle">
           <button className="btn btn-outline-light btn-sm" onClick={reopenMindbugModal} type="button">
@@ -751,6 +753,10 @@ export function App() {
         />
       ) : null}
       <CardPreviewModal label={previewCardLabel} onClose={() => setPreviewCardLabel(null)} />
+      <button className="log-icon-btn" onClick={() => setShowLog(true)} title="Game logs" type="button">
+        🗒
+      </button>
+      {showLog ? <GameLog logLines={state?.log || []} onClose={() => setShowLog(false)} /> : null}
     </main>
   );
 }

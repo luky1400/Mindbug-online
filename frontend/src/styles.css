@@ -357,6 +357,40 @@ body {
   color: #dbe7ff;
 }
 
+.log-box-tall {
+  max-height: 60vh;
+}
+
+.log-popup-card {
+  width: min(600px, 92vw);
+  text-align: left;
+}
+
+.log-icon-btn {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 40;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #111c31;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  transition: background 0.15s, color 0.15s;
+}
+
+.log-icon-btn:hover {
+  background: #1a2d50;
+  color: var(--text);
+}
+
 .overlay {
   position: fixed;
   inset: 0;
