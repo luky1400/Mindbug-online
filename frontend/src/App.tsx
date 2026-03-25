@@ -642,6 +642,27 @@ export function App() {
         {!isWaitingForOpponent && viewer ? (
           <>
             <div className="col-12">
+              <BoardZone
+                title={opponent?.name || state!.opponent_player_name || "Opponent"}
+                player={opponent || { player_index: 1, name: state!.opponent_player_name || "Opponent", lives: 0, mindbugs_remaining: 0, hand_count: 0, draw_count: 0, discard_count: 0, battlefield: [], discard: [], hand: [] }}
+                battlefieldMode={canAnswerDefense || hasBlockingChoiceModal ? "readonly" : "defender"}
+                selectedBattlefieldIndex={canAnswerDefense && !hasBlockingChoiceModal ? selectedDefenderIndex : null}
+                onSelectBattlefield={canAnswerDefense || hasBlockingChoiceModal ? undefined : (index) => toggleSelected("defender", index)}
+                onPreview={(label) => setPreviewCardLabel(label)}
+              />
+            </div>
+            <div className="col-12">
+              <BoardZone
+                title={`${viewer.name}${state!.is_viewer_turn ? " (your turn)" : ""}`}
+                player={viewer}
+                active={state!.is_viewer_turn}
+                battlefieldMode={hasBlockingChoiceModal ? "readonly" : canAnswerDefense ? "defender" : "attacker"}
+                selectedBattlefieldIndex={hasBlockingChoiceModal ? null : canAnswerDefense ? selectedDefenderIndex : selectedAttackerIndex}
+                onSelectBattlefield={hasBlockingChoiceModal ? undefined : (index) => toggleSelected(canAnswerDefense ? "defender" : "attacker", index)}
+                onPreview={(label) => setPreviewCardLabel(label)}
+              />
+            </div>
+            <div className="col-12">
               <section className="card border-0 bg-panel">
                 <div className="card-body">
                   <div className="row g-3 align-items-end">
@@ -674,28 +695,6 @@ export function App() {
                   </div>
                 </div>
               </section>
-            </div>
-
-            <div className="col-12">
-              <BoardZone
-                title={opponent?.name || state!.opponent_player_name || "Opponent"}
-                player={opponent || { player_index: 1, name: state!.opponent_player_name || "Opponent", lives: 0, mindbugs_remaining: 0, hand_count: 0, draw_count: 0, discard_count: 0, battlefield: [], discard: [], hand: [] }}
-                battlefieldMode={canAnswerDefense || hasBlockingChoiceModal ? "readonly" : "defender"}
-                selectedBattlefieldIndex={canAnswerDefense && !hasBlockingChoiceModal ? selectedDefenderIndex : null}
-                onSelectBattlefield={canAnswerDefense || hasBlockingChoiceModal ? undefined : (index) => toggleSelected("defender", index)}
-                onPreview={(label) => setPreviewCardLabel(label)}
-              />
-            </div>
-            <div className="col-12">
-              <BoardZone
-                title={`${viewer.name}${state!.is_viewer_turn ? " (your turn)" : ""}`}
-                player={viewer}
-                active={state!.is_viewer_turn}
-                battlefieldMode={hasBlockingChoiceModal ? "readonly" : canAnswerDefense ? "defender" : "attacker"}
-                selectedBattlefieldIndex={hasBlockingChoiceModal ? null : canAnswerDefense ? selectedDefenderIndex : selectedAttackerIndex}
-                onSelectBattlefield={hasBlockingChoiceModal ? undefined : (index) => toggleSelected(canAnswerDefense ? "defender" : "attacker", index)}
-                onPreview={(label) => setPreviewCardLabel(label)}
-              />
             </div>
             <div className="col-12">
               <section className="card border-0 bg-panel">
