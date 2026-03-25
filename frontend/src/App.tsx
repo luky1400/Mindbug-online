@@ -699,9 +699,6 @@ export function App() {
 
       {canAnswerMindbug && isMindbugModalHidden ? (
         <div className="choice-modal-toggle">
-          <div className="choice-modal-toggle-text">
-            Mindbug: {state?.pending_mindbug?.card_label}
-          </div>
           <button className="btn btn-outline-light btn-sm" onClick={reopenMindbugModal} type="button">
             Show prompt
           </button>
