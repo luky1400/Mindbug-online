@@ -67,10 +67,6 @@ export function CardTile({
           img.style.display = "none";
         }}
       />
-      <div className="card-label">
-        <div className="card-name">{parsed.name}</div>
-        {parsed.details ? <div className="card-details">{parsed.details}</div> : null}
-      </div>
     </button>
   );
 }

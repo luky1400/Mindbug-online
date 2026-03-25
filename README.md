@@ -110,16 +110,14 @@ PYTHONPATH=. pytest tests/tests_mindbug_use.py
   - make Game UI to fit one screen size - user cannot roll up and down
   - upravit obrazku dle pravidel (+ když najedu with mouse cursor on any of discard_piles, it will render cards in it)
   - dát na rozklikávatko (vpravo nahoře): pravidla, logs, cards in game - rozdělené do tabs podle sets (include also number of copies of each card)
-  - 
-- **UI screens:**
   - seperate create/join room and Game
+
 - **UI additonal:**
   - možnost zvětšit i cards_laid_out 
   - Když defender vybira, jestli a cim bude branit, tak mu ukazat kartu utocnika - zvyrznit ji:
     - Prompt_ can you make orange/red border/glow to card that was selected as attacker. This border should only apply until defender is selected.
   - Hide redundant information in UI
-    - text pod kartami
-    - Discard Pile dát nějak nastranu a karty zobrazit, pouze když na to user klikne - zobrazi se stejne modal window a user muze kliknout na hide.
+  - Discard Pile dát nějak nastranu a karty zobrazit, pouze když na to user klikne - zobrazi se stejne modal window a user muze kliknout na hide.
   - udělat nejakou signalizaci, která upozorní hrace, ze je na tahu (play_card/attack, Mindbug, Defend, etc.)
   - Kliknout a zvetsit celou ruku najednou - udelat to same, jako 2x klik, ale pro vsechny karty najednou. Dát karty v ruce bliz k sobe a zvetsit.
   - add icons to buttons - attack, play_card, End turn (lepší by bylo místo click button, přetahovat, ale to by bylo moc tezke)
