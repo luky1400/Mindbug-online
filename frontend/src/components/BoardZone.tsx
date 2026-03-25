@@ -8,6 +8,7 @@ interface BoardZoneProps {
   battlefieldMode: "attacker" | "defender" | "readonly";
   selectedBattlefieldIndex: number | null;
   onSelectBattlefield?: (index: number) => void;
+  onPreview?: (label: string) => void;
 }
 
 export function BoardZone({
@@ -16,7 +17,8 @@ export function BoardZone({
   active = false,
   battlefieldMode,
   selectedBattlefieldIndex,
-  onSelectBattlefield
+  onSelectBattlefield,
+  onPreview
 }: BoardZoneProps) {
   const battlefieldClickable = battlefieldMode !== "readonly";
 
@@ -51,6 +53,7 @@ export function BoardZone({
                 showAbilityBadges
                 showBattlefieldHighlight
                 onClick={battlefieldClickable ? () => onSelectBattlefield?.(index) : undefined}
+                onDoubleClick={() => onPreview?.(label)}
               />
             ))
           )}

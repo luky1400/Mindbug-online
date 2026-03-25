@@ -661,6 +661,7 @@ export function App() {
               battlefieldMode={canAnswerDefense || hasBlockingChoiceModal ? "readonly" : "defender"}
               selectedBattlefieldIndex={canAnswerDefense && !hasBlockingChoiceModal ? selectedDefenderIndex : null}
               onSelectBattlefield={canAnswerDefense || hasBlockingChoiceModal ? undefined : (index) => toggleSelected("defender", index)}
+              onPreview={(label) => setPreviewCardLabel(label)}
             />
           </div>
           <div className="col-12">
@@ -671,6 +672,7 @@ export function App() {
               battlefieldMode={hasBlockingChoiceModal ? "readonly" : canAnswerDefense ? "defender" : "attacker"}
               selectedBattlefieldIndex={hasBlockingChoiceModal ? null : canAnswerDefense ? selectedDefenderIndex : selectedAttackerIndex}
               onSelectBattlefield={hasBlockingChoiceModal ? undefined : (index) => toggleSelected(canAnswerDefense ? "defender" : "attacker", index)}
+              onPreview={(label) => setPreviewCardLabel(label)}
             />
           </div>
           <div className="col-12">

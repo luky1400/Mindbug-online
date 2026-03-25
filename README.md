@@ -111,9 +111,7 @@ PYTHONPATH=. pytest tests/tests_mindbug_use.py
   - upravit obrazku dle pravidel (+ když najedu with mouse cursor on any of discard_piles, it will render cards in it)
   - dát na rozklikávatko (vpravo nahoře): pravidla, logs, cards in game - rozdělené do tabs podle sets (include also number of copies of each card)
   - seperate create/join room and Game
-
 - **UI additonal:**
-  - možnost zvětšit i cards_laid_out 
   - Když defender vybira, jestli a cim bude branit, tak mu ukazat kartu utocnika - zvyrznit ji:
     - Prompt_ can you make orange/red border/glow to card that was selected as attacker. This border should only apply until defender is selected.
   - Hide redundant information in UI
