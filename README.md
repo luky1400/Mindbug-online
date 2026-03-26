@@ -143,7 +143,7 @@ V případě shody tento proces opakujte."
 
 ## Bugs
 
-- **A**After player currently on turn plays Compost_dragon(), and opponent uses Mindbug to steal it and triggers its [CardActionType.PLAY](http://CardActionType.PLAY), the appropriate player makes a choice. Then current player should have played again bcause opoonent used Mindbug. But opponent is on turn which is wrong.
+- **When player attacks with Shark_dog() and targets defender with HUNTER ability. The combat is resolved and after that its speacial_action.ATTACK is triggered which is wrong. special_action.ATTACK should be triggered before combat is resolved. In case targeted defender is defeated with speacial_action.ATTACK, attack is cancelled and turn automatically ends in case attacker has no FRENZY.** 
 - Opponents cards laid out can be selected for target attack but they have no blue border when selected.
 
 ## Documentation notes
