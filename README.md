@@ -136,6 +136,7 @@ PYTHONPATH=. pytest tests/tests_mindbug_use.py
 - add persistent database-backed sessions so rooms survive server restarts.
 - add Time limit for action (play_card, attack, use_mindMindbug?, defend?)
 - add other sets
+- add confirmation panel (same as for surrender) when click leave game.
 - "Začínajícího hráče určíte tak, že si každý hráč náhodně vylosuje jednu kartu z hromádky nepoužitých karet nestvůr a poté si hráči porovnají sílu těchto karet. Hráč, jehož karta má vyšší hodnotu síly, bude začínajícím hráčem.
 V případě shody tento proces opakujte."
 - make all images the same resolution size
