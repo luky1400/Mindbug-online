@@ -36,6 +36,7 @@ export function App() {
   const [errorText, setErrorText] = useState("");
   const [previewCardLabel, setPreviewCardLabel] = useState<string | null>(null);
   const [showLog, setShowLog] = useState(false);
+  const [showSurrenderConfirm, setShowSurrenderConfirm] = useState(false);
 
   const viewer = state?.viewer || null;
   const opponent = state?.opponent || null;
@@ -424,6 +425,14 @@ export function App() {
     );
   }
 
+  async function confirmSurrender() {
+    setShowSurrenderConfirm(false);
+    await emitAction(
+      () => socketActions.surrender(socketRef.current as Socket),
+      "You surrendered."
+    );
+  }
+
   function leaveSession() {
     socketRef.current?.disconnect();
     socketRef.current = null;
@@ -740,10 +749,26 @@ export function App() {
         <button className="log-icon-btn" onClick={() => setShowLog(true)} title="Game log" type="button">
           🗒
         </button>
+        <button className="surrender-icon-btn" onClick={() => setShowSurrenderConfirm(true)} title="Surrender" type="button">
+        <span role="img" aria-label="White flag" style={{ fontSize: '22px', marginRight: '4px' }}>
+          🏳️
+        </span>
+        </button>
         <button className="leave-icon-btn" onClick={leaveSession} title="Leave game" type="button">
           🚪
         </button>
       </div>
+      {showSurrenderConfirm ? (
+        <div className="overlay" onClick={() => setShowSurrenderConfirm(false)}>
+          <div className="overlay-card surrender-confirm-modal" onClick={e => e.stopPropagation()}>
+            <p>Surrender and let your opponent win?</p>
+            <div className="surrender-confirm-btns">
+              <button className="btn btn-danger btn-sm" onClick={() => void confirmSurrender()} type="button">Yes, surrender</button>
+              <button className="btn btn-outline-light btn-sm" onClick={() => setShowSurrenderConfirm(false)} type="button">Cancel</button>
+            </div>
+          </div>
+        </div>
+      ) : null}
       {showLog ? <GameLog logLines={state?.log || []} onClose={() => setShowLog(false)} /> : null}
     </main>
   );

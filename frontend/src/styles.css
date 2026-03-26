@@ -376,6 +376,7 @@ body {
 }
 
 .log-icon-btn,
+.surrender-icon-btn,
 .leave-icon-btn {
   width: 40px;
   height: 40px;
@@ -397,10 +398,33 @@ body {
   color: var(--text);
 }
 
+.surrender-icon-btn:hover {
+  background: #2d251a;
+  color: #e0a800;
+  border-color: #e0a800;
+}
+
 .leave-icon-btn:hover {
   background: #2d1a1a;
   color: var(--danger);
   border-color: var(--danger);
+}
+
+.surrender-confirm-modal {
+  max-width: 340px;
+  text-align: center;
+  padding: 1.5rem;
+}
+
+.surrender-confirm-modal p {
+  margin: 0 0 1.2rem;
+  font-size: 1rem;
+}
+
+.surrender-confirm-btns {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
 }
 
 .overlay {

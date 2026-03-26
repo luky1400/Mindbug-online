@@ -542,3 +542,12 @@ async def mindbug_response(sid: str, payload: dict[str, Any]) -> dict[str, Any]:
         game.respond_to_mindbug(bool(payload.get("use_mindbug", False)))
 
     return await _handle_socket_action(sid, action)
+
+
+@sio.event
+async def surrender(sid: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:
+    def action(session: GameSession, player: SessionPlayer) -> None:
+        game = _require_active_game(session)
+        game.surrender(player.player_index)
+
+    return await _handle_socket_action(sid, action)

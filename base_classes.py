@@ -1275,6 +1275,13 @@ class Game:
                 )
                 self.log.append(f"{self.winner.name} wins.")
 
+    def surrender(self, player_index: int) -> None:
+        self._ensure_active()
+        surrendering = self.players[player_index]
+        self.winner = self.players[0] if self.players[1] == surrendering else self.players[1]
+        self.game_state = GameState.GAME_OVER
+        self.log.append(f"{surrendering.name} surrendered. {self.winner.name} wins.")
+
     def _ensure_active(self) -> None:
         if self.game_state == GameState.GAME_OVER:
             raise ValueError("Game is already over.")

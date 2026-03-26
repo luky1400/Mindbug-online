@@ -109,7 +109,7 @@ PYTHONPATH=. pytest tests/tests_mindbug_use.py
 - **Improve UI layout**
   - make Game UI to fit one screen size - users cannot roll up and down
   - upravit obrazovku dle pravidel (+ když najedu with mouse cursor on any of discard_piles, it will render cards in it)
-  - dát na rozklikávatko (vpravo nahoře): pravidla, logs, cards in game - rozdělené do tabs podle sets (include also number of copies of each card)
+  - dát na rozklikávatko (vpravo nahoře): pravidla, cards in game - rozdělené do tabs podle sets (include also number of copies of each card)
 - **UI additonal:**
   - Když defender vybira, jestli a cim bude branit, tak mu ukazat kartu utocnika - zvyrznit ji:
     - Prompt_ can you make orange/red border/glow to card that was selected as attacker. This border should only apply until defender is selected.
@@ -117,11 +117,11 @@ PYTHONPATH=. pytest tests/tests_mindbug_use.py
   - Discard Pile dát nějak nastranu a karty zobrazit, pouze když na to user klikne - zobrazi se stejne modal window a user muze kliknout na hide.
   - udělat nejakou signalizaci, která upozorní hrace, ze je na tahu (play_card/attack, Mindbug, Defend, etc.)
   - Kliknout a zvetsit celou ruku najednou - udelat to same, jako 2x klik, ale pro vsechny karty najednou. Dát karty v ruce bliz k sobe a zvetsit.
-  - add icons to buttons - attack, play_card, End turn (lepší by bylo místo click button, přetahovat, ale to by bylo moc tezke)
+  - add icons to buttons - attack, play_card, End turn (lepší by bylo místo click button, přetahovat)
 
 ## TODO - game rules
 
-- "Pokud probíhá více efektů současně (například pokud se dvě nestvůry porazí navzájem), rozhoduje o pořadí vyhodnocení efektů hráč, jenž je na tahu. Vždy dokončete vyhodnocování jednoho efektu předtím, než začnete vyhodnocovat další."
+- TODO - "Pokud probíhá více efektů současně (například pokud se dvě nestvůry porazí navzájem), rozhoduje o pořadí vyhodnocení efektů hráč, jenž je na tahu. Vždy dokončete vyhodnocování jednoho efektu předtím, než začnete vyhodnocovat další."
   - modular component window - player currently on turn decides which DEFEAT action will be triggered first
 - Jiný naming:
   - efekty schopnosti: Příchod, ..
@@ -134,7 +134,6 @@ PYTHONPATH=. pytest tests/tests_mindbug_use.py
 ## Nice to have
 
 - add persistent database-backed sessions so rooms survive server restarts.
-- add option: Surrender
 - add Time limit for action (play_card, attack, use_mindMindbug?, defend?)
 - add other sets
 - "Začínajícího hráče určíte tak, že si každý hráč náhodně vylosuje jednu kartu z hromádky nepoužitých karet nestvůr a poté si hráči porovnají sílu těchto karet. Hráč, jehož karta má vyšší hodnotu síly, bude začínajícím hráčem.
@@ -156,5 +155,5 @@ V případě shody tento proces opakujte."
 - Create room now lets the host choose which sets are used for that room. First Contact is always selected and cannot be unchecked, while the remaining CardSet values can be enabled. The selected sets are sent in the create-room request, stored on the room, used when the game starts, and shown in the UI in both the room metadata and room status area.
 - TOUGH cards have `TOUGH` badge in the top-right.
 - Dynamic badges of special effects only appear when the is actually gained from an effect, not when it is native on the card (e.g. Lone Yeti, Mummy Cat, Snail Thrower effect, Ram Hopper ).
-- 
+- Rooms are stored only in memory, so if the host server restarts, the game is lost.
 

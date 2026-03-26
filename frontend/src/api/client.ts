@@ -124,5 +124,8 @@ export const socketActions = {
   },
   mindbugResponse(socket: Socket, useMindbug: boolean) {
     return emitWithAck<SocketAckResponse>(socket, "mindbug_response", { use_mindbug: useMindbug });
+  },
+  surrender(socket: Socket) {
+    return emitWithAck<SocketAckResponse>(socket, "surrender");
   }
 };
