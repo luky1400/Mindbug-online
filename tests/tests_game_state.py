@@ -1,7 +1,7 @@
 import pytest
 
 from base_classes import Game
-from cards import Luchataur, Tiger_squirrel, get_card_pool
+from cards import Luchataur, Tiger_squirrel
 from enums import CardSet, GameState
 
 
@@ -10,7 +10,7 @@ def _new_game() -> Game:
         player_names=["Player 1", "Player 2"],
         starting_draw_pile_size=0,
     )
-    game.start_game(card_pool=[])
+    game.start_game()
     return game
 
 
@@ -31,7 +31,7 @@ def test_start_game_sets_state_to_active_and_resets_winner() -> None:
     )
     game.winner = game.players[0]
 
-    game.start_game(card_pool=[])
+    game.start_game()
 
     assert game.game_state == GameState.ACTIVE
     assert game.turn in (0, 1)
@@ -86,7 +86,7 @@ def test_start_game_uses_only_selected_card_sets() -> None:
         starting_draw_pile_size=10,
     )
 
-    game.start_game(card_pool=get_card_pool(), sets=[CardSet.FIRST_CONTACT])
+    game.start_game(sets=[CardSet.FIRST_CONTACT])
 
     assert game.selected_sets == [CardSet.FIRST_CONTACT]
 
@@ -101,7 +101,7 @@ def test_start_game_stores_all_available_sets_when_no_filter_is_passed() -> None
         starting_draw_pile_size=0,
     )
 
-    game.start_game(card_pool=get_card_pool())
+    game.start_game()
 
     assert game.selected_sets == [
         CardSet.FIRST_CONTACT,

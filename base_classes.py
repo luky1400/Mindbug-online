@@ -247,6 +247,7 @@ class Game:
         self.enforce_turn_action_limit = enforce_turn_action_limit
         self.auto_end_turn_after_successful_play = auto_end_turn_after_successful_play
         self.auto_end_turn_after_resolved_attack = auto_end_turn_after_resolved_attack
+        self.card_pool: list[Card] = []
         self.selected_sets: list[CardSet] = []
         self.hand_size_limit = 5
 
@@ -258,9 +259,7 @@ class Game:
     def opponent(self) -> Player:
         return self.players[1 - self.turn]
 
-    def _resolve_selected_sets(
-        self, card_pool: list[Card], sets: list[CardSet] | None = None
-    ) -> list[CardSet]:
+    def _resolve_selected_sets(self, sets: list[CardSet] | None) -> list[CardSet]:
         if sets is not None:
             resolved_sets: list[CardSet] = []
             for card_set in sets:
@@ -269,23 +268,16 @@ class Game:
             return resolved_sets
 
         available_sets: list[CardSet] = []
-        for card in card_pool:
+        for card in self.card_pool:
             if card.set is not None and card.set not in available_sets:
                 available_sets.append(card.set)
         return available_sets
 
-    def _select_cards_for_game(
-        self, card_pool: list[Card], sets: list[CardSet] | None = None
-    ) -> list[Card]:
-        self.selected_sets = self._resolve_selected_sets(card_pool, sets)
-        if sets is not None:
-            allowed_sets = set(self.selected_sets)
-            card_pool = [card for card in card_pool if card.set in allowed_sets]
-        if len(card_pool) < self.number_of_cards_in_game:
+    def _select_cards_for_game(self) -> list[Card]:
+        if len(self.card_pool) < self.number_of_cards_in_game:
             raise ValueError("Card pool does not contain enough cards for a game.")
-        selected_cards = random.sample(card_pool, self.number_of_cards_in_game)
-        game_cards = [card.clone() for card in selected_cards]
-        return game_cards
+        selected_cards = random.sample(self.card_pool, self.number_of_cards_in_game)
+        return [card.clone() for card in selected_cards]
 
     def _draw_up_to_hand_limit_if_needed(self, player: Player) -> int:
         cards_drawn = 0
@@ -301,10 +293,11 @@ class Game:
         for player in self.players:
             self._draw_up_to_hand_limit_if_needed(player)
 
-    def start_game(
-        self, card_pool: list[Card], sets: list[CardSet] | None = None
-    ) -> None:
-        game_cards = self._select_cards_for_game(card_pool, sets=sets)
+    def start_game(self, sets: list[CardSet] | None = None) -> None:
+        from cards import get_card_pool
+        self.card_pool = get_card_pool(sets=sets)
+        self.selected_sets = self._resolve_selected_sets(sets)
+        game_cards = self._select_cards_for_game()
 
         for player_index, player in enumerate(self.players):
             player_cards = game_cards[

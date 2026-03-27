@@ -9,7 +9,7 @@ def _new_game() -> Game:
         player_names=["Player 1", "Player 2"],
         starting_draw_pile_size=0,
     )
-    game.start_game(card_pool=[])
+    game.start_game()
     return game
 
 
@@ -63,7 +63,7 @@ def test_multiplayer_attack_automatically_passes_turn_when_not_frenzy_bonus_case
         enforce_turn_action_limit=True,
         auto_end_turn_after_resolved_attack=True,
     )
-    game.start_game(card_pool=[])
+    game.start_game()
 
     player = game.current_player
     opponent = game.opponent
@@ -85,7 +85,7 @@ def test_multiplayer_frenzy_survivor_keeps_turn_for_optional_second_attack() -> 
         enforce_turn_action_limit=True,
         auto_end_turn_after_resolved_attack=True,
     )
-    game.start_game(card_pool=[])
+    game.start_game()
 
     player = game.current_player
     opponent = game.opponent
@@ -110,6 +110,6 @@ def test_manual_end_turn_is_not_available_without_pending_frenzy_attack() -> Non
         enforce_turn_action_limit=True,
         auto_end_turn_after_resolved_attack=True,
     )
-    game.start_game(card_pool=[])
+    game.start_game()
 
     assert game.can_end_turn_manually() is False

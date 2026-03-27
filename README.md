@@ -101,11 +101,16 @@ PYTHONPATH=. pytest tests/tests_mindbug_use.py
 - `frontend/` - React + TypeScript multiplayer frontend
 - `requirements.txt` - Python dependencies
 
-## TODO
+## TODO - backend
 
-- finish backend to work well
-  - handle that player or opponent can choose which cards to play or discard - do for all cards
-  - add tests regularly for things that are not working
+- handle that player or opponent can choose which cards to play or discard - do for all cards
+- add tests regularly for things that are not working
+- add attribute in Game class that stores game cards - players cards - to implement Future_eric
+- "Pokud probíhá více efektů současně (například pokud se dvě nestvůry porazí navzájem), rozhoduje o pořadí vyhodnocení efektů hráč, jenž je na tahu. Vždy dokončete vyhodnocování jednoho efektu předtím, než začnete vyhodnocovat další."
+  - modular component window - player currently on turn decides which DEFEAT action will be triggered first
+
+## TODO - frontend
+
 - **Improve UI layout**
   - make Game UI to fit one screen size - users cannot roll up and down
   - upravit obrazovku dle pravidel (+ když najedu with mouse cursor on any of discard_piles, it will render cards in it)
@@ -121,8 +126,6 @@ PYTHONPATH=. pytest tests/tests_mindbug_use.py
 
 ## TODO - game rules
 
-- TODO - "Pokud probíhá více efektů současně (například pokud se dvě nestvůry porazí navzájem), rozhoduje o pořadí vyhodnocení efektů hráč, jenž je na tahu. Vždy dokončete vyhodnocování jednoho efektu předtím, než začnete vyhodnocovat další."
-  - modular component window - player currently on turn decides which DEFEAT action will be triggered first
 - Jiný naming:
   - efekty schopnosti: Příchod, ..
   - Stálé schopnosti (př. Zesnovačka)

@@ -25,7 +25,7 @@ def _new_game() -> Game:
         player_names=["Player 1", "Player 2"],
         starting_draw_pile_size=0,
     )
-    game.start_game(card_pool=[])
+    game.start_game()
     return game
 
 
@@ -298,7 +298,7 @@ def test_play_compost_dragon_resolves_discard_choice_with_turn_limit_enabled() -
         enforce_turn_action_limit=True,
         auto_end_turn_after_successful_play=True,
     )
-    game.start_game(card_pool=[])
+    game.start_game()
 
     player = game.current_player
     opponent = game.opponent

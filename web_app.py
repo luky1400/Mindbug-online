@@ -65,6 +65,7 @@ class GameSession:
     def __init__(self, game_id: str, selected_sets: list[CardSet]) -> None:
         self.game_id = game_id
         self.selected_sets = selected_sets
+        self.card_pool = get_card_pool(sets=selected_sets)
         self.players: list[SessionPlayer] = []
         self.game: Game | None = None
         self.lock = Lock()
@@ -89,7 +90,7 @@ class GameSession:
                 auto_end_turn_after_successful_play=True,
                 auto_end_turn_after_resolved_attack=True,
             )
-            self.game.start_game(card_pool=get_card_pool(), sets=self.selected_sets)
+            self.game.start_game(sets=self.selected_sets)
         return player
 
     def get_player(self, player_id: str) -> SessionPlayer:
@@ -124,7 +125,7 @@ class GameSession:
                 "max_players": 2,
                 "invite_code": self.game_id,
                 "selected_sets": [card_set.value for card_set in self.selected_sets],
-                "card_pool_by_set": _get_card_pool_by_set(self.selected_sets),
+                "card_pool_by_set": _get_card_pool_by_set(self.card_pool, self.selected_sets),
             }
 
         state = self.game.get_state(viewer_index=player.player_index)
@@ -136,7 +137,7 @@ class GameSession:
                 "max_players": 2,
                 "invite_code": self.game_id,
                 "selected_sets": [card_set.value for card_set in self.game.selected_sets],
-                "card_pool_by_set": _get_card_pool_by_set(self.game.selected_sets),
+                "card_pool_by_set": _get_card_pool_by_set(self.game.card_pool, self.game.selected_sets),
             }
         )
         return state
@@ -190,7 +191,7 @@ class LegacyGameStore:
             players_start_with_mindbugs=2,
             await_mindbug_response=True,
         )
-        game.start_game(card_pool=get_card_pool())
+        game.start_game()
         game_id = str(uuid4())
         with self._lock:
             self._games[game_id] = game
@@ -218,12 +219,11 @@ if (frontend_dist_root / "assets").exists():
     fastapi_app.mount("/assets", StaticFiles(directory=frontend_dist_root / "assets"), name="frontend-assets")
 
 
-def _get_card_pool_by_set(selected_sets: list[CardSet]) -> dict[str, list[dict]]:
-    cards = get_card_pool(sets=selected_sets)
+def _get_card_pool_by_set(card_pool: list[Any], selected_sets: list[CardSet]) -> dict[str, list[dict]]:
     result: dict[str, list[dict]] = {}
     for card_set in selected_sets:
         seen: dict[str, dict] = {}
-        for card in cards:
+        for card in card_pool:
             if card.set != card_set:
                 continue
             if card.name not in seen:

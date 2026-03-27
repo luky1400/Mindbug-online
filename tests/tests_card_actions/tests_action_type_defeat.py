@@ -20,7 +20,7 @@ def _new_game() -> Game:
         player_names=["Player 1", "Player 2"],
         starting_draw_pile_size=0,
     )
-    game.start_game(card_pool=[])
+    game.start_game()
     return game
 
 

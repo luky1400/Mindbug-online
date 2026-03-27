@@ -24,7 +24,7 @@ def _new_game() -> Game:
         player_names=["Player 1", "Player 2"],
         starting_draw_pile_size=0,
     )
-    game.start_game(card_pool=[])
+    game.start_game()
     return game
 
 
@@ -222,7 +222,7 @@ def test_shark_dog_attack_action_choice_resolves_without_error_when_pending_defe
         starting_draw_pile_size=0,
         auto_end_turn_after_resolved_attack=True,
     )
-    game.start_game(card_pool=[])
+    game.start_game()
     player = game.current_player
     opponent = game.opponent
 

@@ -18,7 +18,7 @@ def test_opponent_steals_kangasaurus_rex_with_mindbug_and_activates_its_play_act
         starting_draw_pile_size=0,
         await_mindbug_response=True,
     )
-    game.start_game(card_pool=[])
+    game.start_game()
 
     player = game.current_player
     opponent = game.opponent
@@ -64,7 +64,7 @@ def test_multiplayer_mindbug_steal_does_not_consume_active_players_turn_action()
         await_mindbug_response=True,
         enforce_turn_action_limit=True,
     )
-    game.start_game(card_pool=[])
+    game.start_game()
 
     player = game.current_player
     opponent = game.opponent
@@ -95,7 +95,7 @@ def test_multiplayer_declined_mindbug_automatically_passes_turn() -> None:
         enforce_turn_action_limit=True,
         auto_end_turn_after_successful_play=True,
     )
-    game.start_game(card_pool=[])
+    game.start_game()
 
     player = game.current_player
     opponent = game.opponent
@@ -118,7 +118,7 @@ def test_mindbug_bug_makes_opponent_lose_1_life_before_using_mindbug() -> None:
         starting_draw_pile_size=0,
         await_mindbug_response=True,
     )
-    game.start_game(card_pool=[])
+    game.start_game()
 
     player = game.current_player
     opponent = game.opponent
@@ -141,7 +141,7 @@ def test_mindbug_bug_can_stop_mindbug_if_opponent_loses_last_life() -> None:
         starting_draw_pile_size=0,
         await_mindbug_response=True,
     )
-    game.start_game(card_pool=[])
+    game.start_game()
 
     player = game.current_player
     opponent = game.opponent
@@ -166,7 +166,7 @@ def test_play_draws_replacement_before_pending_mindbug_response() -> None:
         starting_draw_pile_size=0,
         await_mindbug_response=True,
     )
-    game.start_game(card_pool=[])
+    game.start_game()
 
     player = game.current_player
     opponent = game.opponent
@@ -197,7 +197,7 @@ def test_mindbug_stolen_ferret_bomber_original_player_retains_turn_after_choice_
         enforce_turn_action_limit=True,
         auto_end_turn_after_successful_play=True,
     )
-    game.start_game(card_pool=[])
+    game.start_game()
 
     player = game.current_player
     opponent = game.opponent
@@ -234,7 +234,7 @@ def test_mindbug_stolen_compost_dragon_original_player_retains_turn_after_choice
         enforce_turn_action_limit=True,
         auto_end_turn_after_successful_play=True,
     )
-    game.start_game(card_pool=[])
+    game.start_game()
 
     player = game.current_player
     opponent = game.opponent
@@ -265,7 +265,7 @@ def test_stolen_compost_dragon_resurrected_card_cannot_be_mindbugged_again() -> 
         starting_draw_pile_size=0,
         await_mindbug_response=True,
     )
-    game.start_game(card_pool=[])
+    game.start_game()
 
     player = game.current_player
     opponent = game.opponent

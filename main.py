@@ -1,5 +1,4 @@
 from base_classes import Game
-from cards import get_card_pool
 from enums import CardSpecialType
 from enums import GameState
 
@@ -293,7 +292,7 @@ def main() -> None:
         players_start_with_mindbugs=2,
         await_mindbug_response=True,
     )
-    game.start_game(card_pool=get_card_pool())
+    game.start_game()
 
     while game.game_state != GameState.GAME_OVER:
         print_game_state(game)
