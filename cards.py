@@ -71,7 +71,7 @@ def get_card_pool(sets: list[CardSet] | None = None) -> list[Card]:
         
         # CardSet.PROMO_CARDS
         (Battle_beetle, 1),
-        (Board_zooka, 1),
+        (Boar_zooka, 1),
         # (Evilcat, 1), # NOTE - this is 3rd evolution
         (Knightmare, 1),
         (Macaw_dagon, 1),
@@ -125,8 +125,8 @@ class Bee_bear(Card):
     set: CardSet = CardSet.FIRST_CONTACT
 
 
-class Board_zooka(Card):
-    name: str = "Board-Zooka"
+class Boar_zooka(Card):
+    name: str = "Boar-Zooka"
     strength: int = 6
     special_types: list[CardSpecialType] = []
     action_type: CardActionType = CardActionType.DEFEATED

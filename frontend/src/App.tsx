@@ -3,6 +3,7 @@ import type { Socket } from "socket.io-client";
 import { createGameSocket, gameApi, socketActions } from "./api/client";
 import { BoardZone } from "./components/BoardZone";
 import { CardPreviewModal } from "./components/CardPreviewModal";
+import { CardBrowserModal } from "./components/CardBrowserModal";
 import { GameLog } from "./components/GameLog";
 import { HandPanel } from "./components/HandPanel";
 import { PendingCardActionModal } from "./components/PendingCardActionModal";
@@ -38,6 +39,7 @@ export function App() {
   const [showLog, setShowLog] = useState(false);
   const [showSurrenderConfirm, setShowSurrenderConfirm] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  const [showCardBrowser, setShowCardBrowser] = useState(false);
 
   const viewer = state?.viewer || null;
   const opponent = state?.opponent || null;
@@ -747,6 +749,9 @@ export function App() {
       ) : null}
       <CardPreviewModal label={previewCardLabel} onClose={() => setPreviewCardLabel(null)} />
       <div className="top-icon-btns">
+        <button className="card-browser-icon-btn" onClick={() => setShowCardBrowser(true)} title="Card pool" type="button">
+          🃏
+        </button>
         <button className="log-icon-btn" onClick={() => setShowLog(true)} title="Game log" type="button">
           🗒
         </button>
@@ -780,6 +785,13 @@ export function App() {
             </div>
           </div>
         </div>
+      ) : null}
+      {showCardBrowser && state ? (
+        <CardBrowserModal
+          cardPoolBySet={state.card_pool_by_set}
+          selectedSets={state.selected_sets}
+          onClose={() => setShowCardBrowser(false)}
+        />
       ) : null}
       {showLog ? <GameLog logLines={state?.log || []} onClose={() => setShowLog(false)} /> : null}
     </main>

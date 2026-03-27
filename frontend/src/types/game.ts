@@ -1,6 +1,11 @@
 export type CardLabel = string;
 export type CardSet = "First Contact" | "New Servants" | "Promo Cards";
 
+export interface CardPoolEntry {
+  label: CardLabel;
+  copies: number;
+}
+
 export const REQUIRED_CARD_SET: CardSet = "First Contact";
 export const CARD_SET_OPTIONS: CardSet[] = [REQUIRED_CARD_SET, "New Servants", "Promo Cards"];
 
@@ -66,6 +71,7 @@ export interface MultiplayerState {
   max_players: number;
   invite_code: string;
   selected_sets: CardSet[];
+  card_pool_by_set: { [set: string]: CardPoolEntry[] };
 }
 
 export interface SessionResponse {

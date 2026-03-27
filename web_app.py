@@ -124,6 +124,7 @@ class GameSession:
                 "max_players": 2,
                 "invite_code": self.game_id,
                 "selected_sets": [card_set.value for card_set in self.selected_sets],
+                "card_pool_by_set": _get_card_pool_by_set(self.selected_sets),
             }
 
         state = self.game.get_state(viewer_index=player.player_index)
@@ -135,6 +136,7 @@ class GameSession:
                 "max_players": 2,
                 "invite_code": self.game_id,
                 "selected_sets": [card_set.value for card_set in self.game.selected_sets],
+                "card_pool_by_set": _get_card_pool_by_set(self.game.selected_sets),
             }
         )
         return state
@@ -214,6 +216,22 @@ fastapi_app.mount("/static", StaticFiles(directory=web_root), name="static")
 fastapi_app.mount("/card-images", StaticFiles(directory=card_images_root), name="card-images")
 if (frontend_dist_root / "assets").exists():
     fastapi_app.mount("/assets", StaticFiles(directory=frontend_dist_root / "assets"), name="frontend-assets")
+
+
+def _get_card_pool_by_set(selected_sets: list[CardSet]) -> dict[str, list[dict]]:
+    cards = get_card_pool(sets=selected_sets)
+    result: dict[str, list[dict]] = {}
+    for card_set in selected_sets:
+        seen: dict[str, dict] = {}
+        for card in cards:
+            if card.set != card_set:
+                continue
+            if card.name not in seen:
+                seen[card.name] = {"label": card.short_label(), "copies": 1}
+            else:
+                seen[card.name]["copies"] += 1
+        result[card_set.value] = list(seen.values())
+    return result
 
 
 def _normalize_player_name(raw_name: str, fallback: str) -> str:
