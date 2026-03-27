@@ -37,6 +37,7 @@ export function App() {
   const [previewCardLabel, setPreviewCardLabel] = useState<string | null>(null);
   const [showLog, setShowLog] = useState(false);
   const [showSurrenderConfirm, setShowSurrenderConfirm] = useState(false);
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
 
   const viewer = state?.viewer || null;
   const opponent = state?.opponent || null;
@@ -754,7 +755,7 @@ export function App() {
           🏳️
         </span>
         </button>
-        <button className="leave-icon-btn" onClick={leaveSession} title="Leave game" type="button">
+        <button className="leave-icon-btn" onClick={() => setShowLeaveConfirm(true)} title="Leave game" type="button">
           🚪
         </button>
       </div>
@@ -763,8 +764,19 @@ export function App() {
           <div className="overlay-card surrender-confirm-modal" onClick={e => e.stopPropagation()}>
             <p>Surrender and let your opponent win?</p>
             <div className="surrender-confirm-btns">
-              <button className="btn btn-danger btn-sm" onClick={() => void confirmSurrender()} type="button">Yes, surrender</button>
+              <button className="btn btn-danger btn-sm" onClick={() => void confirmSurrender()} type="button">Surrender</button>
               <button className="btn btn-outline-light btn-sm" onClick={() => setShowSurrenderConfirm(false)} type="button">Cancel</button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+      {showLeaveConfirm ? (
+        <div className="overlay" onClick={() => setShowLeaveConfirm(false)}>
+          <div className="overlay-card surrender-confirm-modal" onClick={e => e.stopPropagation()}>
+            <p>Leave the game?</p>
+            <div className="surrender-confirm-btns">
+              <button className="btn btn-danger btn-sm" onClick={() => { setShowLeaveConfirm(false); leaveSession(); }} type="button">Leave</button>
+              <button className="btn btn-outline-light btn-sm" onClick={() => setShowLeaveConfirm(false)} type="button">Cancel</button>
             </div>
           </div>
         </div>

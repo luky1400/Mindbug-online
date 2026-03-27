@@ -112,11 +112,11 @@ PYTHONPATH=. pytest tests/tests_mindbug_use.py
   - dát na rozklikávatko (vpravo nahoře): pravidla, cards in game - rozdělené do tabs podle sets (include also number of copies of each card)
 - **UI additonal:**
   - Když defender vybira, jestli a cim bude branit, tak mu ukazat kartu utocnika - zvyrznit ji:
-    - Prompt_ can you make orange/red border/glow to card that was selected as attacker. This border should only apply until defender is selected.
+    - Prompt: can you make orange/red border/glow to card that was selected as attacker. This border should only apply until defender is selected.
   - Hide redundant information in UI
   - Discard Pile dát nějak nastranu a karty zobrazit, pouze když na to user klikne - zobrazi se stejne modal window a user muze kliknout na hide.
   - udělat nejakou signalizaci, která upozorní hrace, ze je na tahu (play_card/attack, Mindbug, Defend, etc.)
-  - Kliknout a zvetsit celou ruku najednou - udelat to same, jako 2x klik, ale pro vsechny karty najednou. Dát karty v ruce bliz k sobe a zvetsit.
+  - Refactor hand - dát karty v ruce bliz k sobe a zvetsit. I zvetsit celou ruku najednou? I Smazat Expand button?
   - add icons to buttons - attack, play_card, End turn (lepší by bylo místo click button, přetahovat)
 
 ## TODO - game rules
@@ -160,8 +160,6 @@ PYTHONPATH=. pytest tests/tests_mindbug_use.py
   - Bullet train
   - Fennel Trickster
   - Blastfish
-  - (Ratomancer)
-  - (Cornanon, Pear patrol)
   - Steelhorn
   - Porcupine teacher
   - Turtle toaster
@@ -183,7 +181,7 @@ V případě shody tento proces opakujte."
 ## Bugs
 
 - **When player attacks with Shark_dog() and targets defender with HUNTER ability. The combat is resolved and after that its speacial_action.ATTACK is triggered which is wrong. special_action.ATTACK should be triggered before combat is resolved. In case targeted defender is defeated with speacial_action.ATTACK, attack is cancelled and turn automatically ends in case attacker has no FRENZY.** 
-- Opponents cards laid out can be selected for target attack but they have no blue border when selected.
+- (Opponents cards laid out can be selected for target attack but they have no blue border when selected.)
 
 ## Documentation notes
 
