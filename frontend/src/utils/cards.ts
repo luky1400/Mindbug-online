@@ -75,7 +75,7 @@ const nativeAbilityTagsByName: Record<string, string[]> = {
 
 const highlightedBattlefieldCards = new Set([
   "Bee Bear",
-  "Board-Zooka",
+  "Boar Zooka",
   "Deathweaver",
   "Elephantopus",
   "Ferret Pacifier",

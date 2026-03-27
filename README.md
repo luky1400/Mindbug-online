@@ -110,8 +110,6 @@ PYTHONPATH=. pytest tests/tests_mindbug_use.py
   - modular component window - player currently on turn decides which DEFEAT action will be triggered first
 - Implement New Servants - Hyenix, Hungery Hamster, ..
 
-
-
 ## TODO - frontend
 
 - **Improve UI layout**
@@ -183,9 +181,14 @@ V případě shody tento proces opakujte."
 - dát na rozklikávatko (vpravo nahoře): pravidla
 - [QA](https://www.zatrolene-hry.cz/spolecenska-hra/mozkozrout-12630/otazky/)
 
-## Bugs
+## Bugs - backend
 
 - **When player attacks with Shark_dog() and targets defender with HUNTER ability. The combat is resolved and after that its speacial_action.ATTACK is triggered which is wrong. special_action.ATTACK should be triggered before combat is resolved. In case targeted defender is defeated with speacial_action.ATTACK, attack is cancelled and turn automatically ends in case attacker has no FRENZY.** 
+- 
+
+## Bugs - frontend
+
+- For cards with purple background, i dont see green actual strength if it is higher than normal.
 - (Opponents cards laid out can be selected for target attack but they have no blue border when selected.)
 
 ## Documentation notes
