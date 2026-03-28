@@ -107,11 +107,13 @@ PYTHONPATH=. pytest tests/tests_mindbug_use.py
 - add tests regularly for things that are not working
 - "Pokud probíhá více efektů současně (například pokud se dvě nestvůry porazí navzájem), rozhoduje o pořadí vyhodnocení efektů hráč, jenž je na tahu. Vždy dokončete vyhodnocování jednoho efektu předtím, než začnete vyhodnocovat další."
   - modular component window - player currently on turn decides which DEFEAT action will be triggered first
-- Implement New Servants - Hyenix, Hungery Hamster, ..
+- Implement New Servants - Hyenix, Hunger Hamster, ..
 - Simplify and unify code
+- Investigate if logs make sense - is order correct?
 
 ## TODO - frontend
 
+- [Inspiration](https://www.google.com/search?q=mindbug+sharkdog+kills+target+before+combat&sca_esv=a02f3e9b87f4a5a7&biw=928&bih=929&sxsrf=ANbL-n7HQ14P5EW6K1BdKcbbh2tpTjZctA%3A1774706171802&ei=-93HabrZML6N-d8Py-v86A0&ved=0ahUKEwj6ws3X38KTAxW-Rv4FHcs1H90Q4dUDCBE&uact=5&oq=mindbug+sharkdog+kills+target+before+combat&gs_lp=Egxnd3Mtd2l6LXNlcnAiK21pbmRidWcgc2hhcmtkb2cga2lsbHMgdGFyZ2V0IGJlZm9yZSBjb21iYXQyBRAhGKABMgUQIRigAUiAX1CkC1iPXnABeACQAQCYAYYBoAGVFaoBBDE5Ljm4AQPIAQD4AQGYAhygArsVwgIIEAAYsAMY7wXCAgsQABiABBiwAxiiBMICCBAAGBYYChgewgIFEAAY7wXCAggQABiABBiiBMICBxAhGKABGAqYAwCIBgGQBgWSBwUxNy4xMaAHk1-yBwUxNi4xMbgHtxXCBwYxLjIzLjTIBzmACAA&sclient=gws-wiz-serp#fpstate=ive&vld=cid:9515da25,vid:kjw0N0Uhvm8,st:0)
 - **Improve UI layout**
   - make Game UI to fit one screen size - users cannot roll up and down
   - upravit obrazovku dle pravidel (+ když najedu with mouse cursor on any of discard_piles, it will render cards in it)
@@ -121,9 +123,10 @@ PYTHONPATH=. pytest tests/tests_mindbug_use.py
     - adjust resolution size, ...
   - Hide redundant information in UI
   - Discard Pile dát nějak nastranu a karty zobrazit, pouze když na to user klikne - zobrazi se stejne modal window a user muze kliknout na hide.
-  - udělat nejakou signalizaci, která upozorní hrace, ze je na tahu (play_card/attack, Mindbug, Defend, etc.)
+  - udělat nejakou signalizaci (dát Game status mezi Boards), která upozorní hrace, ze je na tahu (play_card/attack, Mindbug, Defend, etc.)
   - Refactor hand - dát karty v ruce bliz k sobe a zvetsit. I zvetsit celou ruku najednou? I Smazat Expand button?
   - add icons to buttons - attack, play_card, End turn (lepší by bylo místo click button, přetahovat)
+  - Smazat Close button u Card preview
 
 ## TODO - game rules
 
@@ -183,7 +186,6 @@ V případě shody tento proces opakujte."
 
 ## Bugs - backend
 
-- **When player attacks with Shark_dog() and targets defender with HUNTER ability. The combat is resolved and after that, its special_action.ATTACK is triggered which is wrong. special_action.ATTACK should be triggered before combat is resolved. In case targeted defender is defeated with speacial_action.ATTACK, attack is cancelled and turn automatically ends in case attacker has no FRENZY and can attack again.** 
 - 
 
 ## Bugs - frontend
