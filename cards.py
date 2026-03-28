@@ -115,7 +115,7 @@ class Battle_beetle(Card):
             else:
                 game.log.append(f"{game.opponent.name} cannot lose life.")
         else:
-            game.log.append(f"{game.opponent.name} does not loses 2 lives because you have different number of Mindbugs.")
+            game.log.append(f"{game.opponent.name} does not lose 2 lives because you have a different number of Mindbugs.")
 
 
 class Bee_bear(Card):
@@ -505,8 +505,8 @@ class Kangasaurus_rex(Card):
     action_description: str = "Defeat all enemy creatures with power 4 or less."
     set: CardSet = CardSet.FIRST_CONTACT
 
-    # NOTE: we need to use iteration over a copy of the list, otherwise - when you remove items while looping, Python’s loop index advances but the list shrinks/reindexes, so some elements are skipped.
     def trigger_action(self, game: Game) -> None:
+        # NOTE: we need to use iteration over a copy of the list, otherwise - when you remove items while looping, Python’s loop index advances but the list shrinks/reindexes, so some elements are skipped.
         for card in game.opponent.cards_laid_out.copy():
             if card.strength <= 4:
                 game._destroy_creature(game.opponent, card)
