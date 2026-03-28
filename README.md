@@ -182,12 +182,12 @@ V případě shody tento proces opakujte."
 
 ## Bugs - backend
 
-- **When player attacks with Shark_dog() and targets defender with HUNTER ability. The combat is resolved and after that its speacial_action.ATTACK is triggered which is wrong. special_action.ATTACK should be triggered before combat is resolved. In case targeted defender is defeated with speacial_action.ATTACK, attack is cancelled and turn automatically ends in case attacker has no FRENZY.** 
+- **When player attacks with Shark_dog() and targets defender with HUNTER ability. The combat is resolved and after that, its special_action.ATTACK is triggered which is wrong. special_action.ATTACK should be triggered before combat is resolved. In case targeted defender is defeated with speacial_action.ATTACK, attack is cancelled and turn automatically ends in case attacker has no FRENZY and can attack again.** 
 - 
 
 ## Bugs - frontend
 
-- FOr Knightmare card, I dont see green actual strength if it is higher than normal.
+- For Knightmare card, I dont see green actual strength if it is higher than normal.
 - (Opponents cards laid out can be selected for target attack but they have no blue border when selected.)
 
 ## Documentation notes

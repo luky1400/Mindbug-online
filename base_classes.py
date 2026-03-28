@@ -210,6 +210,14 @@ class PendingCardActionChoice:
     auto_end_after_attack: bool = False
 
 
+@dataclass
+class PendingAttackContinuation:
+    attacker: Card
+    attacker_owner_index: int
+    defender: Optional[Card]
+    defender_owner_index: int
+
+
 class Game:
     def __init__(
         self,
@@ -239,6 +247,7 @@ class Game:
         self._pending_mindbug_decision: PendingMindbugDecision | None = None
         self._pending_defense_decision: PendingDefenseDecision | None = None
         self._pending_card_action_choice: PendingCardActionChoice | None = None
+        self._pending_attack_continuation: PendingAttackContinuation | None = None
         self.number_of_players = len(player_names)
         self.number_of_cards_in_game = (
             self.starting_draw_pile_size * self.number_of_players
@@ -330,6 +339,7 @@ class Game:
         self._pending_mindbug_decision = None
         self._pending_defense_decision = None
         self._pending_card_action_choice = None
+        self._pending_attack_continuation = None
         self._recalculate_ongoing_effects()
 
     # NOTe - mabe beter to split: play_card and play_card_from_hand functions?
@@ -586,6 +596,9 @@ class Game:
                 self._draw_up_to_hand_limit_for_each_player_if_needed()
             self._recalculate_ongoing_effects()
             self._check_game_over()
+            if self._pending_attack_continuation is not None:
+                self._continue_attack_after_action_resolution()
+                return
             if pending.auto_end_after_play:
                 self._auto_end_turn_after_play_if_needed()
             if pending.auto_end_after_attack:
@@ -800,11 +813,33 @@ class Game:
             )
         self._attacks_this_turn[id(attacker)] = attacks_used + 1
 
+        # Resolve HUNTER target before ATTACK action trigger
+        attacker_has_hunter = CardSpecialType.HUNTER in attacker.special_types
+        hunter_defender: Optional[Card] = None
+        if defender_index is not None and not attacker_has_hunter:
+            raise ValueError(
+                "Cannot target attack with a non-HUNTER attacker. Remove target and attack again."
+            )
+        if attacker_has_hunter and defender_index is not None:
+            if defender_index < 0 or defender_index >= len(
+                defender_owner.cards_laid_out
+            ):
+                raise ValueError("Invalid defender index.")
+            hunter_defender = defender_owner.cards_laid_out[defender_index]
+
         # Trigger action if attacker has an action type
         if attacker.action_type == CardActionType.ATTACK:
             attacker.trigger_action(self)
-            if self._pending_card_action_choice is None:
-                self._draw_up_to_hand_limit_for_each_player_if_needed()
+            if self._pending_card_action_choice is not None:
+                # Action needs player input — pause attack and continue after choice resolves
+                self._pending_attack_continuation = PendingAttackContinuation(
+                    attacker=attacker,
+                    attacker_owner_index=self.turn,
+                    defender=hunter_defender,
+                    defender_owner_index=1 - self.turn,
+                )
+                return
+            self._draw_up_to_hand_limit_for_each_player_if_needed()
             self._check_game_over()
             # ATTACK action can remove attacker before combat resolution (e.g. Snail Hydra attacks and destroys Explosive Toad, which then destroys Snail Hydra).
             if attacker not in attacker_owner.cards_laid_out:
@@ -815,20 +850,16 @@ class Game:
                 )
                 self._auto_end_turn_after_attack_if_needed()
                 return
+            # ATTACK action may have defeated the HUNTER target before combat
+            if hunter_defender is not None and hunter_defender not in defender_owner.cards_laid_out:
+                self.log.append(
+                    f"{defender_owner.name}'s {hunter_defender.name} was defeated. Combat is cancelled."
+                )
+                self._finalize_attack_action(attacker_owner, attacker)
+                return
 
-        attacker_has_hunter = CardSpecialType.HUNTER in attacker.special_types
-        if defender_index is not None and not attacker_has_hunter:
-            raise ValueError(
-                "Cannot target attack with a non-HUNTER attacker. Remove target and attack again."
-            )
-
-        if attacker_has_hunter and defender_index is not None:
-            if defender_index < 0 or defender_index >= len(
-                defender_owner.cards_laid_out
-            ):
-                raise ValueError("Invalid defender index.")
-            defender = defender_owner.cards_laid_out[defender_index]
-            self._resolve_combat(attacker_owner, defender_owner, attacker, defender)
+        if hunter_defender is not None:
+            self._resolve_combat(attacker_owner, defender_owner, attacker, hunter_defender)
             return
 
         eligible_defender_indices = self.get_eligible_defender_indices(
@@ -842,6 +873,56 @@ class Game:
         self._pending_defense_decision = PendingDefenseDecision(
             attacking_player_index=self.turn,
             defending_player_index=1 - self.turn,
+            attacker=attacker,
+        )
+        self.game_state = GameState.AWAITING_DEFENSE
+        self.log.append(
+            f"Waiting for {defender_owner.name} to choose a blocker or lose 1 life."
+        )
+
+    def _continue_attack_after_action_resolution(self) -> None:
+        cont = self._pending_attack_continuation
+        assert cont is not None
+        self._pending_attack_continuation = None
+        attacker_owner = self.players[cont.attacker_owner_index]
+        defender_owner = self.players[cont.defender_owner_index]
+        attacker = cont.attacker
+
+        if attacker not in attacker_owner.cards_laid_out:
+            self._turn_action_taken = True
+            self._pending_frenzy_attacker_id = None
+            self.log.append(
+                f"{attacker_owner.name}'s {attacker.name} is no longer on the battlefield. Attack is cancelled."
+            )
+            self._auto_end_turn_after_attack_if_needed()
+            return
+
+        # HUNTER target was defeated by the ATTACK action
+        if cont.defender is not None and cont.defender not in defender_owner.cards_laid_out:
+            self.log.append(
+                f"{defender_owner.name}'s {cont.defender.name} was defeated. Combat is cancelled."
+            )
+            self._finalize_attack_action(attacker_owner, attacker)
+            return
+
+        # HUNTER target survived — proceed with combat
+        if cont.defender is not None:
+            self._resolve_combat(attacker_owner, defender_owner, attacker, cont.defender)
+            return
+
+        # Non-HUNTER attacker — proceed with defense decision
+        attacker_index = attacker_owner.cards_laid_out.index(attacker)
+        eligible_defender_indices = self.get_eligible_defender_indices(
+            attacker_index=attacker_index,
+            hunter_target_override=False,
+        )
+        if len(eligible_defender_indices) == 0:
+            self._resolve_direct_attack(attacker_owner, defender_owner, attacker)
+            return
+
+        self._pending_defense_decision = PendingDefenseDecision(
+            attacking_player_index=cont.attacker_owner_index,
+            defending_player_index=cont.defender_owner_index,
             attacker=attacker,
         )
         self.game_state = GameState.AWAITING_DEFENSE
