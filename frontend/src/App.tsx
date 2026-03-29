@@ -10,7 +10,7 @@ import { DefeatedOrderingModal } from "./components/DefeatedOrderingModal";
 import { PendingCardActionModal } from "./components/PendingCardActionModal";
 import { PendingMindbugModal } from "./components/PendingMindbugModal";
 import { CARD_SET_OPTIONS, REQUIRED_CARD_SET, type CardSet, type MultiplayerState } from "./types/game";
-import { cardHasTag } from "./utils/cards";
+import { cardHasTag, parseCardLabel } from "./utils/cards";
 
 type StoredSession = {
   gameId: string;
@@ -124,6 +124,9 @@ export function App() {
   const pendingDefeatedOrderingIdentity = state?.pending_defeated_ordering
     ? state.pending_defeated_ordering.entries.map(e => e.card_label).join("|")
     : null;
+  const pendingCardActionName = state?.pending_card_action
+    ? parseCardLabel(state.pending_card_action.source_card_label).name
+    : "";
 
   function persistSession(nextSession: StoredSession) {
     localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(nextSession));
@@ -738,12 +741,12 @@ export function App() {
                           : `Waiting for ${state!.pending_mindbug.responding_player_name} to answer the Mindbug prompt.`
                         : state!.pending_defense
                           ? state!.pending_defense.response_required_from_viewer
-                            ? `Defend against ${state!.pending_defense.attacking_player_name}'s ${state!.pending_defense.attacker_label}.`
+                            ? `Defend against ${state!.pending_defense.attacking_player_name}'s ${parseCardLabel(state!.pending_defense.attacker_label).name}.`
                             : `Waiting for ${state!.pending_defense.defending_player_name} to choose a blocker or lose 1 life.`
                           : state!.pending_card_action
                             ? state!.pending_card_action.response_required_from_viewer
-                              ? `Resolve ${state!.pending_card_action.source_card_label}.`
-                              : `Waiting for ${state!.pending_card_action.responding_player_name} to resolve ${state!.pending_card_action.source_card_label}.`
+                              ? `Resolve ${pendingCardActionName}'s action.`
+                              : `Waiting for ${state!.pending_card_action.responding_player_name} to resolve ${pendingCardActionName}'s action.`
                             : state!.pending_defeated_ordering
                               ? state!.pending_defeated_ordering.response_required_from_viewer
                                 ? "Choose the order of DEFEATED effects."
