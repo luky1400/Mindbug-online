@@ -1,5 +1,5 @@
 import type { PendingCardActionState } from "../types/game";
-import { cardImageUrl } from "../utils/cards";
+import { cardImageUrl, parseCardLabel } from "../utils/cards";
 
 interface PendingCardActionModalProps {
   pending: PendingCardActionState | null;
@@ -19,6 +19,14 @@ export function PendingCardActionModal({
   onHide
 }: PendingCardActionModalProps) {
   if (!pending?.response_required_from_viewer) return null;
+  const details = parseCardLabel(pending.source_card_label).details;
+  const detailParts = details
+    .split("|")
+    .map((part) => part.trim())
+    .filter(Boolean);
+  const actionHeading = details.includes("|")
+    ? detailParts[detailParts.length - 1] || "Choose card"
+    : details || "Choose card";
   const stagedCardLabel = pending.staged_card_label;
   const isOptionChoice = pending.selection_zone === "options";
   const isChoiceReady =
@@ -28,6 +36,7 @@ export function PendingCardActionModal({
   return (
     <div className="overlay overlay-choice overlay-choice-centered">
       <div className="choice-overlay-content" onClick={(event) => event.stopPropagation()}>
+        <h3 className="text-center mb-3">{actionHeading}</h3>
         {stagedCardLabel ? (
           <div className="text-center mb-3">
             <img
