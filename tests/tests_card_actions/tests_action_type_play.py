@@ -8,6 +8,7 @@ from cards import (
     Ferret_bomber,
     Goreagle_alpha,
     Grave_robber,
+    Hyenix,
     Hungry_hungry_hamster,
     killer_bee,
     Kangasaurus_rex,
@@ -284,6 +285,48 @@ def test_play_hungry_hungry_hamster_lets_player_play_received_card() -> None:
     assert player.number_of_lives == 5
     assert received_card in player.cards_laid_out
     assert received_card not in opponent.hand
+
+
+def test_hyenix_can_be_played_from_discard_after_owner_loses_life() -> None:
+    game = _new_game()
+    player = game.current_player
+    opponent = game.opponent
+
+    hyenix = Hyenix()
+    player.number_of_lives = 3
+    player.discard_pile = [hyenix]
+    player.hand = [Goreagle_alpha()]
+    opponent.hand = [Tiger_squirrel()]
+
+    game.play_card(hand_index=0)
+
+    assert game._pending_card_action_choice is not None
+    game.resolve_pending_card_action([1])
+
+    assert player.number_of_lives == 2
+    assert hyenix in player.cards_laid_out
+    assert hyenix not in player.discard_pile
+
+
+def test_hyenix_can_stay_in_discard_after_owner_loses_life() -> None:
+    game = _new_game()
+    player = game.current_player
+    opponent = game.opponent
+
+    hyenix = Hyenix()
+    player.number_of_lives = 3
+    player.discard_pile = [hyenix]
+    player.hand = [Goreagle_alpha()]
+    opponent.hand = [Tiger_squirrel()]
+
+    game.play_card(hand_index=0)
+
+    assert game._pending_card_action_choice is not None
+    game.resolve_pending_card_action([0])
+
+    assert player.number_of_lives == 2
+    assert hyenix in player.discard_pile
+    assert hyenix not in player.cards_laid_out
 
 
 def test_play_compost_dragon_plays_card_from_discard_and_triggers_its_play_action() -> None:

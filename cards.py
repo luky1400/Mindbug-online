@@ -65,7 +65,7 @@ def get_card_pool(sets: list[CardSet] | None = None) -> list[Card]:
         (Goreagle_alpha, 2),
         (Hamster_lion, 2),
         (Hungry_hungry_hamster, 2),
-        # (Hyenix, 2), # TODO - implement
+        (Hyenix, 2),
         (Majestic_manticore, 2),
         (The_lurker, 2),
         (Turf_the_surfer, 2),
@@ -109,7 +109,7 @@ class Battle_beetle(Card):
     
     def trigger_action(self, game: Game) -> None:
         if game.current_player.mindbugs_remaining == game.opponent.mindbugs_remaining:
-            lost_life = game.opponent.lose_life(2)
+            lost_life = game.lose_life(1 - game.turn, 2, auto_end_after_attack=True)
             if lost_life > 0:
                 game.log.append(f"{game.opponent.name} loses {lost_life} lives because {game.current_player.name} plays Battle Beetle.")
             else:
@@ -178,7 +178,7 @@ class Chameleon_sniper(Card):
     set: CardSet = CardSet.FIRST_CONTACT
 
     def trigger_action(self, game: Game) -> None:
-        lost_life = game.opponent.lose_life(1)
+        lost_life = game.lose_life(1 - game.turn, 1, auto_end_after_attack=True)
         if lost_life > 0:
             game.log.append(
                 f"{game.current_player.name}'s {game.current_player.cards_laid_out[0].name} attacks {game.opponent.name} for {lost_life} life."
@@ -210,7 +210,7 @@ class Count_draculeech(Card):
     set: CardSet = CardSet.NEW_SERVANTS
 
     def trigger_action(self, game: Game) -> None:
-        lost_life = game.current_player.lose_life(1)
+        lost_life = game.lose_life(game.turn, 1, auto_end_after_attack=True)
         if lost_life > 0:
             game.log.append(
                 f"{game.current_player.name}'s {game.current_player.cards_laid_out[0].name} causes {game.current_player.name} to lose {lost_life} life."
@@ -383,7 +383,7 @@ class Goreagle_alpha(Card):
     set: CardSet = CardSet.NEW_SERVANTS
 
     def trigger_action(self, game: Game) -> None:
-        lost_life = game.current_player.lose_life(1)
+        lost_life = game.lose_life(game.turn, 1, auto_end_after_play=True)
         if lost_life > 0:
             game.log.append(
                 f"{game.current_player.name}'s {game.current_player.cards_laid_out[0].name} causes {game.current_player.name} to lose {lost_life} life."
@@ -446,7 +446,6 @@ class Hungry_hungry_hamster(Card):
         game.resolve_hungry_hungry_hamster_action(self)
 
 
-# TODO
 class Hyenix(Card):
     name: str = "Hyenix"
     strength: int = 7
@@ -455,27 +454,6 @@ class Hyenix(Card):
         "When you lose life while this is in your discard pile, you may play this card."
     )
     set: CardSet = CardSet.NEW_SERVANTS
-
-    # NOTE: To implement "When you lose life while this is in your discard pile, you may play this card,"
-    # we define a hook method that should be called by Game or Player when the current player loses life.
-    # This will check if Hyenix is in their discard_pile and allow them to move it to cards_laid_out (play it).
-
-    def on_owner_lose_life(self, game: Game) -> None:
-        owner = None
-        # Figure out which player owns this in their discard
-        for player in game.players:
-            if self in player.discard_pile:
-                owner = player
-                break
-        # Only allow if this card is in the correct discard pile and owner lost life
-        if owner is not None:
-            # "may play this card" -- for now, always play. Later, hook up to prompt/confirmation UI.
-            owner.discard_pile.remove(self)
-            owner.cards_laid_out.append(self)
-            game.log.append(
-                f"{owner.name} plays Hyenix from their discard pile after losing life."
-            )
-
 
 class Kangasaurus_rex(Card):
     name: str = "Kangasaurus Rex"
@@ -503,7 +481,7 @@ class killer_bee(Card):
     set: CardSet = CardSet.FIRST_CONTACT
 
     def trigger_action(self, game: Game) -> None:
-        lost_life = game.opponent.lose_life(1)
+        lost_life = game.lose_life(1 - game.turn, 1, auto_end_after_play=True)
         if lost_life > 0:
             game.log.append(
                 f"{game.opponent.name} loses {lost_life} life because {game.current_player.name} plays Killer Bee."
@@ -863,7 +841,11 @@ class Turbo_bug(Card):
     set: CardSet = CardSet.FIRST_CONTACT
 
     def trigger_action(self, game: Game) -> None:
-        lost_life = game.opponent.lose_life(game.opponent.number_of_lives - 1)
+        lost_life = game.lose_life(
+            1 - game.turn,
+            game.opponent.number_of_lives - 1,
+            auto_end_after_attack=True,
+        )
         if lost_life > 0:
             game.log.append(
                 f"{game.current_player.name}'s {game.current_player.cards_laid_out[0].name} attacks {game.opponent.name} for {lost_life} life."

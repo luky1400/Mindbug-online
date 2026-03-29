@@ -171,6 +171,7 @@ class Player:
             raise ValueError("Invalid hand index.")
         return self.hand.pop(hand_index)
 
+    # NOTE - not used, lose_life method on Game is used instead
     def lose_life(self, amount: int = 1) -> int:
         if amount <= 0 or self.cannot_lose_life:
             return 0
@@ -239,6 +240,14 @@ class PendingCombatFinalization:
     attacker_owner_index: int
 
 
+@dataclass
+class PendingHyenixTrigger:
+    owner_index: int
+    card: Card
+    auto_end_after_play: bool = False
+    auto_end_after_attack: bool = False
+
+
 class Game:
     def __init__(
         self,
@@ -272,6 +281,7 @@ class Game:
         self._pending_defeated_ordering: PendingDefeatedOrdering | None = None
         self._defeated_action_queue: list[DefeatedCreatureEntry] = []
         self._pending_combat_finalization: PendingCombatFinalization | None = None
+        self._pending_hyenix_triggers: list[PendingHyenixTrigger] = []
         self.number_of_players = len(player_names)
         self.number_of_cards_in_game = (
             self.starting_draw_pile_size * self.number_of_players
@@ -367,6 +377,7 @@ class Game:
         self._pending_defeated_ordering = None
         self._defeated_action_queue = []
         self._pending_combat_finalization = None
+        self._pending_hyenix_triggers = []
         self._recalculate_ongoing_effects()
 
     # NOTe - mabe beter to split: play_card and play_card_from_hand functions?
@@ -428,7 +439,9 @@ class Game:
                 return
 
             if responder.life_loss_before_using_mindbug > 0:
-                lost_life = responder.lose_life(responder.life_loss_before_using_mindbug)
+                lost_life = self.lose_life(
+                    responder_index, responder.life_loss_before_using_mindbug
+                )
                 if lost_life > 0:
                     self.log.append(
                         f"{responder.name} loses {lost_life} life before using Mindbug."
@@ -574,6 +587,8 @@ class Game:
             return f"Waiting for {responder_name} to choose a card to play from the opponent's discard pile."
         if pending.action_key == "harpy_mother":
             return f"Waiting for {responder_name} to choose enemy creatures to take control of with Harpy Mother."
+        if pending.action_key == "hyenix":
+            return f"Waiting for {responder_name} to choose whether to play Hyenix from their discard pile."
         if pending.action_key == "hungry_hungry_hamster_give":
             return f"Waiting for {responder_name} to choose a card to give away for Hungry Hungry Hamster."
         if pending.action_key == "hungry_hungry_hamster_place":
@@ -623,6 +638,8 @@ class Game:
             self._apply_grave_robber_choice(pending, selected_indices)
         elif pending.action_key == "harpy_mother":
             self._apply_harpy_mother_choice(pending, selected_indices)
+        elif pending.action_key == "hyenix":
+            self._apply_hyenix_choice(pending, selected_indices)
         elif pending.action_key == "hungry_hungry_hamster_give":
             self._apply_hungry_hungry_hamster_give_choice(pending, selected_indices)
         elif pending.action_key == "hungry_hungry_hamster_place":
@@ -639,6 +656,9 @@ class Game:
             raise ValueError("Unsupported pending card action choice.")
 
         if apply_post_resolution_effects:
+            if self._pending_card_action_choice is not None:
+                return
+            self._process_next_hyenix_trigger_if_needed()
             if self._pending_card_action_choice is not None:
                 return
             if pending.draw_up_to_hand_limit_after_resolution:
@@ -797,6 +817,29 @@ class Game:
             owner.cards_laid_out.append(creature)
             self.log.append(f"{owner.name}'s Harpy Mother takes control of {creature.name}.")
 
+    def _apply_hyenix_choice(
+        self, pending: PendingCardActionChoice, selected_indices: list[int]
+    ) -> None:
+        owner = self.players[pending.responding_player_index]
+        hyenix = pending.staged_card
+        if hyenix is None:
+            raise ValueError("Hyenix choice is missing the staged card.")
+        if selected_indices[0] == 0:
+            self.log.append(f"{owner.name} keeps Hyenix in their discard pile.")
+            return
+        if hyenix not in owner.discard_pile:
+            self.log.append(
+                f"{owner.name} cannot play Hyenix from their discard pile because it is no longer there."
+            )
+            return
+        owner.discard_pile.remove(hyenix)
+        self.log.append(f"{owner.name} plays Hyenix from their discard pile after losing life.")
+        self._finalize_played_card(
+            owner_index=pending.responding_player_index,
+            card=hyenix,
+            consume_turn_action=False,
+        )
+
     def _apply_hungry_hungry_hamster_give_choice(
         self, pending: PendingCardActionChoice, selected_indices: list[int]
     ) -> None:
@@ -893,6 +936,84 @@ class Game:
         self.log.append(
             f"{source_owner.name}'s Tusked Extorter attacks {responder.name} and makes them discard {card.name}."
         )
+
+    def lose_life(
+        self,
+        player_index: int,
+        amount: int = 1,
+        *,
+        auto_end_after_play: bool = False,
+        auto_end_after_attack: bool = False,
+    ) -> int:
+        player = self.players[player_index]
+        lost_life = player.lose_life(amount)
+        if lost_life > 0:
+            self._queue_hyenix_triggers_for_player(
+                player_index,
+                auto_end_after_play=auto_end_after_play,
+                auto_end_after_attack=auto_end_after_attack,
+            )
+        return lost_life
+
+    def _queue_hyenix_triggers_for_player(
+        self,
+        player_index: int,
+        *,
+        auto_end_after_play: bool = False,
+        auto_end_after_attack: bool = False,
+    ) -> None:
+        queued_by_card_id = {
+            id(trigger.card): trigger
+            for trigger in self._pending_hyenix_triggers
+            if trigger.owner_index == player_index
+        }
+        for card in self.players[player_index].discard_pile:
+            if card.name != "Hyenix":
+                continue
+            queued = queued_by_card_id.get(id(card))
+            if queued is None:
+                self._pending_hyenix_triggers.append(
+                    PendingHyenixTrigger(
+                        owner_index=player_index,
+                        card=card,
+                        auto_end_after_play=auto_end_after_play,
+                        auto_end_after_attack=auto_end_after_attack,
+                    )
+                )
+                continue
+            queued.auto_end_after_play = (
+                queued.auto_end_after_play or auto_end_after_play
+            )
+            queued.auto_end_after_attack = (
+                queued.auto_end_after_attack or auto_end_after_attack
+            )
+
+    def _process_next_hyenix_trigger_if_needed(self) -> None:
+        if self.game_state == GameState.GAME_OVER:
+            self._pending_hyenix_triggers = []
+            return
+        if self._pending_card_action_choice is not None:
+            return
+        while self._pending_hyenix_triggers:
+            trigger = self._pending_hyenix_triggers.pop(0)
+            owner = self.players[trigger.owner_index]
+            if trigger.card not in owner.discard_pile:
+                continue
+            self._set_pending_card_action_choice(
+                action_key="hyenix",
+                source_card=trigger.card,
+                responding_player_index=trigger.owner_index,
+                selection_owner_index=trigger.owner_index,
+                selection_zone="options",
+                eligible_indices=[0, 1],
+                min_choices=1,
+                max_choices=1,
+                option_labels=["Keep Hyenix in discard pile", "Play Hyenix"],
+                staged_card=trigger.card,
+                auto_end_after_play=trigger.auto_end_after_play,
+                auto_end_after_attack=trigger.auto_end_after_attack,
+            )
+            return
 
     # TODO - do not put defender_index as argument to attack function, instead create defend function that takes attacker and defender and is used inside attack function
     def attack(
@@ -1674,13 +1795,14 @@ class Game:
                 card.trigger_action(self)
             finally:
                 self.turn = original_turn
-            # When stolen by Mindbug (consume_turn_action=False), the original player
-            # retains their turn after the pending choice resolves — do not auto-end it.
-            if not consume_turn_action and self._pending_card_action_choice is not None:
-                self._pending_card_action_choice.auto_end_after_play = False
             self._recalculate_ongoing_effects()
 
         self._check_game_over()
+        self._process_next_hyenix_trigger_if_needed()
+        # When stolen by Mindbug (consume_turn_action=False), the original player
+        # retains their turn after the pending choice resolves — do not auto-end it.
+        if not consume_turn_action and self._pending_card_action_choice is not None:
+            self._pending_card_action_choice.auto_end_after_play = False
         if self.enforce_turn_action_limit and consume_turn_action:
             self._turn_action_taken = True
             self._pending_frenzy_attacker_id = None
@@ -1688,7 +1810,9 @@ class Game:
     def _resolve_direct_attack(
         self, attacker_owner: Player, defender_owner: Player, attacker: Card
     ) -> None:
-        lost_life = defender_owner.lose_life(1)
+        lost_life = self.lose_life(
+            self.players.index(defender_owner), 1, auto_end_after_attack=True
+        )
         if lost_life > 0:
             self.log.append(
                 f"{attacker_owner.name}'s {attacker.name} attacks directly for {lost_life} life."
@@ -1698,6 +1822,7 @@ class Game:
                 f"{attacker_owner.name}'s {attacker.name} attacks directly, but {defender_owner.name} cannot lose life."
             )
         self._check_game_over()
+        self._process_next_hyenix_trigger_if_needed()
         self._finalize_attack_action(attacker_owner, attacker)
 
     def _resolve_combat(

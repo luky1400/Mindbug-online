@@ -103,8 +103,6 @@ PYTHONPATH=. pytest tests/tests_mindbug_use.py
 
 ## TODO - backend
 
-- Implement New Servants Hyenix and Hungry Hamster
-- 
 - add tests regularly for things that are not working
 - Simplify and unify code
 - Investigate if logs make sense - is order correct? ... Add log "Player 1" attacks.
@@ -119,20 +117,22 @@ PYTHONPATH=. pytest tests/tests_mindbug_use.py
   - Když defender vybira, jestli a cim bude branit, tak mu ukazat kartu utocnika - zvyrznit ji:
     - Prompt: can you make orange/red border/glow to card that was selected as attacker. This border should only apply until defender is selected.
     - adjust resolution size, ...
-  - Hide redundant information in UI
-  - Discard Pile dát nějak nastranu a karty zobrazit, pouze když na to user klikne - zobrazi se stejne modal window a user muze kliknout na hide.
-  - udělat nejakou signalizaci (dát Game status mezi Boards), která upozorní hrace, ze je na tahu (play_card/attack, Mindbug, Defend, etc.)
-  - Refactor hand - dát karty v ruce bliz k sobe a zvetsit. I zvetsit celou ruku najednou? I Smazat Expand button?
-  - add icons to buttons - attack, play_card, End turn (lepší by bylo místo click button, přetahovat)
-  - Smazat Close button u Card preview
-  - Special effects:
-    - Hrac ukradnul kartu mozkozroutem
-    - when card is defeated
-    - drawing cards
-    - Hunt/No hunt
-    - Hrac utoci
-    - Aktivovala se akce
-    - Zesnovačka zrušila PLAY akci, ..
+  - Show attack/play/end turn buttons only during players turn, otherwise show defend/lose life button.
+- dont show Game status: "Your turn". But rather: "Play card or attack" / "Play card" / "Attack."
+- Hide redundant information in UI
+- Discard Pile dát nějak nastranu a karty zobrazit, pouze když na to user klikne - zobrazi se stejne modal window a user muze kliknout na hide.
+- udělat nejakou signalizaci (dát Game status mezi Boards), která upozorní hrace, ze je na tahu (play_card/attack, Mindbug, Defend, etc.)
+- Refactor hand - dát karty v ruce bliz k sobe a zvetsit. I zvetsit celou ruku najednou? I Smazat Expand button?
+- add icons to buttons - attack, play_card, End turn (lepší by bylo místo click button, přetahovat)
+- Smazat Close button u Card preview
+- Special effects:
+  - Hrac ukradnul kartu mozkozroutem
+  - when card is defeated
+  - drawing cards
+  - Hunt/No hunt
+  - Hrac utoci
+  - Aktivovala se akce
+  - Zesnovačka zrušila PLAY akci, ..
 
 ## TODO - game rules
 
