@@ -103,8 +103,7 @@ PYTHONPATH=. pytest tests/tests_mindbug_use.py
 
 ## TODO - backend
 
-- handle that player or opponent can choose which cards to play or discard - do for all cards
-- Implement New Servants - Hyenix, Hunger Hamster, ..
+- Implement New Servants Hyenix and Hungry Hamster
 - 
 - add tests regularly for things that are not working
 - Simplify and unify code

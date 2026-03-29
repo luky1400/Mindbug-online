@@ -99,12 +99,17 @@ def resolve_pending_card_action_cli(game: Game) -> None:
             selection_pool = selection_owner.hand
         elif pending.selection_zone == "discard":
             selection_pool = selection_owner.discard_pile
+        elif pending.selection_zone == "options":
+            selection_pool = pending.option_labels or []
         else:
             selection_pool = selection_owner.cards_laid_out
 
         print(f"\n{responder.name}, resolve {pending.source_card.name}:")
         for index in pending.eligible_indices:
-            print(f"  [{index}] {selection_pool[index].short_label()}")
+            if pending.selection_zone == "options":
+                print(f"  [{index}] {selection_pool[index]}")
+            else:
+                print(f"  [{index}] {selection_pool[index].short_label()}")
 
         if pending.max_choices == 1:
             selected_indices = [

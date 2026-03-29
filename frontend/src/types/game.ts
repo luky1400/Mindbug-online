@@ -42,12 +42,14 @@ export interface PendingCardActionState {
   source_card_label: CardLabel;
   responding_player_name: string;
   selection_owner_name: string;
-  selection_zone: "hand" | "battlefield" | "discard";
+  selection_zone: "hand" | "battlefield" | "discard" | "options";
   selection_owner: "viewer" | "opponent";
   response_required_from_viewer: boolean;
   eligible_indices: number[];
   min_choices: number;
   max_choices: number;
+  option_labels: string[] | null;
+  staged_card_label: CardLabel | null;
 }
 
 export interface DefeatedOrderingEntry {

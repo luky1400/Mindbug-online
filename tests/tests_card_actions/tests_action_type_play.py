@@ -8,6 +8,7 @@ from cards import (
     Ferret_bomber,
     Goreagle_alpha,
     Grave_robber,
+    Hungry_hungry_hamster,
     killer_bee,
     Kangasaurus_rex,
     Mysterious_mermaid,
@@ -17,8 +18,6 @@ from cards import (
     Giraffodile,
 )
 from enums import GameState
-
-# TODO - add test for Hungry_hungry_hamster()
 
 def _new_game() -> Game:
     game = Game(
@@ -247,6 +246,44 @@ def test_play_brain_fly_takes_control_of_creature_with_power_6_or_more() -> None
     assert stolen_creature not in opponent.cards_laid_out
     assert other_eligible_creature in opponent.cards_laid_out
     assert weak_creature in opponent.cards_laid_out
+
+
+def test_play_hungry_hungry_hamster_lets_opponent_choose_card_to_give() -> None:
+    game = _new_game()
+    player = game.current_player
+    opponent = game.opponent
+
+    ignored_card = Tiger_squirrel()
+    chosen_card = Chameleon_sniper()
+    player.hand = [Hungry_hungry_hamster()]
+    opponent.hand = [ignored_card, chosen_card]
+
+    game.play_card(hand_index=0)
+    game.resolve_pending_card_action([1])
+    game.resolve_pending_card_action([0])
+
+    assert chosen_card in player.hand
+    assert ignored_card in opponent.hand
+    assert chosen_card not in opponent.hand
+
+
+def test_play_hungry_hungry_hamster_lets_player_play_received_card() -> None:
+    game = _new_game()
+    player = game.current_player
+    opponent = game.opponent
+
+    received_card = Axolotl_healer()
+    player.number_of_lives = 3
+    player.hand = [Hungry_hungry_hamster()]
+    opponent.hand = [received_card, Tiger_squirrel()]
+
+    game.play_card(hand_index=0)
+    game.resolve_pending_card_action([0])
+    game.resolve_pending_card_action([1])
+
+    assert player.number_of_lives == 5
+    assert received_card in player.cards_laid_out
+    assert received_card not in opponent.hand
 
 
 def test_play_compost_dragon_plays_card_from_discard_and_triggers_its_play_action() -> None:

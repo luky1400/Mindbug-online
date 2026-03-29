@@ -28,6 +28,7 @@ class Card:
     )  # TODO - rename to base_keywords
     base_cannot_block: bool = field(init=False)
     base_cannot_attack: bool = field(init=False)
+    temporary_cannot_block_until_turn_end: bool = False
 
     def __post_init__(self) -> None:
         cls = type(self)
@@ -205,6 +206,8 @@ class PendingCardActionChoice:
     eligible_indices: list[int]
     min_choices: int
     max_choices: int
+    option_labels: list[str] | None = None
+    staged_card: Card | None = None
     draw_up_to_hand_limit_after_resolution: bool = False
     auto_end_after_play: bool = False
     auto_end_after_attack: bool = False
@@ -506,6 +509,8 @@ class Game:
         eligible_indices: list[int],
         min_choices: int,
         max_choices: int,
+        option_labels: list[str] | None = None,
+        staged_card: Card | None = None,
         draw_up_to_hand_limit_after_resolution: bool = False,
         auto_end_after_play: bool = False,
         auto_end_after_attack: bool = False,
@@ -519,6 +524,8 @@ class Game:
             eligible_indices=eligible_indices,
             min_choices=min_choices,
             max_choices=max_choices,
+            option_labels=option_labels,
+            staged_card=staged_card,
             draw_up_to_hand_limit_after_resolution=draw_up_to_hand_limit_after_resolution,
             auto_end_after_play=auto_end_after_play,
             auto_end_after_attack=auto_end_after_attack,
@@ -553,6 +560,8 @@ class Game:
             return f"Waiting for {responder_name} to choose a creature to steal with Brain Fly."
         if pending.action_key == "compost_dragon":
             return f"Waiting for {responder_name} to choose a card to play from the discard pile."
+        if pending.action_key == "count_draculeech":
+            return f"Waiting for {responder_name} to choose a creature to defeat with Count Draculeech."
         if pending.action_key == "ferret_bomber":
             return f"Waiting for {responder_name} to choose cards to discard for Ferret Bomber."
         if pending.action_key == "explosive_toad":
@@ -565,10 +574,16 @@ class Game:
             return f"Waiting for {responder_name} to choose a card to play from the opponent's discard pile."
         if pending.action_key == "harpy_mother":
             return f"Waiting for {responder_name} to choose enemy creatures to take control of with Harpy Mother."
+        if pending.action_key == "hungry_hungry_hamster_give":
+            return f"Waiting for {responder_name} to choose a card to give away for Hungry Hungry Hamster."
+        if pending.action_key == "hungry_hungry_hamster_place":
+            return f"Waiting for {responder_name} to choose whether to play the received card or put it into their hand."
         if pending.action_key == "shark_dog":
             return f"Waiting for {responder_name} to choose a creature with power 6 or more to defeat with Shark Dog."
         if pending.action_key == "tiger_squirrel":
             return f"Waiting for {responder_name} to choose a creature with power 7 or more to defeat with Tiger Squirrel."
+        if pending.action_key == "turf_the_surfer":
+            return f"Waiting for {responder_name} to choose a creature that cannot block because of Turf the Surfer."
         if pending.action_key == "tusked_extorter":
             return f"Waiting for {responder_name} to choose a card to discard for Tusked Extorter."
         return f"Waiting for {responder_name} to resolve a card action choice."
@@ -594,6 +609,8 @@ class Game:
             self._apply_brain_fly_choice(pending, selected_indices)
         elif pending.action_key == "compost_dragon":
             self._apply_compost_dragon_choice(pending, selected_indices)
+        elif pending.action_key == "count_draculeech":
+            self._apply_count_draculeech_choice(pending, selected_indices)
         elif pending.action_key == "ferret_bomber":
             self._apply_ferret_bomber_choice(pending, selected_indices)
         elif pending.action_key == "explosive_toad":
@@ -606,16 +623,24 @@ class Game:
             self._apply_grave_robber_choice(pending, selected_indices)
         elif pending.action_key == "harpy_mother":
             self._apply_harpy_mother_choice(pending, selected_indices)
+        elif pending.action_key == "hungry_hungry_hamster_give":
+            self._apply_hungry_hungry_hamster_give_choice(pending, selected_indices)
+        elif pending.action_key == "hungry_hungry_hamster_place":
+            self._apply_hungry_hungry_hamster_place_choice(pending, selected_indices)
         elif pending.action_key == "shark_dog":
             self._apply_shark_dog_choice(pending, selected_indices)
         elif pending.action_key == "tiger_squirrel":
             self._apply_tiger_squirrel_choice(pending, selected_indices)
+        elif pending.action_key == "turf_the_surfer":
+            self._apply_turf_the_surfer_choice(pending, selected_indices)
         elif pending.action_key == "tusked_extorter":
             self._apply_tusked_extorter_choice(pending, selected_indices)
         else:
             raise ValueError("Unsupported pending card action choice.")
 
         if apply_post_resolution_effects:
+            if self._pending_card_action_choice is not None:
+                return
             if pending.draw_up_to_hand_limit_after_resolution:
                 self._draw_up_to_hand_limit_for_each_player_if_needed()
             self._recalculate_ongoing_effects()
@@ -691,6 +716,15 @@ class Game:
             consume_turn_action=not is_mindbug_stolen,
         )
 
+    def _apply_count_draculeech_choice(
+        self, pending: PendingCardActionChoice, selected_indices: list[int]
+    ) -> None:
+        owner = self.players[pending.responding_player_index]
+        enemy = self.players[pending.selection_owner_index]
+        defeated_creature = enemy.cards_laid_out[selected_indices[0]]
+        self._destroy_creature(enemy, defeated_creature)
+        self.log.append(f"{owner.name}'s Count Draculeech defeats {defeated_creature.name}.")
+
     def _apply_ferret_bomber_choice(
         self, pending: PendingCardActionChoice, selected_indices: list[int]
     ) -> None:
@@ -763,6 +797,57 @@ class Game:
             owner.cards_laid_out.append(creature)
             self.log.append(f"{owner.name}'s Harpy Mother takes control of {creature.name}.")
 
+    def _apply_hungry_hungry_hamster_give_choice(
+        self, pending: PendingCardActionChoice, selected_indices: list[int]
+    ) -> None:
+        giving_player = self.players[pending.responding_player_index]
+        receiving_player = self.players[1 - pending.responding_player_index]
+        card = giving_player.hand.pop(selected_indices[0])
+        self.log.append(
+            f"{giving_player.name} gives {card.name} to {receiving_player.name} because of Hungry Hungry Hamster."
+        )
+        self._set_pending_card_action_choice(
+            action_key="hungry_hungry_hamster_place",
+            source_card=pending.source_card,
+            responding_player_index=1 - pending.responding_player_index,
+            selection_owner_index=1 - pending.responding_player_index,
+            selection_zone="options",
+            eligible_indices=[0, 1],
+            min_choices=1,
+            max_choices=1,
+            option_labels=["Put into hand", f"Play {card.name}"],
+            staged_card=card,
+            auto_end_after_play=pending.auto_end_after_play,
+        )
+
+    def _apply_hungry_hungry_hamster_place_choice(
+        self, pending: PendingCardActionChoice, selected_indices: list[int]
+    ) -> None:
+        owner = self.players[pending.responding_player_index]
+        giver = self.players[1 - pending.responding_player_index]
+        card = pending.staged_card
+        if card is None:
+            raise ValueError("Hungry Hungry Hamster is missing the received card.")
+        if selected_indices[0] == 0:
+            owner.hand.append(card)
+            self.log.append(
+                f"{owner.name} puts {card.name} from {giver.name}'s hand into their hand because of Hungry Hungry Hamster."
+            )
+            return
+
+        self.log.append(
+            f"{owner.name} plays {card.name} from {giver.name}'s hand because of Hungry Hungry Hamster."
+        )
+        self._finalize_played_card(
+            owner_index=pending.responding_player_index,
+            card=card,
+            consume_turn_action=False,
+        )
+        if self._pending_card_action_choice is not None:
+            self._pending_card_action_choice.auto_end_after_play = (
+                pending.auto_end_after_play
+            )
+
     def _apply_shark_dog_choice(
         self, pending: PendingCardActionChoice, selected_indices: list[int]
     ) -> None:
@@ -783,6 +868,18 @@ class Game:
         self._destroy_creature(enemy, defeated_creature)
         self.log.append(
             f"{owner.name}'s Tiger Squirrel defeats {defeated_creature.name} with power 7 or more."
+        )
+
+    def _apply_turf_the_surfer_choice(
+        self, pending: PendingCardActionChoice, selected_indices: list[int]
+    ) -> None:
+        owner = self.players[pending.responding_player_index]
+        enemy = self.players[pending.selection_owner_index]
+        chosen_creature = enemy.cards_laid_out[selected_indices[0]]
+        chosen_creature.temporary_cannot_block_until_turn_end = True
+        chosen_creature.cannot_block = True
+        self.log.append(
+            f"{owner.name}'s Turf the Surfer makes {chosen_creature.name} unable to block this turn."
         )
 
     def _apply_tusked_extorter_choice(
@@ -1052,6 +1149,26 @@ class Game:
             auto_end_after_play=True,
         )
 
+    def resolve_count_draculeech_action(self, source_card: Card) -> None:
+        eligible_indices = list(range(len(self.opponent.cards_laid_out)))
+        if not eligible_indices:
+            self.log.append(
+                f"{self.current_player.name}'s Count Draculeech does not defeat a creature because {self.opponent.name} has no creatures on the battlefield."
+            )
+            return
+        self._set_pending_card_action_choice(
+            action_key="count_draculeech",
+            source_card=source_card,
+            responding_player_index=self.turn,
+            selection_owner_index=1 - self.turn,
+            selection_zone="battlefield",
+            eligible_indices=eligible_indices,
+            min_choices=1,
+            max_choices=1,
+            draw_up_to_hand_limit_after_resolution=True,
+            auto_end_after_attack=True,
+        )
+
     def resolve_ferret_bomber_action(self, source_card: Card) -> None:
         discard_count = min(2, len(self.opponent.hand))
         if discard_count == 0:
@@ -1195,6 +1312,25 @@ class Game:
             max_choices=max_choices,
         )
 
+    def resolve_hungry_hungry_hamster_action(self, source_card: Card) -> None:
+        eligible_indices = list(range(len(self.opponent.hand)))
+        if not eligible_indices:
+            self.log.append(
+                f"{self.current_player.name}'s Hungry Hungry Hamster does not receive a card from {self.opponent.name}'s hand because they have no cards in their hand."
+            )
+            return
+        self._set_pending_card_action_choice(
+            action_key="hungry_hungry_hamster_give",
+            source_card=source_card,
+            responding_player_index=1 - self.turn,
+            selection_owner_index=1 - self.turn,
+            selection_zone="hand",
+            eligible_indices=eligible_indices,
+            min_choices=1,
+            max_choices=1,
+            auto_end_after_play=True,
+        )
+
     def resolve_shark_dog_action(self, source_card: Card) -> None:
         eligible_indices = [
             i for i, card in enumerate(self.opponent.cards_laid_out)
@@ -1238,6 +1374,26 @@ class Game:
             min_choices=1,
             max_choices=1,
             auto_end_after_play=True,
+        )
+
+    def resolve_turf_the_surfer_action(self, source_card: Card) -> None:
+        eligible_indices = list(range(len(self.opponent.cards_laid_out)))
+        if not eligible_indices:
+            self.log.append(
+                f"{self.current_player.name}'s Turf the Surfer does not choose a creature because {self.opponent.name} has no creatures on the battlefield."
+            )
+            return
+        self._set_pending_card_action_choice(
+            action_key="turf_the_surfer",
+            source_card=source_card,
+            responding_player_index=self.turn,
+            selection_owner_index=1 - self.turn,
+            selection_zone="battlefield",
+            eligible_indices=eligible_indices,
+            min_choices=1,
+            max_choices=1,
+            draw_up_to_hand_limit_after_resolution=True,
+            auto_end_after_attack=True,
         )
 
     def resolve_tusked_extorter_action(self, source_card: Card) -> None:
@@ -1325,6 +1481,9 @@ class Game:
     def end_turn(self) -> None:
         self._ensure_active()
         self._ensure_no_pending_resolution()
+        for player in self.players:
+            for card in player.cards_laid_out:
+                card.temporary_cannot_block_until_turn_end = False
         self.turn = 1 - self.turn
         self._attacks_this_turn = {}
         self._turn_action_taken = False
@@ -1739,6 +1898,10 @@ class Game:
             "eligible_indices": list(pending.eligible_indices),
             "min_choices": pending.min_choices,
             "max_choices": pending.max_choices,
+            "option_labels": list(pending.option_labels) if pending.option_labels else None,
+            "staged_card_label": (
+                pending.staged_card.short_label() if pending.staged_card is not None else None
+            ),
         }
 
     def _serialize_pending_card_action_for_viewer(
@@ -1813,7 +1976,9 @@ class Game:
             for card in player.cards_laid_out:
                 card.strength = card.base_strength
                 card.special_types = list(card.base_special_types)
-                card.cannot_block = card.base_cannot_block
+                card.cannot_block = (
+                    card.base_cannot_block or card.temporary_cannot_block_until_turn_end
+                )
                 card.cannot_attack = card.base_cannot_attack
 
         for owner_idx, owner in enumerate(self.players):

@@ -27,11 +27,26 @@ export function PendingCardActionModal({
   const actionHeading = details.includes("|")
     ? detailParts[detailParts.length - 1] || "Choose card"
     : details || "Choose card";
+  const stagedCardLabel = pending.staged_card_label;
+  const isOptionChoice = pending.selection_zone === "options";
 
   return (
     <div className="overlay overlay-choice">
       <div className="choice-overlay-content" onClick={(event) => event.stopPropagation()}>
         <h3 className="text-center mb-3">{actionHeading}</h3>
+        {stagedCardLabel ? (
+          <div className="text-center mb-3">
+            <img
+              className="preview-image choice-preview-image"
+              src={cardImageUrl(stagedCardLabel)}
+              alt={stagedCardLabel}
+              onError={(event) => {
+                event.currentTarget.style.display = "none";
+              }}
+            />
+            <div className="mt-2">{parseCardLabel(stagedCardLabel).name}</div>
+          </div>
+        ) : null}
         <div className="choice-options-grid mt-3">
           {pending.eligible_indices.map((index) => (
             <button
@@ -40,14 +55,18 @@ export function PendingCardActionModal({
               onClick={() => onToggle(index)}
               type="button"
             >
-              <img
-                className="preview-image choice-preview-image"
-                src={cardImageUrl(cards[index])}
-                alt={cards[index]}
-                onError={(event) => {
-                  event.currentTarget.style.display = "none";
-                }}
-              />
+              {isOptionChoice ? (
+                <span>{cards[index]}</span>
+              ) : (
+                <img
+                  className="preview-image choice-preview-image"
+                  src={cardImageUrl(cards[index])}
+                  alt={cards[index]}
+                  onError={(event) => {
+                    event.currentTarget.style.display = "none";
+                  }}
+                />
+              )}
             </button>
           ))}
         </div>

@@ -1,5 +1,4 @@
 from base_classes import DrawPile, Game
-from unittest.mock import patch
 from cards import (
     Brain_fly,
     Chameleon_sniper,
@@ -137,9 +136,9 @@ def test_attack_count_draculeech_loses_1_life_and_defeats_an_enemy_creature() ->
     player.cards_laid_out = [Count_draculeech()]
     opponent.cards_laid_out = [weak_enemy, target_enemy]
 
-    # Count Draculeech ATTACK action defeats target_enemy (index 1).
-    with patch("cards.randint", return_value=1):
-        _attack_and_defend(game, attacker_index=0, defender_index=0)
+    game.attack(attacker_index=0)
+    game.resolve_pending_card_action([1])
+    game.defend(defender_index=0)
 
     assert player.number_of_lives == 4
     assert target_enemy in opponent.discard_pile
@@ -193,9 +192,9 @@ def test_attack_turf_the_surfer_sets_selected_enemy_cannot_block() -> None:
     player.cards_laid_out = [Turf_the_surfer()]
     opponent.cards_laid_out = [defender, selected_enemy]
 
-    # Select selected_enemy for "cannot block" effect.
-    with patch("cards.randint", return_value=1):
-        _attack_and_defend(game, attacker_index=0, defender_index=0)
+    game.attack(attacker_index=0)
+    game.resolve_pending_card_action([1])
+    game.defend(defender_index=0)
 
     assert selected_enemy.cannot_block is True
 

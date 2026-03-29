@@ -115,7 +115,7 @@ export function App() {
 
   const selectionText = `Hand: ${selectedHandIndex ?? "-"} | Attacker: ${selectedAttackerIndex ?? "-"} | Target/Blocker: ${selectedDefenderIndex ?? "-"}`;
   const pendingCardActionIdentity = state?.pending_card_action
-    ? `${state.pending_card_action.action_key}|${state.pending_card_action.source_card_label}|${state.pending_card_action.selection_zone}|${state.pending_card_action.selection_owner_name}|${state.pending_card_action.responding_player_name}`
+    ? `${state.pending_card_action.action_key}|${state.pending_card_action.source_card_label}|${state.pending_card_action.staged_card_label || ""}|${state.pending_card_action.selection_zone}|${state.pending_card_action.selection_owner_name}|${state.pending_card_action.responding_player_name}`
     : null;
   const pendingMindbugIdentity = state?.pending_mindbug
     ? `${state.pending_mindbug.acting_player_name}|${state.pending_mindbug.card_label}|${state.pending_mindbug.responding_player_name}`
@@ -161,6 +161,7 @@ export function App() {
   function getPendingCardActionPool(sourceState: MultiplayerState | null) {
     const pending = sourceState?.pending_card_action;
     if (!pending) return [];
+    if (pending.selection_zone === "options") return pending.option_labels || [];
     const owner = pending.selection_owner === "viewer" ? sourceState?.viewer : sourceState?.opponent;
     if (!owner) return [];
     if (pending.selection_zone === "hand") return owner.hand || [];

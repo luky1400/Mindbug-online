@@ -219,14 +219,7 @@ class Count_draculeech(Card):
             game.log.append(
                 f"{game.current_player.name}'s {game.current_player.cards_laid_out[0].name} would make its owner lose life, but they cannot lose life."
             )
-        # TODO - implement player card choice, instead of random
-        card = game.opponent.cards_laid_out[
-            randint(0, len(game.opponent.cards_laid_out) - 1)
-        ]
-        game._destroy_creature(game.opponent, card)
-        game.log.append(
-            f"{game.current_player.name}'s {game.current_player.cards_laid_out[0].name} defeats {card.name}."
-        )
+        game.resolve_count_draculeech_action(self)
 
 
 class Creep_from_the_deep(Card):
@@ -445,29 +438,15 @@ class Hungry_hungry_hamster(Card):
     special_types: list[CardSpecialType] = [CardSpecialType.SNEAKY]
     action_type: CardActionType = CardActionType.PLAY
     action_description: str = (
-        "An opponent gives you a card from their hand. Play it or put it into oyur hand."
+        "An opponent gives you a card from their hand. Play it or put it into your hand."
     )
     set: CardSet = CardSet.NEW_SERVANTS
 
     def trigger_action(self, game: Game) -> None:
-        if len(game.opponent.hand) == 0:
-            game.log.append(
-                f"{game.current_player.name}'s {game.current_player.cards_laid_out[0].name} does not receive a card from {game.opponent.name}'s hand because they have no cards in their hand."
-            )
-            return
-        # TODO - implement player card choice, instead of random
-        card = game.opponent.hand.pop(randint(0, len(game.opponent.hand) - 1))
-        # TODO - implement player choice if should be appended to hand or laid out
-        if randint(0, 1) == 0:
-            game.current_player.hand.append(card)
-        else:
-            game.current_player.cards_laid_out.append(card)
-        game.log.append(
-            f"{game.current_player.name} receives {card.name} from {game.opponent.name}'s hand."
-        )
+        game.resolve_hungry_hungry_hamster_action(self)
 
 
-# TODO - hard one
+# TODO
 class Hyenix(Card):
     name: str = "Hyenix"
     strength: int = 7
@@ -904,14 +883,7 @@ class Turf_the_surfer(Card):
     set: CardSet = CardSet.NEW_SERVANTS
 
     def trigger_action(self, game: Game) -> None:
-        # TODO - implement player card choice, instead of random
-        card = game.opponent.cards_laid_out[
-            randint(0, len(game.opponent.cards_laid_out) - 1)
-        ]
-        card.cannot_block = True
-        game.log.append(
-            f"{game.current_player.name}'s {game.current_player.cards_laid_out[0].name} makes {card.name} cannot block this turn."
-        )
+        game.resolve_turf_the_surfer_action(self)
 
 
 class Tusked_extorter(Card):
