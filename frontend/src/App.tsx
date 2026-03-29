@@ -33,6 +33,7 @@ export function App() {
   const [selectedAttackerIndex, setSelectedAttackerIndex] = useState<number | null>(null);
   const [selectedDefenderIndex, setSelectedDefenderIndex] = useState<number | null>(null);
   const [selectedChoiceIndices, setSelectedChoiceIndices] = useState<number[]>([]);
+  const selectedChoiceIndicesRef = useRef<number[]>([]);
   const [defeatedOrderingIndices, setDefeatedOrderingIndices] = useState<number[]>([]);
   const [isMindbugModalHidden, setIsMindbugModalHidden] = useState(false);
   const [isChoiceModalHidden, setIsChoiceModalHidden] = useState(false);
@@ -139,6 +140,7 @@ export function App() {
     setSelectedHandIndex(null);
     setSelectedAttackerIndex(null);
     setSelectedDefenderIndex(null);
+    selectedChoiceIndicesRef.current = [];
     setSelectedChoiceIndices([]);
   }
 
@@ -217,6 +219,7 @@ export function App() {
         previousChoicePool[index] === choiceSelectionPool[index]
     );
     if (normalizedChoiceIndices.length !== selectedChoiceIndices.length) {
+      selectedChoiceIndicesRef.current = normalizedChoiceIndices;
       setSelectedChoiceIndices(normalizedChoiceIndices);
     }
     if (
@@ -509,14 +512,15 @@ export function App() {
     );
   }
 
-  async function resolveCardActionChoice() {
+  async function resolveCardActionChoice(selectedIndicesOverride?: number[]) {
     if (!socketRef.current) return setErrorText("Create or join a room first.");
     if (!state?.pending_card_action) return setErrorText("No card action choice is waiting.");
     if (!canAnswerCardAction) return setErrorText("Waiting for the other player to resolve this card action.");
     const pending = state.pending_card_action;
+    const selectedIndices = selectedIndicesOverride ?? selectedChoiceIndicesRef.current;
     if (
-      selectedChoiceIndices.length < pending.min_choices ||
-      selectedChoiceIndices.length > pending.max_choices
+      selectedIndices.length < pending.min_choices ||
+      selectedIndices.length > pending.max_choices
     ) {
       const message =
         pending.min_choices === pending.max_choices
@@ -527,7 +531,7 @@ export function App() {
     await emitAction(
       () =>
         socketActions.resolveCardActionChoice(socketRef.current as Socket, {
-          selected_indices: selectedChoiceIndices
+          selected_indices: selectedIndices
         }),
       "Card action resolved."
     );
@@ -589,16 +593,18 @@ export function App() {
     const pending = state?.pending_card_action;
     if (!pending) return;
     setSelectedChoiceIndices((current) => {
+      let next = current;
       if (pending.max_choices === 1) {
-        return current[0] === index ? [] : [index];
+        next = current[0] === index ? [] : [index];
+      } else if (current.includes(index)) {
+        next = current.filter((value) => value !== index);
+      } else if (current.length >= pending.max_choices) {
+        next = current;
+      } else {
+        next = [...current, index];
       }
-      if (current.includes(index)) {
-        return current.filter((value) => value !== index);
-      }
-      if (current.length >= pending.max_choices) {
-        return current;
-      }
-      return [...current, index];
+      selectedChoiceIndicesRef.current = next;
+      return next;
     });
   }
 
@@ -852,9 +858,6 @@ export function App() {
       ) : null}
       {canAnswerCardAction && isChoiceModalHidden ? (
         <div className="choice-modal-toggle">
-          <div className="choice-modal-toggle-text">
-            Resolve {state?.pending_card_action?.source_card_label}
-          </div>
           <button className="btn btn-outline-light btn-sm" onClick={reopenChoiceModal} type="button">
             Show choice
           </button>

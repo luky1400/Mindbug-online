@@ -29,9 +29,12 @@ export function PendingCardActionModal({
     : details || "Choose card";
   const stagedCardLabel = pending.staged_card_label;
   const isOptionChoice = pending.selection_zone === "options";
+  const isChoiceReady =
+    selectedIndices.length >= pending.min_choices &&
+    selectedIndices.length <= pending.max_choices;
 
   return (
-    <div className="overlay overlay-choice">
+    <div className="overlay overlay-choice overlay-choice-centered">
       <div className="choice-overlay-content" onClick={(event) => event.stopPropagation()}>
         <h3 className="text-center mb-3">{actionHeading}</h3>
         {stagedCardLabel ? (
@@ -44,19 +47,18 @@ export function PendingCardActionModal({
                 event.currentTarget.style.display = "none";
               }}
             />
-            <div className="mt-2">{parseCardLabel(stagedCardLabel).name}</div>
           </div>
         ) : null}
         <div className="choice-options-grid mt-3">
           {pending.eligible_indices.map((index) => (
             <button
               key={`${cards[index]}-${index}`}
-              className={`choice-preview-button ${selectedIndices.includes(index) ? "choice-preview-selected" : ""}`}
+              className={`choice-preview-button ${isOptionChoice ? "choice-option-button" : ""} ${selectedIndices.includes(index) ? "choice-preview-selected" : ""}`}
               onClick={() => onToggle(index)}
               type="button"
             >
               {isOptionChoice ? (
-                <span>{cards[index]}</span>
+                <span className="choice-option-label">{cards[index]}</span>
               ) : (
                 <img
                   className="preview-image choice-preview-image"
@@ -77,7 +79,12 @@ export function PendingCardActionModal({
           <button className="btn btn-outline-secondary" onClick={onHide} type="button">
             Hide for now
           </button>
-          <button className="btn btn-outline-light" onClick={onConfirm} type="button">
+          <button
+            className="btn btn-outline-light"
+            onClick={onConfirm}
+            type="button"
+            disabled={!isChoiceReady}
+          >
             Confirm choice
           </button>
         </div>
