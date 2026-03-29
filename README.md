@@ -195,8 +195,9 @@ V případě shody tento proces opakujte."
 
 ## Bugs - frontend
 
-- For Knightmare card, I dont see green actual strength if it is higher than normal.
+- In Knightmare, Steamforger cards, I dont see green actual strength if it is higher than normal.
 - (Opponents cards laid out can be selected for target attack but they have no blue border when selected.)
+- I see FRENZY above Hyenix card when deciding whether to play it or not.
 
 ## Documentation notes
 
