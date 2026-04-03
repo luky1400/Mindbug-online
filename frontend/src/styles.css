@@ -33,6 +33,18 @@ body {
   padding: 6px 10px;
 }
 
+.btn-block-defend {
+  background: #2e8b57;
+  border-color: #2e8b57;
+  color: #212529;
+}
+
+.btn-block-defend:hover {
+  background: #267a4b;
+  border-color: #267a4b;
+  color: #212529;
+}
+
 .game-status-bar {
   display: flex;
   align-items: center;
@@ -55,18 +67,9 @@ body {
 .game-bottom-bar {
   display: flex;
   flex-direction: column;
-  gap: 4px;
   flex: 1;
   min-height: 0;
-  padding-top: 4px;
-}
-
-.action-buttons {
-  display: flex;
-  gap: 8px;
-  justify-content: center;
-  flex-shrink: 0;
-  padding: 2px 0;
+  padding-top: 2px;
 }
 
 .hand-area {

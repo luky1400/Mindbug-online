@@ -754,13 +754,28 @@ export function App() {
             </div>
             {state!.pending_defense?.response_required_from_viewer ? (
               <div className="d-flex gap-2 align-items-center">
-                <button className="btn btn-sm btn-outline-light" onClick={() => void defendWithSelectedBlocker()} type="button">
+                <button className="btn btn-sm btn-block-defend" onClick={() => void defendWithSelectedBlocker()} type="button">
                   Block with selected
                 </button>
                 <button className="btn btn-sm btn-warning" onClick={() => void takeLifeLoss()} type="button">
                   Lose 1 life
                 </button>
               </div>
+            ) : null}
+            {canAct ? (
+              <div className="d-flex gap-2 align-items-center">
+                <button className="btn btn-sm btn-primary" onClick={() => void playSelectedCard()} type="button">
+                  Play card
+                </button>
+                <button className="btn btn-sm btn-danger" onClick={() => void attackSelected()} type="button">
+                  Attack
+                </button>
+              </div>
+            ) : null}
+            {canManuallyEndTurn ? (
+              <button className="btn btn-sm btn-success" onClick={() => void endTurn()} type="button">
+                End turn
+              </button>
             ) : null}
             {errorText ? <span className="error-text">{errorText}</span> : null}
           </div>
@@ -777,19 +792,6 @@ export function App() {
           />
 
           <div className="game-bottom-bar">
-            <div className="action-buttons">
-              <button className="btn btn-sm btn-primary" disabled={!canAct} onClick={() => void playSelectedCard()} type="button">
-                Play card
-              </button>
-              <button className="btn btn-sm btn-outline-light" disabled={!canAct} onClick={() => void attackSelected()} type="button">
-                Attack
-              </button>
-              {canManuallyEndTurn ? (
-                <button className="btn btn-sm btn-success" onClick={() => void endTurn()} type="button">
-                  End turn
-                </button>
-              ) : null}
-            </div>
             <div className="hand-area">
               <HandPanel
                 cards={hand}
