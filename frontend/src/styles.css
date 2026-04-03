@@ -292,21 +292,19 @@ body {
 
 .discard-pile-btn {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 1px;
-  background: #0e1a30;
-  border: 1px solid var(--border);
+  justify-content: center;
+  background: transparent;
+  border: 1px solid transparent;
   border-radius: 8px;
-  padding: 3px 4px 2px;
+  padding: 2px 0 0;
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
+  transition: transform 0.15s ease, filter 0.15s ease;
   color: var(--muted);
 }
 
 .discard-pile-btn:hover:not(:disabled) {
-  background: #1a2d50;
-  border-color: var(--accent);
+  transform: translateY(-1px);
 }
 
 .discard-pile-btn-empty {
@@ -314,22 +312,36 @@ body {
   cursor: default;
 }
 
-.discard-pile-icon {
-  font-size: 0.9rem;
+.discard-icon {
+  position: relative;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #b9c6df;
+  filter: drop-shadow(0 0 10px rgba(113, 163, 255, 0.18));
+}
+
+.discard-icon::before {
+  content: "🪦";
+  position: absolute;
+  inset: 0;
+  font-size: 34px;
   line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.discard-pile-count {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: var(--text);
-  line-height: 1.2;
-}
-
-.discard-pile-label {
-  font-size: 0.58rem;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
+.discard-icon-number {
+  position: relative;
+  z-index: 1;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #f5f8ff;
+  line-height: 1;
+  transform: translateY(3px);
 }
 
 .board-zone-battlefield {

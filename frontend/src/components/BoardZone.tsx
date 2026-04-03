@@ -61,9 +61,9 @@ export function BoardZone({
                 type="button"
                 disabled={player.discard_count === 0}
               >
-                <span className="discard-pile-icon">🪦</span>
-                <span className="discard-pile-count">{player.discard_count}</span>
-                <span className="discard-pile-label">Discard</span>
+                <div className="discard-icon" aria-label={`${player.discard_count} cards in discard pile`}>
+                  <span className="discard-icon-number">{player.discard_count}</span>
+                </div>
               </button>
             </div>
             <div className="board-zone-battlefield">
