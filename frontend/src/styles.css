@@ -238,8 +238,10 @@ body {
 }
 
 .stat-lives {
-  border-color: #8f3a3a;
-  background: rgba(50, 20, 20, 0.5);
+  background: transparent;
+  border-color: transparent;
+  padding: 2px 0 0;
+  box-shadow: none;
 }
 
 .stat-value {
@@ -249,17 +251,36 @@ body {
   line-height: 1.2;
 }
 
-.stat-value-with-icon {
+.life-heart {
+  position: relative;
+  width: 42px;
+  height: 38px;
   display: flex;
   align-items: center;
-  gap: 4px;
+  justify-content: center;
+  color: #ff5f78;
+  filter: drop-shadow(0 0 10px rgba(255, 95, 120, 0.32));
 }
 
-.stat-icon {
-  color: #ff6b7d;
-  font-size: 0.88rem;
+.life-heart::before {
+  content: "♥";
+  position: absolute;
+  inset: 0;
+  font-size: 38px;
   line-height: 1;
-  text-shadow: 0 0 8px rgba(255, 107, 125, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.life-heart-number {
+  position: relative;
+  z-index: 1;
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #fff7fa;
+  line-height: 1;
+  transform: translateY(1px);
 }
 
 .stat-label {

@@ -37,11 +37,9 @@ export function BoardZone({
             <div className="board-zone-sidebar">
               <div className="sidebar-stats">
                 <div className="stat-item stat-lives">
-                  <div className="stat-value stat-value-with-icon">
-                    <span className="stat-icon" aria-hidden="true">♥</span>
-                    <span>{player.lives}</span>
+                  <div className="life-heart" aria-label={`${player.lives} lives`}>
+                    <span className="life-heart-number">{player.lives}</span>
                   </div>
-                  <span className="stat-label">Lives</span>
                 </div>
                 <div className="stat-item">
                   <span className="stat-value">{player.mindbugs_remaining}</span>
