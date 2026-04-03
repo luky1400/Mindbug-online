@@ -13,6 +13,7 @@ def _build_card_pool(card_specs: list[tuple[Callable[[], Card], int]]) -> list[C
         card_pool.extend(card_factory() for _ in range(copies))
     return card_pool
 
+
 # SOURCE: https://ryanascherr.github.io/mindbug/
 # IMG: https://github.com/ryanascherr/mindbug-deck/tree/main
 # # copies: https://mindbug.fandom.com/wiki/First_Contact, https://mindbug.fandom.com/wiki/First_Contact_Addon_Pack
@@ -20,68 +21,71 @@ def _build_card_pool(card_specs: list[tuple[Callable[[], Card], int]]) -> list[C
 def get_card_pool(sets: list[CardSet] | None = None) -> list[Card]:
     if sets is None:
         sets = [CardSet.FIRST_CONTACT, CardSet.NEW_SERVANTS, CardSet.PROMO_CARDS]
-    card_pool = _build_card_pool([
-        # CardSet.FIRST_CONTACT - includes 48/49 cards
-        (Axolotl_healer, 2),
-        (Bee_bear, 1),
-        (Brain_fly, 1),
-        (Chameleon_sniper, 1),
-        (Compost_dragon, 2),
-        (Deathweaver, 1),
-        (Elephantopus, 1),
-        (Explosive_toad, 2),
-        (Ferret_bomber, 2),
-        (Giraffodile, 1),
-        (Goblin_werewolf, 2),
-        (Gorillion, 1),
-        (Grave_robber, 2),
-        (Harpy_mother, 1),
-        (Kangasaurus_rex, 2),
-        (killer_bee, 2),
-        (Lone_yeti, 1),
-        (Luchataur, 2),
-        (Mysterious_mermaid, 1),
-        (Plated_scorpion, 2),
-        (Rhino_turtle, 2),
-        (Shark_dog, 1),
-        (Sharky_crab_dog_mummypus, 1),
-        (Shield_bugs, 2),
-        (Short_neck_giraffodile, 1), # = nerfed version of Giraffodile (exclusive for online Mindbug) - replace Girafoddile/add to Add-ons set?
-        (Snail_hydra, 2),
-        (Snail_thrower, 1),
-        (Spider_owl, 2),
-        (Strange_barrel, 1),
-        (Tiger_squirrel, 2),
-        (Turbo_bug, 1),
-        (Tusked_extorter, 2),
-        (Urchin_hurler, 1),
-
-        # CardSet.NEW_SERVANTS - includes 24 cards
-        (Bugserker, 2),
-        (Count_draculeech, 2),
-        (Creep_from_the_deep, 2),
-        (Ferret_pacifier, 2),
-        (Froblin_instigator, 2),
-        (Goreagle_alpha, 2),
-        (Hamster_lion, 2),
-        (Hungry_hungry_hamster, 2),
-        (Hyenix, 2),
-        (Majestic_manticore, 2),
-        (The_lurker, 2),
-        (Turf_the_surfer, 2),
-        
-        # CardSet.PROMO_CARDS
-        (Battle_beetle, 1),
-        (Boar_zooka, 1),
-        # (Evilcat, 1), # NOTE - this is 3rd evolution
-        (Future_eric, 1),
-        (Knightmare, 1),
-        (Macaw_dagon, 1),
-        (Mindbug_bug, 1),
-        (Ram_hopper, 1),
-        (Steamforger, 1),
-        (Unigon, 1),
-    ])
+    card_pool = _build_card_pool(
+        [
+            # CardSet.FIRST_CONTACT - includes 48/49 cards
+            (Axolotl_healer, 2),
+            (Bee_bear, 1),
+            (Brain_fly, 1),
+            (Chameleon_sniper, 1),
+            (Compost_dragon, 2),
+            (Deathweaver, 1),
+            (Elephantopus, 1),
+            (Explosive_toad, 2),
+            (Ferret_bomber, 2),
+            (Giraffodile, 1),
+            (Goblin_werewolf, 2),
+            (Gorillion, 1),
+            (Grave_robber, 2),
+            (Harpy_mother, 1),
+            (Kangasaurus_rex, 2),
+            (killer_bee, 2),
+            (Lone_yeti, 1),
+            (Luchataur, 2),
+            (Mysterious_mermaid, 1),
+            (Plated_scorpion, 2),
+            (Rhino_turtle, 2),
+            (Shark_dog, 1),
+            (Sharky_crab_dog_mummypus, 1),
+            (Shield_bugs, 2),
+            (
+                Short_neck_giraffodile,
+                1,
+            ),  # = nerfed version of Giraffodile (exclusive for online Mindbug) - replace Girafoddile/add to Add-ons set?
+            (Snail_hydra, 2),
+            (Snail_thrower, 1),
+            (Spider_owl, 2),
+            (Strange_barrel, 1),
+            (Tiger_squirrel, 2),
+            (Turbo_bug, 1),
+            (Tusked_extorter, 2),
+            (Urchin_hurler, 1),
+            # CardSet.NEW_SERVANTS - includes 24 cards
+            (Bugserker, 2),
+            (Count_draculeech, 2),
+            (Creep_from_the_deep, 2),
+            (Ferret_pacifier, 2),
+            (Froblin_instigator, 2),
+            (Goreagle_alpha, 2),
+            (Hamster_lion, 2),
+            (Hungry_hungry_hamster, 2),
+            (Hyenix, 2),
+            (Majestic_manticore, 2),
+            (The_lurker, 2),
+            (Turf_the_surfer, 2),
+            # CardSet.PROMO_CARDS
+            (Battle_beetle, 1),
+            (Boar_zooka, 1),
+            # (Evilcat, 1), # NOTE - this is 3rd evolution
+            (Future_eric, 1),
+            (Knightmare, 1),
+            (Macaw_dagon, 1),
+            (Mindbug_bug, 1),
+            (Ram_hopper, 1),
+            (Steamforger, 1),
+            (Unigon, 1),
+        ]
+    )
     allowed_sets = set(sets)
     return [card for card in card_pool if card.set in allowed_sets]
 
@@ -91,8 +95,8 @@ def get_card_pool(sets: list[CardSet] | None = None) -> list[Card]:
 #     strength: int = 3
 #     special_types: list[CardSpecialType] = [CardSpecialType.POISONOUS]
 #     description: str = "Opponent cannot put cards into their hand."
-#     set: CardSet = CardSet.PROMO_CARDS 
-    
+#     set: CardSet = CardSet.PROMO_CARDS
+
 #     # TODO
 #     def apply_ongoing_effect(self, game: Game, owner, opponent) -> None:
 #         opponent.cannot_put_cards_into_hand = True
@@ -127,18 +131,24 @@ class Battle_beetle(Card):
     strength: int = 8
     special_types: list[CardSpecialType] = []
     action_type: CardActionType = CardActionType.ATTACK
-    action_description: str = "If you have the same number of Mindbugs as the opponent, the opponent loses 2 lives."
+    action_description: str = (
+        "If you have the same number of Mindbugs as the opponent, the opponent loses 2 lives."
+    )
     set: CardSet = CardSet.PROMO_CARDS
-    
+
     def trigger_action(self, game: Game) -> None:
         if game.current_player.mindbugs_remaining == game.opponent.mindbugs_remaining:
             lost_life = game.lose_life(1 - game.turn, 2, auto_end_after_attack=True)
             if lost_life > 0:
-                game.log.append(f"{game.opponent.name} loses {lost_life} lives because {game.current_player.name} plays Battle Beetle.")
+                game.log.append(
+                    f"{game.opponent.name} loses {lost_life} lives because {game.current_player.name} plays Battle Beetle."
+                )
             else:
                 game.log.append(f"{game.opponent.name} cannot lose life.")
         else:
-            game.log.append(f"{game.opponent.name} does not lose 2 lives because you have a different number of Mindbugs.")
+            game.log.append(
+                f"{game.opponent.name} does not lose 2 lives because you have a different number of Mindbugs."
+            )
 
 
 class Bee_bear(Card):
@@ -162,7 +172,9 @@ class Boar_zooka(Card):
     def trigger_action(self, game: Game) -> None:
         for card in game.opponent.cards_laid_out.copy():
             game._destroy_creature(game.opponent, card)
-        game.log.append(f"{game.current_player.name}'s {game.current_player.cards_laid_out[0].name} defeats all enemy creatures.")
+        game.log.append(
+            f"{game.current_player.name}'s {game.current_player.cards_laid_out[0].name} defeats all enemy creatures."
+        )
 
     def apply_ongoing_effect(self, game: Game, owner, opponent) -> None:
         self.cannot_block = True
@@ -324,9 +336,11 @@ class Future_eric(Card):
     strength: int = 3
     special_types: list[CardSpecialType] = [CardSpecialType.SNEAKY]
     action_type: CardActionType = CardActionType.PLAY
-    action_description: str = "Put the top 2 cards of the unused pile on the bottom of your draw pile without looking at them."
+    action_description: str = (
+        "Put the top 2 cards of the unused pile on the bottom of your draw pile without looking at them."
+    )
     set: CardSet = CardSet.PROMO_CARDS
-    
+
     def trigger_action(self, game: Game) -> None:
         cards_moved = 0
         for _ in range(2):
@@ -336,7 +350,9 @@ class Future_eric(Card):
             game.current_player.draw_pile.add(card)
             cards_moved += 1
         if cards_moved > 0:
-            game.log.append(f"{game.current_player.name} puts {cards_moved} card(s) from the unused pile on the bottom of their draw pile.")
+            game.log.append(
+                f"{game.current_player.name} puts {cards_moved} card(s) from the unused pile on the bottom of their draw pile."
+            )
 
 
 class Giraffodile(Card):
@@ -470,7 +486,7 @@ class Hyenix(Card):
 #     def trigger_action(self, game: Game) -> None:
 #         roll = random.randint(1, 6)
 #         if roll >= 4:
-              # TODO - Player choice
+# TODO - Player choice
 #             game._destroy_creature(game.opponent, game.opponent.cards_laid_out[0])
 #             game.log.append(
 #                 f"{game.current_player.name}'s {game.current_player.cards_laid_out[0].name} rolls a {roll} and defeats {game.opponent.name}'s {game.opponent.cards_laid_out[0].name}."
@@ -565,9 +581,7 @@ class killer_bee(Card):
                 f"{game.opponent.name} loses {lost_life} life because {game.current_player.name} plays Killer Bee."
             )
         else:
-            game.log.append(
-                f"{game.opponent.name} cannot lose life."
-            )
+            game.log.append(f"{game.opponent.name} cannot lose life.")
 
 
 class Knightmare(Card):
@@ -582,7 +596,9 @@ class Knightmare(Card):
     def trigger_action(self, game: Game) -> None:
         game.game_state = GameState.GAME_OVER
         game.winner = game.opponent
-        game.log.append(f"{game.opponent.name} wins the game because {game.current_player.name}'s {self.name} was defeated.")
+        game.log.append(
+            f"{game.opponent.name} wins the game because {game.current_player.name}'s {self.name} was defeated."
+        )
 
     def apply_ongoing_effect(self, game: Game, owner, opponent) -> None:
         owner.cannot_lose_life = True
@@ -620,10 +636,15 @@ class Macaw_dagon(Card):
     action_type: CardActionType = CardActionType.ATTACK
     action_description: str = "Swap hand with the opponent."
     set: CardSet = CardSet.PROMO_CARDS
-    
+
     def trigger_action(self, game: Game) -> None:
-        game.current_player.hand, game.opponent.hand = game.opponent.hand, game.current_player.hand
-        game.log.append(f"{game.current_player.name} swaps their hand with {game.opponent.name}'s hand.")
+        game.current_player.hand, game.opponent.hand = (
+            game.opponent.hand,
+            game.current_player.hand,
+        )
+        game.log.append(
+            f"{game.current_player.name} swaps their hand with {game.opponent.name}'s hand."
+        )
 
 
 class Majestic_manticore(Card):
@@ -702,7 +723,7 @@ class Ram_hopper(Card):
 #     action_type: CardActionType = CardActionType.PLAY
 #     action_description: str = "Play any number of cards with power 4 or less from your discard pile without activating their Play effects."
 #     set: CardSet = CardSet.PROMO_CARDS
-    
+
 #     def trigger_action(self, game: Game) -> None:
 #         # TODO - Player choice
 #         game.resolve_ratomanger_action(self)
@@ -749,7 +770,9 @@ class Sharky_crab_dog_mummypus(Card):
             CardSpecialType.FRENZY,
             CardSpecialType.POISONOUS,
         ]
-        enemy_tags = {tag for card in opponent.cards_laid_out for tag in card.special_types}
+        enemy_tags = {
+            tag for card in opponent.cards_laid_out for tag in card.special_types
+        }
         for tag in copied_tags:
             if tag in enemy_tags and tag not in self.special_types:
                 self.special_types.append(tag)
@@ -787,7 +810,7 @@ class Short_neck_giraffodile(Card):
 #     action_type: CardActionType = CardActionType.ATTACK
 #     action_description: str = "You may defeat another allied creature. If you do, defeat an enemy creature."
 #     set: CardSet = CardSet.PROMO_CARDS
-    
+
 #     def trigger_action(self, game: Game) -> None:
 #         # TODO - Player choice
 #         game.resolve_slugapult_action(self)
@@ -796,7 +819,7 @@ class Short_neck_giraffodile(Card):
 # class Sluggernaut(Card):
 #     name: str = "Sluggernaut"
 #     strength: int = 6
-#     special_types: list[CardSpecialType] = [CardSpecialType.TOUGH] 
+#     special_types: list[CardSpecialType] = [CardSpecialType.TOUGH]
 #     action_type: CardActionType = CardActionType.LOSE_TOUGH_CHARGE # TODO - add action_description
 #     set: CardSet = CardSet.PROMO_CARDS
 
@@ -882,17 +905,16 @@ class Strange_barrel(Card):
 #     strength: int = 1
 #     special_types: list[CardSpecialType] = []
 #     action_types: list[CardActionType] = [CardActionType.PLAY, CardActionType.DEFEATED]
-#     action_description: list[str] = ["An opponent takes control of this card.", "Lose 2 lives."]
+#     action_description: list[str] = ["An opponent takes control of this card.", "Lose 2 lives."] # TODO - how to know which description to display in UI when player choosing
 #     set: CardSet = CardSet.PROMO_CARDS
-    
+
 #     def trigger_play_effect(self, game: Game) -> None:
 #         game.opponent.cards_laid_out.append(self)
 #         game.log.append(f"{game.opponent.name} takes control of {self.name}.")
-    
+
 #     def trigger_defeated_effect(self, game: Game) -> None:
 #         game.opponent.lose_life(2)
 #         game.log.append(f"{game.opponent.name} loses 2 lives.")
-    
 
 
 class Steamforger(Card):
@@ -900,16 +922,25 @@ class Steamforger(Card):
     strength: int = 9
     special_types: list[CardSpecialType] = []
     action_type: CardActionType = CardActionType.ATTACK
-    action_description: str = "If you control at least 3 more creatures than an opponent, you win the game."
+    action_description: str = (
+        "If you control at least 3 more creatures than an opponent, you win the game."
+    )
     set: CardSet = CardSet.PROMO_CARDS
-    
+
     def trigger_action(self, game: Game) -> None:
-        if len(game.current_player.cards_laid_out) >= len(game.opponent.cards_laid_out) + 3:
+        if (
+            len(game.current_player.cards_laid_out)
+            >= len(game.opponent.cards_laid_out) + 3
+        ):
             game.game_state = GameState.GAME_OVER
             game.winner = game.current_player
-            game.log.append(f"{game.current_player.name} wins the game with Steamforger.")
+            game.log.append(
+                f"{game.current_player.name} wins the game with Steamforger."
+            )
         else:
-            game.log.append(f"{game.current_player.name} does not win the game with Steamforger.")
+            game.log.append(
+                f"{game.current_player.name} does not win the game with Steamforger."
+            )
 
 
 class The_lurker(Card):
@@ -1011,7 +1042,9 @@ class Unigon(Card):
             game.winner = game.current_player
             game.log.append(f"{game.current_player.name} wins the game with Unigon.")
         else:
-            game.log.append(f"{game.current_player.name}'s hand is not empty, so Unigon does not win the game.")
+            game.log.append(
+                f"{game.current_player.name}'s hand is not empty, so Unigon does not win the game."
+            )
 
 
 class Urchin_hurler(Card):
