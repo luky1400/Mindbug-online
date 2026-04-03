@@ -114,7 +114,6 @@ export function App() {
     hasPendingFrenzyAttack
   );
 
-  const selectionText = `Hand: ${selectedHandIndex ?? "-"} | Attacker: ${selectedAttackerIndex ?? "-"} | Target/Blocker: ${selectedDefenderIndex ?? "-"}`;
   const pendingCardActionIdentity = state?.pending_card_action
     ? `${state.pending_card_action.action_key}|${state.pending_card_action.source_card_label}|${state.pending_card_action.staged_card_label || ""}|${state.pending_card_action.selection_zone}|${state.pending_card_action.selection_owner_name}|${state.pending_card_action.responding_player_name}`
     : null;
@@ -716,130 +715,104 @@ export function App() {
 
   // ── Game screen ────────────────────────────────────────────────────────────
   return (
-    <main className="app-shell container-xl py-3">
-      <div className="row g-3">
-        <div className="col-12">
-          <section className="card border-0 bg-panel">
-            <div className="card-body">
-              <div className="d-flex flex-wrap gap-2 align-items-center justify-content-between">
-                <div>
-                  <div className="section-title mb-1">Game status</div>
-                  <div className="turn-banner">
-                    {isWaitingForOpponent
-                      ? `Waiting for second player. Share code ${state!.invite_code}.`
-                      : state!.pending_mindbug
-                        ? state!.pending_mindbug.response_required_from_viewer
-                          ? `Respond to ${state!.pending_mindbug.acting_player_name}'s ${parseCardLabel(state!.pending_mindbug.card_label).name}.`
-                          : `Waiting for ${state!.pending_mindbug.responding_player_name} to answer the Mindbug prompt.`
-                        : state!.pending_defense
-                          ? state!.pending_defense.response_required_from_viewer
-                            ? `Defend against ${state!.pending_defense.attacking_player_name}'s ${parseCardLabel(state!.pending_defense.attacker_label).name}.`
-                            : `Waiting for ${state!.pending_defense.defending_player_name} to choose a blocker or lose 1 life.`
-                          : state!.pending_card_action
-                            ? state!.pending_card_action.response_required_from_viewer
-                              ? `Resolve ${pendingCardActionName}'s action.`
-                              : `Waiting for ${state!.pending_card_action.responding_player_name} to resolve ${pendingCardActionName}'s action.`
-                            : state!.pending_defeated_ordering
-                              ? state!.pending_defeated_ordering.response_required_from_viewer
-                                ? "Choose the order of DEFEATED effects."
-                                : `Waiting for ${state!.pending_defeated_ordering.responding_player_name} to choose DEFEATED action order.`
-                              : state!.is_viewer_turn
-                                ? "Your turn."
-                                : `Waiting for ${state!.turn_player}.`}
-                  </div>
-                </div>
-                {state!.pending_defense?.response_required_from_viewer ? (
-                  <div className="d-flex flex-wrap gap-2 align-items-center">
-                    <button className="btn btn-outline-light" onClick={() => void defendWithSelectedBlocker()} type="button">
-                      Block with selected creature
-                    </button>
-                    <button className="btn btn-warning" onClick={() => void takeLifeLoss()} type="button">
-                      Lose 1 life
-                    </button>
-                  </div>
-                ) : null}
+    <main className="game-layout">
+      {!isWaitingForOpponent && viewer ? (
+        <>
+          <BoardZone
+            title={opponent?.name || state!.opponent_player_name || "Opponent"}
+            player={opponent || { player_index: 1, name: state!.opponent_player_name || "Opponent", lives: 0, mindbugs_remaining: 0, hand_count: 0, draw_count: 0, discard_count: 0, battlefield: [], discard: [], hand: [] }}
+            battlefieldMode={canAnswerDefense || hasBlockingChoiceModal ? "readonly" : "defender"}
+            selectedBattlefieldIndex={canAnswerDefense && !hasBlockingChoiceModal ? selectedDefenderIndex : null}
+            onSelectBattlefield={canAnswerDefense || hasBlockingChoiceModal ? undefined : (index) => toggleSelected("defender", index)}
+            onPreview={(label) => setPreviewCardLabel(label)}
+            animatedBattlefieldStolenIndices={animatedCards.opponentBattlefieldStolen}
+          />
+
+          <div className="game-status-bar">
+            <div className="game-status-text">
+              {isWaitingForOpponent
+                ? `Waiting for second player. Share code ${state!.invite_code}.`
+                : state!.pending_mindbug
+                  ? state!.pending_mindbug.response_required_from_viewer
+                    ? `Respond to ${state!.pending_mindbug.acting_player_name}'s ${parseCardLabel(state!.pending_mindbug.card_label).name}.`
+                    : `Waiting for ${state!.pending_mindbug.responding_player_name} to answer the Mindbug prompt.`
+                  : state!.pending_defense
+                    ? state!.pending_defense.response_required_from_viewer
+                      ? `Defend against ${state!.pending_defense.attacking_player_name}'s ${parseCardLabel(state!.pending_defense.attacker_label).name}.`
+                      : `Waiting for ${state!.pending_defense.defending_player_name} to choose a blocker or lose 1 life.`
+                    : state!.pending_card_action
+                      ? state!.pending_card_action.response_required_from_viewer
+                        ? `Resolve ${pendingCardActionName}'s action.`
+                        : `Waiting for ${state!.pending_card_action.responding_player_name} to resolve ${pendingCardActionName}'s action.`
+                      : state!.pending_defeated_ordering
+                        ? state!.pending_defeated_ordering.response_required_from_viewer
+                          ? "Choose the order of DEFEATED effects."
+                          : `Waiting for ${state!.pending_defeated_ordering.responding_player_name} to choose DEFEATED action order.`
+                        : state!.is_viewer_turn
+                          ? "Your turn."
+                          : `Waiting for ${state!.turn_player}.`}
+            </div>
+            {state!.pending_defense?.response_required_from_viewer ? (
+              <div className="d-flex gap-2 align-items-center">
+                <button className="btn btn-sm btn-outline-light" onClick={() => void defendWithSelectedBlocker()} type="button">
+                  Block with selected
+                </button>
+                <button className="btn btn-sm btn-warning" onClick={() => void takeLifeLoss()} type="button">
+                  Lose 1 life
+                </button>
               </div>
-              {errorText ? <div className="error-text mt-2">{errorText}</div> : null}
+            ) : null}
+            {errorText ? <span className="error-text">{errorText}</span> : null}
+          </div>
+
+          <BoardZone
+            title={`${viewer.name}${state!.is_viewer_turn ? " (your turn)" : ""}`}
+            player={viewer}
+            active={state!.is_viewer_turn}
+            battlefieldMode={hasBlockingChoiceModal ? "readonly" : canAnswerDefense ? "defender" : "attacker"}
+            selectedBattlefieldIndex={hasBlockingChoiceModal ? null : canAnswerDefense ? selectedDefenderIndex : selectedAttackerIndex}
+            onSelectBattlefield={hasBlockingChoiceModal ? undefined : (index) => toggleSelected(canAnswerDefense ? "defender" : "attacker", index)}
+            onPreview={(label) => setPreviewCardLabel(label)}
+            animatedBattlefieldStolenIndices={animatedCards.viewerBattlefieldStolen}
+          />
+
+          <div className="game-bottom-bar">
+            <div className="action-buttons">
+              <button className="btn btn-sm btn-primary" disabled={!canAct} onClick={() => void playSelectedCard()} type="button">
+                Play card
+              </button>
+              <button className="btn btn-sm btn-outline-light" disabled={!canAct} onClick={() => void attackSelected()} type="button">
+                Attack
+              </button>
+              {canManuallyEndTurn ? (
+                <button className="btn btn-sm btn-success" onClick={() => void endTurn()} type="button">
+                  End turn
+                </button>
+              ) : null}
+            </div>
+            <div className="hand-area">
+              <HandPanel
+                cards={hand}
+                selectedIndex={hasBlockingChoiceModal ? null : selectedHandIndex}
+                selectable={!hasBlockingChoiceModal}
+                onSelect={(index) => toggleSelected("hand", index)}
+                onPreview={(label) => setPreviewCardLabel(label)}
+                animatedIndices={animatedCards.viewerHand}
+              />
+            </div>
+          </div>
+        </>
+      ) : (
+        <div className="d-flex align-items-center justify-content-center" style={{ minHeight: "50vh" }}>
+          <section className="card border-0 bg-panel" style={{ maxWidth: 500 }}>
+            <div className="card-body text-center py-4">
+              <div className="turn-banner">
+                {`Waiting for second player. Share code ${state!.invite_code}.`}
+              </div>
             </div>
           </section>
         </div>
-
-        {!isWaitingForOpponent && viewer ? (
-          <>
-            <div className="col-12">
-              <BoardZone
-                title={opponent?.name || state!.opponent_player_name || "Opponent"}
-                player={opponent || { player_index: 1, name: state!.opponent_player_name || "Opponent", lives: 0, mindbugs_remaining: 0, hand_count: 0, draw_count: 0, discard_count: 0, battlefield: [], discard: [], hand: [] }}
-                battlefieldMode={canAnswerDefense || hasBlockingChoiceModal ? "readonly" : "defender"}
-                selectedBattlefieldIndex={canAnswerDefense && !hasBlockingChoiceModal ? selectedDefenderIndex : null}
-                onSelectBattlefield={canAnswerDefense || hasBlockingChoiceModal ? undefined : (index) => toggleSelected("defender", index)}
-                onPreview={(label) => setPreviewCardLabel(label)}
-                animatedBattlefieldStolenIndices={animatedCards.opponentBattlefieldStolen}
-              />
-            </div>
-            <div className="col-12">
-              <BoardZone
-                title={`${viewer.name}${state!.is_viewer_turn ? " (your turn)" : ""}`}
-                player={viewer}
-                active={state!.is_viewer_turn}
-                battlefieldMode={hasBlockingChoiceModal ? "readonly" : canAnswerDefense ? "defender" : "attacker"}
-                selectedBattlefieldIndex={hasBlockingChoiceModal ? null : canAnswerDefense ? selectedDefenderIndex : selectedAttackerIndex}
-                onSelectBattlefield={hasBlockingChoiceModal ? undefined : (index) => toggleSelected(canAnswerDefense ? "defender" : "attacker", index)}
-                onPreview={(label) => setPreviewCardLabel(label)}
-                animatedBattlefieldStolenIndices={animatedCards.viewerBattlefieldStolen}
-              />
-            </div>
-            <div className="col-12">
-              <section className="card border-0 bg-panel">
-                <div className="card-body">
-                  <div className="row g-3 align-items-end">
-                    <div className="col-md-4">
-                      <button className="btn btn-primary w-100" disabled={!canAct} onClick={() => void playSelectedCard()} type="button">
-                        Play selected hand card
-                      </button>
-                    </div>
-                    <div className="col-md-4">
-                      <div className="d-flex gap-2 align-items-center">
-                        <button className="btn btn-outline-light flex-grow-1" disabled={!canAct} onClick={() => void attackSelected()} type="button">
-                          Attack with selected board card
-                        </button>
-                        <div className="info-icon-wrapper">
-                          <span className="info-icon">ⓘ</span>
-                          <div className="info-tooltip-popup">
-                            When your attacker has <span className="chip">HUNTER</span>, you can select a target.
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="col-md-4">
-                      {canManuallyEndTurn ? (
-                        <button className="btn btn-success w-100 mb-2" onClick={() => void endTurn()} type="button">
-                          End turn
-                        </button>
-                      ) : null}
-                      <div className="selection-box">{selectionText}</div>
-                    </div>
-                  </div>
-                </div>
-              </section>
-            </div>
-            <div className="col-12">
-              <section className="card border-0 bg-panel">
-                <div className="card-body">
-                  <HandPanel
-                    cards={hand}
-                    selectedIndex={hasBlockingChoiceModal ? null : selectedHandIndex}
-                    selectable={!hasBlockingChoiceModal}
-                    onSelect={(index) => toggleSelected("hand", index)}
-                    onPreview={(label) => setPreviewCardLabel(label)}
-                    animatedIndices={animatedCards.viewerHand}
-                  />
-                </div>
-              </section>
-            </div>
-          </>
-        ) : null}
-      </div>
+      )}
 
       {canAnswerMindbug && isMindbugModalHidden ? (
         <div className="choice-modal-toggle">
