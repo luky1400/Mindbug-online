@@ -79,6 +79,7 @@ export function BoardZone({
                     <CardTile
                       key={`${label}-${index}`}
                       label={label}
+                      size="medium"
                       selected={selectedBattlefieldIndex === index}
                       clickable={battlefieldClickable}
                       showStrength

@@ -136,6 +136,7 @@ PYTHONPATH=. pytest tests/tests_mindbug_use.py
 - dont show Game status: "Your turn". But rather: "Play card or attack" / "Play card" / "Attack."
 - udělat nejakou signalizaci, která upozorní hrace, ze je na tahu (play_card/attack, Mindbug, Defend, etc.)
 - Ukazat pouzehorni pulku karet v ruce?
+- create icons for number of lives, cards in hand, ..
 - Smazat Close button u Card preview
 - Special effects:
   - Hrac ukradnul kartu mozkozroutem

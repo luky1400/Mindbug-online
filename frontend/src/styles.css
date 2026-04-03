@@ -70,12 +70,21 @@ body {
   flex: 1;
   min-height: 0;
   padding-top: 2px;
+  position: relative;
+  z-index: 6;
 }
 
 .hand-area {
   flex: 1;
   min-height: 120px;
-  overflow-y: auto;
+  overflow: visible;
+  position: relative;
+}
+
+.hand-scroll {
+  overflow-x: auto;
+  overflow-y: visible;
+  padding-top: 24px;
 }
 
 .setup-grid {
@@ -324,14 +333,20 @@ body {
   justify-content: center;
   align-items: flex-end;
   gap: 0;
-  padding: 0 10px;
+  width: max-content;
+  min-width: 100%;
+  padding: 8px 20px 16px;
 }
 
 .hand-row > .card-tile {
-  width: 100px;
   transition: transform 0.15s ease, z-index 0s;
-  margin-left: -12px;
+  margin-left: -28px;
   position: relative;
+  transform-origin: center bottom;
+}
+
+.hand-row > .card-tile.card-tile-medium {
+  width: 145px;
 }
 
 .hand-row > .card-tile:first-child {
@@ -339,7 +354,7 @@ body {
 }
 
 .hand-row > .card-tile:hover {
-  transform: translateY(-10px) scale(1.08);
+  transform: translateY(-18px) scale(1.08);
   z-index: 10;
 }
 
@@ -352,11 +367,11 @@ body {
 }
 
 .hand-row > .card-tile:nth-child(odd):hover {
-  transform: translateY(-10px) scale(1.08) rotate(0deg);
+  transform: translateY(-18px) scale(1.08) rotate(0deg);
 }
 
 .hand-row > .card-tile:nth-child(even):hover {
-  transform: translateY(-10px) scale(1.08) rotate(0deg);
+  transform: translateY(-18px) scale(1.08) rotate(0deg);
 }
 
 .placeholder {
@@ -1030,6 +1045,18 @@ body {
   .card-tile-large {
     width: 160px;
   }
+  .hand-row {
+    padding: 8px 12px 14px;
+  }
+  .hand-scroll {
+    padding-top: 20px;
+  }
+  .hand-row > .card-tile {
+    margin-left: -24px;
+  }
+  .hand-row > .card-tile.card-tile-medium {
+    width: 132px;
+  }
   .card-image {
     height: 130px;
   }
@@ -1044,5 +1071,11 @@ body {
 @media (max-width: 640px) {
   .choice-options-grid {
     grid-template-columns: 1fr;
+  }
+  .hand-scroll {
+    padding-top: 16px;
+  }
+  .hand-row > .card-tile {
+    margin-left: -18px;
   }
 }
