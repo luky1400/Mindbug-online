@@ -67,16 +67,16 @@ body {
 .game-bottom-bar {
   display: flex;
   flex-direction: column;
-  flex: 1;
-  min-height: 0;
-  padding-top: 2px;
+  flex: 0 0 auto;
+  min-height: auto;
+  padding-top: 0;
   position: relative;
   z-index: 20;
 }
 
 .hand-area {
-  flex: 1;
-  min-height: 120px;
+  flex: 0 0 auto;
+  min-height: 0;
   overflow: visible;
   position: relative;
   display: flex;
@@ -347,7 +347,7 @@ body {
   gap: 0;
   width: max-content;
   min-width: 100%;
-  padding: 8px 20px 4px;
+  padding: 6px 20px 0;
 }
 
 .hand-row > .card-tile {
@@ -358,11 +358,11 @@ body {
 }
 
 .hand-row > .card-tile.card-tile-medium {
-  width: 160px;
+  width: 172px;
 }
 
 .hand-row > .card-tile.card-tile-medium .card-image {
-  height: 198px;
+  height: 214px;
 }
 
 .hand-row > .card-tile:first-child {
@@ -1062,16 +1062,16 @@ body {
     width: 160px;
   }
   .hand-row {
-    padding: 8px 12px 4px;
+    padding: 6px 12px 0;
   }
   .hand-row > .card-tile {
     margin-left: -24px;
   }
   .hand-row > .card-tile.card-tile-medium {
-    width: 145px;
+    width: 156px;
   }
   .hand-row > .card-tile.card-tile-medium .card-image {
-    height: 182px;
+    height: 194px;
   }
   .card-image {
     height: 130px;
