@@ -26,11 +26,6 @@ export function HandPanel({ cards, selectedIndex, selectable = true, onSelect, o
           {expanded ? "Collapse Hand" : "Expand Hand"}
         </button>
       </div>
-      <p className="section-help">
-        {selectable
-          ? "Click to select a card for play. Double click card for larger readable preview."
-          : "Card selection is temporarily locked while you resolve the current prompt."}
-      </p>
       <div className={`hand-grid ${expanded ? "hand-grid-expanded" : "hand-grid-compact"}`}>
         {cards.length === 0 ? (
           <div className="placeholder">No cards</div>
