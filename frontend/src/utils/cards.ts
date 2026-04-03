@@ -72,6 +72,7 @@ const nativeAbilityTagsByName: Record<string, string[]> = {
   "Shark Dog": ["HUNTER"],
   "Snail Thrower": ["POISONOUS"],
   "Spider Owl": ["SNEAKY", "POISONOUS"],
+  "The Pack": ["TOUGH", "HUNTER"],
   "Tiger Squirrel": ["SNEAKY"],
   "Urchin Hurler": ["HUNTER"]
 };
