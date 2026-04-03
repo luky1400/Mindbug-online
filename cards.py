@@ -475,8 +475,8 @@ class Hyenix(Card):
     set: CardSet = CardSet.NEW_SERVANTS
 
 
-# class Chameleon_sniper(Card):
-#     name: str = "Chameleon Sniper"
+# class Chuck(Card):
+#     name: str = "Chuck"
 #     strength: int = 3
 #     special_types: list[CardSpecialType] = [CardSpecialType.TOUGH]
 #     action_type: CardActionType = CardActionType.PLAY
@@ -497,8 +497,8 @@ class Hyenix(Card):
 #             )
 
 
-class Chuck(Card):
-    name: str = "Chuck"
+class Chameleon_sniper(Card):
+    name: str = "Chameleon Sniper"
     strength: int = 1
     special_types: list[CardSpecialType] = [CardSpecialType.SNEAKY]
     action_type: CardActionType = CardActionType.ATTACK
