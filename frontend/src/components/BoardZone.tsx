@@ -66,11 +66,6 @@ export function BoardZone({
               </button>
             </div>
             <div className="board-zone-battlefield">
-              <p className="section-title">
-                Battlefield
-                {battlefieldMode === "attacker" ? " (select attacker)" : ""}
-                {battlefieldMode === "defender" ? " (select defender)" : ""}
-              </p>
               <div className="cards-row">
                 {player.battlefield.length === 0 ? (
                   <div className="placeholder">No cards</div>
