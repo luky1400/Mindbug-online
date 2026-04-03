@@ -71,7 +71,7 @@ body {
   min-height: 0;
   padding-top: 2px;
   position: relative;
-  z-index: 6;
+  z-index: 20;
 }
 
 .hand-area {
@@ -83,8 +83,11 @@ body {
 
 .hand-scroll {
   overflow-x: auto;
-  overflow-y: visible;
-  padding-top: 24px;
+  overflow-y: hidden;
+  position: relative;
+  z-index: 30;
+  padding-top: 52px;
+  margin-top: -52px;
 }
 
 .setup-grid {
@@ -112,6 +115,8 @@ body {
   flex: 1 1 0;
   min-height: 0;
   overflow: hidden;
+  position: relative;
+  z-index: 1;
 }
 
 .zone > .card-body {
@@ -354,8 +359,8 @@ body {
 }
 
 .hand-row > .card-tile:hover {
-  transform: translateY(-18px) scale(1.08);
-  z-index: 10;
+  transform: translateY(-42px) scale(1.1);
+  z-index: 40;
 }
 
 .hand-row > .card-tile:nth-child(odd) {
@@ -367,11 +372,11 @@ body {
 }
 
 .hand-row > .card-tile:nth-child(odd):hover {
-  transform: translateY(-18px) scale(1.08) rotate(0deg);
+  transform: translateY(-42px) scale(1.1) rotate(0deg);
 }
 
 .hand-row > .card-tile:nth-child(even):hover {
-  transform: translateY(-18px) scale(1.08) rotate(0deg);
+  transform: translateY(-42px) scale(1.1) rotate(0deg);
 }
 
 .placeholder {
@@ -1048,9 +1053,6 @@ body {
   .hand-row {
     padding: 8px 12px 14px;
   }
-  .hand-scroll {
-    padding-top: 20px;
-  }
   .hand-row > .card-tile {
     margin-left: -24px;
   }
@@ -1071,9 +1073,6 @@ body {
 @media (max-width: 640px) {
   .choice-options-grid {
     grid-template-columns: 1fr;
-  }
-  .hand-scroll {
-    padding-top: 16px;
   }
   .hand-row > .card-tile {
     margin-left: -18px;
