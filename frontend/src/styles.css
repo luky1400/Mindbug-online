@@ -113,6 +113,129 @@ body {
   color: var(--muted);
 }
 
+/* ── Board zone layout ────────────────────────────────────────────── */
+
+.board-zone-layout {
+  display: flex;
+  gap: 16px;
+  align-items: stretch;
+}
+
+.board-zone-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 80px;
+  flex-shrink: 0;
+}
+
+.sidebar-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #0e1a30;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 6px 8px 4px;
+}
+
+.stat-lives {
+  border-color: #8f3a3a;
+  background: rgba(50, 20, 20, 0.5);
+}
+
+.stat-value {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.stat-label {
+  font-size: 0.68rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.discard-pile-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  background: #0e1a30;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 8px 6px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  color: var(--muted);
+}
+
+.discard-pile-btn:hover:not(:disabled) {
+  background: #1a2d50;
+  border-color: var(--accent);
+}
+
+.discard-pile-btn-empty {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.discard-pile-icon {
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+.discard-pile-count {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.discard-pile-label {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.board-zone-battlefield {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ── Discard pile modal ───────────────────────────────────────────── */
+
+.discard-modal-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center;
+  overflow-y: auto;
+  max-height: calc(80vh - 120px);
+}
+
+.discard-modal-card {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.discard-modal-image {
+  width: 100%;
+  max-width: 240px;
+  max-height: 340px;
+  display: block;
+  border-radius: 12px;
+  object-fit: contain;
+}
+
 .cards-row {
   display: flex;
   flex-wrap: wrap;
@@ -792,6 +915,18 @@ body {
 }
 
 @media (max-width: 992px) {
+  .board-zone-sidebar {
+    min-width: 66px;
+  }
+
+  .stat-item {
+    padding: 4px 6px 3px;
+  }
+
+  .stat-value {
+    font-size: 1rem;
+  }
+
   .choice-options-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }

@@ -783,7 +783,6 @@ export function App() {
                 selectedBattlefieldIndex={canAnswerDefense && !hasBlockingChoiceModal ? selectedDefenderIndex : null}
                 onSelectBattlefield={canAnswerDefense || hasBlockingChoiceModal ? undefined : (index) => toggleSelected("defender", index)}
                 onPreview={(label) => setPreviewCardLabel(label)}
-                animatedDiscardIndices={animatedCards.opponentDiscard}
                 animatedBattlefieldStolenIndices={animatedCards.opponentBattlefieldStolen}
               />
             </div>
@@ -796,7 +795,6 @@ export function App() {
                 selectedBattlefieldIndex={hasBlockingChoiceModal ? null : canAnswerDefense ? selectedDefenderIndex : selectedAttackerIndex}
                 onSelectBattlefield={hasBlockingChoiceModal ? undefined : (index) => toggleSelected(canAnswerDefense ? "defender" : "attacker", index)}
                 onPreview={(label) => setPreviewCardLabel(label)}
-                animatedDiscardIndices={animatedCards.viewerDiscard}
                 animatedBattlefieldStolenIndices={animatedCards.viewerBattlefieldStolen}
               />
             </div>
