@@ -737,7 +737,7 @@ export function App() {
                       ? `Waiting for second player. Share code ${state!.invite_code}.`
                       : state!.pending_mindbug
                         ? state!.pending_mindbug.response_required_from_viewer
-                          ? `Respond to ${state!.pending_mindbug.acting_player_name}'s ${state!.pending_mindbug.card_label}.`
+                          ? `Respond to ${state!.pending_mindbug.acting_player_name}'s ${parseCardLabel(state!.pending_mindbug.card_label).name}.`
                           : `Waiting for ${state!.pending_mindbug.responding_player_name} to answer the Mindbug prompt.`
                         : state!.pending_defense
                           ? state!.pending_defense.response_required_from_viewer
