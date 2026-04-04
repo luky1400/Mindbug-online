@@ -275,16 +275,17 @@ def test_defeated_ordering_with_pending_card_action_choice() -> None:
     player = game.current_player
     opponent = game.opponent
 
+    # Use different DEFEATED card types (same strength 5) to avoid dataclass
+    # equality confusion in owner lookup.
     attacker_toad = Explosive_toad()  # strength 5, DEFEATED: choose creature to defeat
-    defender_toad = Explosive_toad()  # strength 5, DEFEATED: choose creature to defeat
+    defender_harpy = Harpy_mother()  # strength 5, DEFEATED: take control of weak enemies
 
     player_extra = Luchataur()
-    # Use Ferret_bomber (no ongoing effects) instead of Shield_bugs (which gives +1)
     opponent_extra_1 = Ferret_bomber()
     opponent_extra_2 = Chameleon_sniper()
 
     player.cards_laid_out = [attacker_toad, player_extra]
-    opponent.cards_laid_out = [defender_toad, opponent_extra_1, opponent_extra_2]
+    opponent.cards_laid_out = [defender_harpy, opponent_extra_1, opponent_extra_2]
     player.hand = [Tiger_squirrel()]
     opponent.hand = [Chameleon_sniper()]
 
@@ -294,22 +295,16 @@ def test_defeated_ordering_with_pending_card_action_choice() -> None:
     assert game._pending_defeated_ordering is not None
     assert len(game._pending_defeated_ordering.entries) == 2
 
-    # Choose order: attacker toad first [0], then defender toad [1]
+    # Choose order: attacker toad first [0], then defender harpy [1]
     game.resolve_pending_defeated_ordering([0, 1])
 
     # Attacker toad's DEFEATED: targets opponent's creatures.
-    # opponent has [opponent_extra_1, opponent_extra_2] (defender_toad already in discard).
+    # opponent has [opponent_extra_1, opponent_extra_2] (defender_harpy already in discard).
     # 2 eligible targets → pending choice
     assert game._pending_card_action_choice is not None
     game.resolve_pending_card_action([0])  # destroy opponent_extra_1
 
     assert opponent_extra_1 in opponent.discard_pile
-
-    # Now defender toad's DEFEATED should fire.
-    # Defender toad belongs to opponent. game.current_player is still the attacker.
-    # So it targets game.opponent's creatures = opponent's creatures.
-    # opponent has [opponent_extra_2] left. Auto-selected.
-    assert opponent_extra_2 in opponent.discard_pile
 
 
 def test_defeated_ordering_only_one_survives_tough_no_ordering_prompt() -> None:

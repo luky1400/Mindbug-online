@@ -229,10 +229,12 @@ class DefeatedCreatureEntry:
     owner_name: str
     card_label: str  # snapshot at time of death
 
+
 @dataclass
 class PendingDefeatedOrdering:
     responding_player_index: int
     entries: list[DefeatedCreatureEntry]
+
 
 @dataclass
 class PendingCombatFinalization:
@@ -259,7 +261,6 @@ class Game:
         enforce_turn_action_limit: bool = False,
         auto_end_turn_after_successful_play: bool = False,
         auto_end_turn_after_resolved_attack: bool = False,
-
     ):
         if len(player_names) != 2:
             raise ValueError("Mindbug game supports exactly 2 players.")
@@ -323,9 +324,7 @@ class Game:
         selected_cards = random.sample(self.card_pool, self.number_of_cards_in_game)
         selected_names = {card.name for card in selected_cards}
         self.unused_pile = [
-            card.clone()
-            for card in self.card_pool
-            if card.name not in selected_names
+            card.clone() for card in self.card_pool if card.name not in selected_names
         ]
         random.shuffle(self.unused_pile)
         return [card.clone() for card in selected_cards]
@@ -333,8 +332,7 @@ class Game:
     def _draw_up_to_hand_limit_if_needed(self, player: Player) -> int:
         cards_drawn = 0
         while (
-            len(player.hand) < self.hand_size_limit
-            and len(player.draw_pile.cards) > 0
+            len(player.hand) < self.hand_size_limit and len(player.draw_pile.cards) > 0
         ):
             player.draw(1)
             cards_drawn += 1
@@ -346,6 +344,7 @@ class Game:
 
     def start_game(self, sets: list[CardSet] | None = None) -> None:
         from cards import get_card_pool
+
         self.card_pool = get_card_pool(sets=sets)
         self.selected_sets = self._resolve_selected_sets(sets)
         game_cards = self._select_cards_for_game()
@@ -399,7 +398,11 @@ class Game:
         card_to_play, played_from_hand = self._resolve_card_to_play(
             hand_index=hand_index, card=card
         )
-        if self.enforce_turn_action_limit and self._turn_action_taken and played_from_hand:
+        if (
+            self.enforce_turn_action_limit
+            and self._turn_action_taken
+            and played_from_hand
+        ):
             raise ValueError("You already took your action this turn.")
         actor = self.current_player
 
@@ -666,7 +669,10 @@ class Game:
             self._recalculate_ongoing_effects()
             self._check_game_over()
             # Continue processing queued DEFEATED actions
-            if self._defeated_action_queue or self._pending_combat_finalization is not None:
+            if (
+                self._defeated_action_queue
+                or self._pending_combat_finalization is not None
+            ):
                 self._process_next_defeated_action()
                 return
             if self._pending_attack_continuation is not None:
@@ -678,7 +684,9 @@ class Game:
                 self._auto_end_turn_after_attack_if_needed()
             if self._pending_defense_decision is not None:
                 attacker = self._pending_defense_decision.attacker
-                attacker_player = self.players[self._pending_defense_decision.attacking_player_index]
+                attacker_player = self.players[
+                    self._pending_defense_decision.attacking_player_index
+                ]
                 if attacker not in attacker_player.cards_laid_out:
                     self.log.append(
                         f"{attacker_player.name}'s {attacker.name} is no longer on the battlefield. Attack is cancelled."
@@ -713,19 +721,25 @@ class Game:
         owner = self.players[pending.responding_player_index]
         opponent = self.players[pending.selection_owner_index]
         if not selected_indices:
-            self.log.append(f"{owner.name}'s Brain Fly does not take control of a creature.")
+            self.log.append(
+                f"{owner.name}'s Brain Fly does not take control of a creature."
+            )
             return
         stolen_creature = opponent.cards_laid_out[selected_indices[0]]
         opponent.cards_laid_out.remove(stolen_creature)
         owner.cards_laid_out.append(stolen_creature)
-        self.log.append(f"{owner.name}'s Brain Fly takes control of {stolen_creature.name}.")
+        self.log.append(
+            f"{owner.name}'s Brain Fly takes control of {stolen_creature.name}."
+        )
 
     def _apply_compost_dragon_choice(
         self, pending: PendingCardActionChoice, selected_indices: list[int]
     ) -> None:
         owner = self.players[pending.responding_player_index]
         if not selected_indices:
-            self.log.append(f"{owner.name}'s Compost Dragon has no card to play from the discard pile.")
+            self.log.append(
+                f"{owner.name}'s Compost Dragon has no card to play from the discard pile."
+            )
             return
         card = owner.discard_pile.pop(selected_indices[0])
         self.log.append(f"{owner.name} plays {card.name} from their discard pile.")
@@ -743,7 +757,9 @@ class Game:
         enemy = self.players[pending.selection_owner_index]
         defeated_creature = enemy.cards_laid_out[selected_indices[0]]
         self._destroy_creature(enemy, defeated_creature)
-        self.log.append(f"{owner.name}'s Count Draculeech defeats {defeated_creature.name}.")
+        self.log.append(
+            f"{owner.name}'s Count Draculeech defeats {defeated_creature.name}."
+        )
 
     def _apply_ferret_bomber_choice(
         self, pending: PendingCardActionChoice, selected_indices: list[int]
@@ -770,18 +786,27 @@ class Game:
             return
         defeated_creature = enemy.cards_laid_out[selected_indices[0]]
         self._destroy_creature(enemy, defeated_creature)
-        self.log.append(f"{owner.name}'s Explosive Toad defeats {defeated_creature.name}.")
+        self.log.append(
+            f"{owner.name}'s Explosive Toad defeats {defeated_creature.name}."
+        )
 
     def _apply_short_neck_giraffodile_choice(
         self, pending: PendingCardActionChoice, selected_indices: list[int]
     ) -> None:
         owner = self.players[pending.responding_player_index]
         if not selected_indices:
-            self.log.append(f"{owner.name}'s Short Neck Giraffodile has no card to play from the discard pile.")
+            self.log.append(
+                f"{owner.name}'s Short Neck Giraffodile has no card to play from the discard pile."
+            )
             return
-        drawn_cards = [owner.discard_pile.pop(index) for index in sorted(selected_indices, reverse=True)]
+        drawn_cards = [
+            owner.discard_pile.pop(index)
+            for index in sorted(selected_indices, reverse=True)
+        ]
         owner.hand.extend(drawn_cards)
-        self.log.append(f"{owner.name} draws {len(drawn_cards)} cards from their discard pile.")
+        self.log.append(
+            f"{owner.name} draws {len(drawn_cards)} cards from their discard pile."
+        )
 
     def _apply_snail_hydra_choice(
         self, pending: PendingCardActionChoice, selected_indices: list[int]
@@ -790,7 +815,9 @@ class Game:
         source_owner = self.players[1 - pending.selection_owner_index]
         defeated_creature = enemy.cards_laid_out[selected_indices[0]]
         self._destroy_creature(enemy, defeated_creature)
-        self.log.append(f"{source_owner.name}'s Snail Hydra defeats {defeated_creature.name}.")
+        self.log.append(
+            f"{source_owner.name}'s Snail Hydra defeats {defeated_creature.name}."
+        )
 
     def _apply_grave_robber_choice(
         self, pending: PendingCardActionChoice, selected_indices: list[int]
@@ -798,7 +825,9 @@ class Game:
         owner = self.players[pending.responding_player_index]
         opponent = self.players[pending.selection_owner_index]
         card = opponent.discard_pile.pop(selected_indices[0])
-        self.log.append(f"{owner.name} plays {card.name} from {opponent.name}'s discard pile.")
+        self.log.append(
+            f"{owner.name} plays {card.name} from {opponent.name}'s discard pile."
+        )
         is_mindbug_stolen = not pending.auto_end_after_play
         self._finalize_played_card(
             owner_index=pending.responding_player_index,
@@ -815,7 +844,9 @@ class Game:
         for creature in stolen_creatures:
             enemy.cards_laid_out.remove(creature)
             owner.cards_laid_out.append(creature)
-            self.log.append(f"{owner.name}'s Harpy Mother takes control of {creature.name}.")
+            self.log.append(
+                f"{owner.name}'s Harpy Mother takes control of {creature.name}."
+            )
 
     def _apply_hyenix_choice(
         self, pending: PendingCardActionChoice, selected_indices: list[int]
@@ -833,7 +864,9 @@ class Game:
             )
             return
         owner.discard_pile.remove(hyenix)
-        self.log.append(f"{owner.name} plays Hyenix from their discard pile after losing life.")
+        self.log.append(
+            f"{owner.name} plays Hyenix from their discard pile after losing life."
+        )
         self._finalize_played_card(
             owner_index=pending.responding_player_index,
             card=hyenix,
@@ -1089,6 +1122,9 @@ class Game:
                 return
             self._draw_up_to_hand_limit_for_each_player_if_needed()
             self._check_game_over()
+            # NOTE - prevents the code from continuing to set up defense decisions or direct attacks, that would overwrite GAME_OVER with AWAITING_DEFENSE
+            if self.game_state == GameState.GAME_OVER:
+                return
             # ATTACK action can remove attacker before combat resolution (e.g. Snail Hydra attacks and destroys Explosive Toad, which then destroys Snail Hydra).
             if attacker not in attacker_owner.cards_laid_out:
                 self._turn_action_taken = True
@@ -1099,7 +1135,10 @@ class Game:
                 self._auto_end_turn_after_attack_if_needed()
                 return
             # ATTACK action may have defeated the HUNTER target before combat
-            if hunter_defender is not None and hunter_defender not in defender_owner.cards_laid_out:
+            if (
+                hunter_defender is not None
+                and hunter_defender not in defender_owner.cards_laid_out
+            ):
                 self.log.append(
                     f"{defender_owner.name}'s {hunter_defender.name} was defeated. Combat is cancelled."
                 )
@@ -1107,7 +1146,9 @@ class Game:
                 return
 
         if hunter_defender is not None:
-            self._resolve_combat(attacker_owner, defender_owner, attacker, hunter_defender)
+            self._resolve_combat(
+                attacker_owner, defender_owner, attacker, hunter_defender
+            )
             return
 
         eligible_defender_indices = self.get_eligible_defender_indices(
@@ -1132,6 +1173,10 @@ class Game:
         cont = self._pending_attack_continuation
         assert cont is not None
         self._pending_attack_continuation = None
+
+        if self.game_state == GameState.GAME_OVER:
+            return
+
         attacker_owner = self.players[cont.attacker_owner_index]
         defender_owner = self.players[cont.defender_owner_index]
         attacker = cont.attacker
@@ -1146,7 +1191,10 @@ class Game:
             return
 
         # HUNTER target was defeated by the ATTACK action
-        if cont.defender is not None and cont.defender not in defender_owner.cards_laid_out:
+        if (
+            cont.defender is not None
+            and cont.defender not in defender_owner.cards_laid_out
+        ):
             self.log.append(
                 f"{defender_owner.name}'s {cont.defender.name} was defeated. Combat is cancelled."
             )
@@ -1155,7 +1203,9 @@ class Game:
 
         # HUNTER target survived — proceed with combat
         if cont.defender is not None:
-            self._resolve_combat(attacker_owner, defender_owner, attacker, cont.defender)
+            self._resolve_combat(
+                attacker_owner, defender_owner, attacker, cont.defender
+            )
             return
 
         # Non-HUNTER attacker — proceed with defense decision
@@ -1185,9 +1235,7 @@ class Game:
 
         pending = self._pending_defeated_ordering
         if len(ordered_indices) != len(pending.entries):
-            raise ValueError(
-                f"Must order all {len(pending.entries)} DEFEATED actions."
-            )
+            raise ValueError(f"Must order all {len(pending.entries)} DEFEATED actions.")
         if sorted(ordered_indices) != list(range(len(pending.entries))):
             raise ValueError("Invalid ordering indices.")
 
@@ -1316,7 +1364,8 @@ class Game:
             (
                 player_index
                 for player_index, player in enumerate(self.players)
-                if source_card in player.cards_laid_out or source_card in player.discard_pile
+                if source_card in player.cards_laid_out
+                or source_card in player.discard_pile
             ),
             None,
         )
@@ -1372,8 +1421,9 @@ class Game:
         self._set_pending_card_action_choice(
             action_key="snail_hydra",
             source_card=source_card,
-            responding_player_index=self.turn, # NOTE - current player chooses the creature to defeat
-            selection_owner_index=1 - self.turn, # NOTE - target selection points to opponent battlefield
+            responding_player_index=self.turn,  # NOTE - current player chooses the creature to defeat
+            selection_owner_index=1
+            - self.turn,  # NOTE - target selection points to opponent battlefield
             selection_zone="battlefield",
             eligible_indices=eligible_indices,
             min_choices=1,
@@ -1406,7 +1456,8 @@ class Game:
             (
                 player_index
                 for player_index, player in enumerate(self.players)
-                if source_card in player.cards_laid_out or source_card in player.discard_pile
+                if source_card in player.cards_laid_out
+                or source_card in player.discard_pile
             ),
             None,
         )
@@ -1415,7 +1466,8 @@ class Game:
             return
         enemy = 1 - owner
         eligible_indices = [
-            i for i, card in enumerate(self.players[enemy].cards_laid_out)
+            i
+            for i, card in enumerate(self.players[enemy].cards_laid_out)
             if card.strength <= 5
         ]
         if not eligible_indices:
@@ -1456,7 +1508,8 @@ class Game:
 
     def resolve_shark_dog_action(self, source_card: Card) -> None:
         eligible_indices = [
-            i for i, card in enumerate(self.opponent.cards_laid_out)
+            i
+            for i, card in enumerate(self.opponent.cards_laid_out)
             if card.strength >= 6
         ]
         if not eligible_indices:
@@ -1479,7 +1532,8 @@ class Game:
 
     def resolve_tiger_squirrel_action(self, source_card: Card) -> None:
         eligible_indices = [
-            i for i, card in enumerate(self.opponent.cards_laid_out)
+            i
+            for i, card in enumerate(self.opponent.cards_laid_out)
             if card.strength >= 7
         ]
         if not eligible_indices:
@@ -1675,7 +1729,10 @@ class Game:
         }
 
     def _destroy_creature(
-        self, owner: Player, creature: Card, ignore_tough: bool = False,
+        self,
+        owner: Player,
+        creature: Card,
+        ignore_tough: bool = False,
         defer_defeated_action: bool = False,
     ) -> bool:
         if (
@@ -1690,7 +1747,10 @@ class Game:
         owner.move_to_discard(creature)
         self.log.append(f"{owner.name}'s {creature.name} is defeated.")
 
-        if creature.action_type == CardActionType.DEFEATED and not defer_defeated_action:
+        if (
+            creature.action_type == CardActionType.DEFEATED
+            and not defer_defeated_action
+        ):
             creature.trigger_action(self)
             if self._pending_card_action_choice is None:
                 self._draw_up_to_hand_limit_for_each_player_if_needed()
@@ -1723,7 +1783,9 @@ class Game:
     def surrender(self, player_index: int) -> None:
         self._ensure_active()
         surrendering = self.players[player_index]
-        self.winner = self.players[0] if self.players[1] == surrendering else self.players[1]
+        self.winner = (
+            self.players[0] if self.players[1] == surrendering else self.players[1]
+        )
         self.game_state = GameState.GAME_OVER
         self.log.append(f"{surrendering.name} surrendered. {self.winner.name} wins.")
 
@@ -1856,23 +1918,27 @@ class Game:
                 attacker_owner, attacker, defer_defeated_action=need_ordering
             )
             if was_deferred:
-                deferred_entries.append(DefeatedCreatureEntry(
-                    owner_index=self.players.index(attacker_owner),
-                    creature=attacker,
-                    owner_name=attacker_owner.name,
-                    card_label=attacker.short_label(),
-                ))
+                deferred_entries.append(
+                    DefeatedCreatureEntry(
+                        owner_index=self.players.index(attacker_owner),
+                        creature=attacker,
+                        owner_name=attacker_owner.name,
+                        card_label=attacker.short_label(),
+                    )
+                )
         if defender_defeated:
             was_deferred = self._destroy_creature(
                 defender_owner, defender, defer_defeated_action=need_ordering
             )
             if was_deferred:
-                deferred_entries.append(DefeatedCreatureEntry(
-                    owner_index=self.players.index(defender_owner),
-                    creature=defender,
-                    owner_name=defender_owner.name,
-                    card_label=defender.short_label(),
-                ))
+                deferred_entries.append(
+                    DefeatedCreatureEntry(
+                        owner_index=self.players.index(defender_owner),
+                        creature=defender,
+                        owner_name=defender_owner.name,
+                        card_label=defender.short_label(),
+                    )
+                )
 
         if len(deferred_entries) >= 2:
             self._pending_combat_finalization = PendingCombatFinalization(
@@ -1966,7 +2032,8 @@ class Game:
                     self._pending_defeated_ordering.responding_player_index
                 ].name,
                 "response_required_from_viewer": (
-                    self._pending_defeated_ordering.responding_player_index == viewer_index
+                    self._pending_defeated_ordering.responding_player_index
+                    == viewer_index
                 ),
                 "entries": [
                     {
@@ -2019,15 +2086,21 @@ class Game:
         return {
             "action_key": pending.action_key,
             "source_card_label": pending.source_card.short_label(),
-            "responding_player_name": self.players[pending.responding_player_index].name,
+            "responding_player_name": self.players[
+                pending.responding_player_index
+            ].name,
             "selection_owner_name": self.players[pending.selection_owner_index].name,
             "selection_zone": pending.selection_zone,
             "eligible_indices": list(pending.eligible_indices),
             "min_choices": pending.min_choices,
             "max_choices": pending.max_choices,
-            "option_labels": list(pending.option_labels) if pending.option_labels else None,
+            "option_labels": (
+                list(pending.option_labels) if pending.option_labels else None
+            ),
             "staged_card_label": (
-                pending.staged_card.short_label() if pending.staged_card is not None else None
+                pending.staged_card.short_label()
+                if pending.staged_card is not None
+                else None
             ),
         }
 

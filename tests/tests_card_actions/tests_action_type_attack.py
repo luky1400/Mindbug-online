@@ -365,3 +365,47 @@ def test_shark_dog_hunter_no_eligible_action_targets_still_resolves_combat() -> 
 
     assert weak_enemy in opponent.discard_pile
     assert shark_dog in player.cards_laid_out
+
+
+def test_attack_action_causing_game_over_does_not_continue_to_defense() -> None:
+    """When an ATTACK action kills the opponent (life drops to 0), the game
+    should end immediately — no defense decision should be set up."""
+    game = Game(
+        player_names=["Player 1", "Player 2"],
+        starting_draw_pile_size=0,
+        enforce_turn_action_limit=True,
+        auto_end_turn_after_resolved_attack=True,
+    )
+    game.start_game()
+    player = game.current_player
+    opponent = game.opponent
+
+    opponent.number_of_lives = 1  # will die from Chameleon Sniper's 1 damage
+    player.cards_laid_out = [Chameleon_sniper()]
+    opponent.cards_laid_out = [Luchataur()]
+
+    game.attack(attacker_index=0)
+
+    assert game.game_state == GameState.GAME_OVER
+    assert game.winner == player
+    assert game._pending_defense_decision is None
+    assert opponent.number_of_lives == 0
+
+
+def test_attack_action_causing_game_over_with_no_defenders() -> None:
+    """When an ATTACK action kills the opponent and there are no defenders,
+    the game ends — no direct attack should be resolved."""
+    game = _new_game()
+    player = game.current_player
+    opponent = game.opponent
+
+    opponent.number_of_lives = 1
+    player.cards_laid_out = [Chameleon_sniper()]
+    opponent.cards_laid_out = []
+    player.hand = [Tiger_squirrel()]
+
+    game.attack(attacker_index=0)
+
+    assert game.game_state == GameState.GAME_OVER
+    assert game.winner == player
+    assert opponent.number_of_lives == 0

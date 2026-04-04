@@ -1,6 +1,8 @@
+# Brief author’s notes for internal purposes
+
 ## TODO - backend
 
-- add tests regularly for things that are not working
+- Add tests regularly for things that are not working
 - Simplify and unify code
 - Investigate if logs make sense - is order correct? ... Add log "Player 1" attacks.
 - TODO - Implement - Wheatl_e, ..
@@ -24,11 +26,12 @@
 ## TODO - game rules
 
 - Jiný naming:
+  - keywords instead of special_types
   - efekty schopnosti: Příchod, ..
   - Stálé schopnosti (př. Zesnovačka)
   - do své herní oblasti
   - support i pro Češtinu
-- udělat funkce pro tyhle termíny: Odložit, Ovládnout nestvůru
+- Udělat funkce pro tyhle termíny: Odložit, Ovládnout nestvůru
 - (Síla nestvůry nemůže mít nikdy nižší hodnotu než 1, a to ani v případě, že by některé efekty hodnotu síly upravovaly.)
 
 ## Nice to have
@@ -47,8 +50,7 @@ V případě shody tento proces opakujte."
 
 ## Bugs - backend
 
-- If player wins, sometimes GameOverModal window is not shown, only Game is over message pops up.
-  - applies only for Attack special effect?
+- 
 
 ## Bugs - frontend
 
@@ -56,3 +58,4 @@ V případě shody tento proces opakujte."
 - In Knightmare, Steamforger cards, I dont see green actual strength if it is higher than normal.
 - I see FRENZY above Hyenix card when deciding whether to play it or not.
 - End turn button should disappear immediatelly after clicking 2nd attack button
+
