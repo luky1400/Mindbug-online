@@ -6,6 +6,7 @@
 - Simplify and unify code
 - Investigate if logs make sense - is order correct? ... Add log "Player 1" attacks.
 - TODO - Implement - Wheatl_e, ..
+- Add log that create still has one tough charge. not died yet.
 
 ## TODO - frontend
 
@@ -18,6 +19,7 @@
 - Smazat Close button u Card preview?
 - Special effects:
   - when card is defeated
+  - when card is discarded
   - drawing cards
   - Hunt/No hunt
   - Hrac utoci
@@ -45,17 +47,16 @@
   - Need to adjust frontend accordingly. E.g.: purple border for Jazz dog, Pandamme. Badges for new ongoing effects.
 - "Začínajícího hráče určíte tak, že si každý hráč náhodně vylosuje jednu kartu z hromádky nepoužitých karet nestvůr a poté si hráči porovnají sílu těchto karet. Hráč, jehož karta má vyšší hodnotu síly, bude začínajícím hráčem.
 V případě shody tento proces opakujte."
-- dát na rozklikávatko (vpravo nahoře): pravidla
-- Kdyz zahraju kartu a cekam na opponenta, jestli pouzije Mindbug, tak kartu dát doprava doprostred, stejne jako v Mindbug online?
+- (dát na rozklikávatko (vpravo nahoře): pravidla)
 
 ## Bugs - backend
 
-- When 
+- 
 
 ## Bugs - frontend
 
 - Opponents cards laid out can be selected for target attack but they have no blue border when selected!
 - In Knightmare, Steamforger cards, I dont see green actual strength if it is higher than normal.
 - I see FRENZY above Hyenix card when deciding whether to play it or not.
-- End turn button should disappear immediatelly after clicking 2nd attack button
+- End turn button should disappear immediatelly after clicking 2nd attack button. Now, it stays there when waiting for opponent choice whether to defeat or lose life.
 

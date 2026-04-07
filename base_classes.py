@@ -726,6 +726,7 @@ class Game:
                 f"{owner.name}'s Brain Fly does not take control of a creature."
             )
             return
+        # NOTE - PLAY effect should not be triggered as card was already PLAYED
         stolen_creature = opponent.cards_laid_out[selected_indices[0]]
         opponent.cards_laid_out.remove(stolen_creature)
         owner.cards_laid_out.append(stolen_creature)
@@ -843,6 +844,7 @@ class Game:
         enemy = self.players[pending.selection_owner_index]
         stolen_creatures = [enemy.cards_laid_out[i] for i in selected_indices]
         for creature in stolen_creatures:
+            # NOTE - PLAY effect should not be triggered as card was already PLAYED
             enemy.cards_laid_out.remove(creature)
             owner.cards_laid_out.append(creature)
             self.log.append(

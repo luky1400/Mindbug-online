@@ -476,6 +476,7 @@ class Hyenix(Card):
     set: CardSet = CardSet.NEW_SERVANTS
 
 
+# PROBLEM - https://boardgamegeek.com/thread/3176165/chuck-harpy-mother-interaction
 # class Chuck(Card):
 #     name: str = "Chuck"
 #     strength: int = 3
