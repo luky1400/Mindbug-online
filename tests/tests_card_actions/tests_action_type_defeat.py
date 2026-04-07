@@ -440,3 +440,39 @@ def test_attacker_defeated_action_destroys_defender_no_crash() -> None:
 
     assert toad in player.discard_pile
     assert plain_defender in opponent.discard_pile
+
+
+def test_harpy_mother_defeated_auto_ends_turn() -> None:
+    """After Harpy Mother's DEFEATED effect resolves (takes control of creatures),
+    the turn should auto-end when auto_end_turn_after_resolved_attack is enabled."""
+    game = Game(
+        player_names=["Player 1", "Player 2"],
+        starting_draw_pile_size=0,
+        enforce_turn_action_limit=True,
+        auto_end_turn_after_resolved_attack=True,
+    )
+    game.start_game()
+    # Force Player 1 to go first
+    game.turn = 0
+    player = game.players[0]
+    opponent = game.players[1]
+
+    harpy_mother = Harpy_mother()
+    # Use a non-FRENZY attacker so turn auto-ends after combat
+    strong_attacker = Card(name="Strong Attacker", strength=9)
+    weak_creature = Chameleon_sniper()  # strength 1, eligible for Harpy Mother
+
+    opponent.cards_laid_out = [harpy_mother, weak_creature]
+    player.cards_laid_out = [strong_attacker]
+    player.hand = [Tiger_squirrel()]
+    opponent.hand = [Chameleon_sniper()]
+
+    # Attack Harpy Mother (strength 5) with Strong Attacker (strength 9) — Harpy Mother dies
+    game.attack(attacker_index=0)
+    game.defend(defender_index=0)
+
+    # Harpy Mother's DEFEATED: take control of weak creatures (auto-selects weak_creature)
+    # After resolution, turn should auto-end
+    assert harpy_mother in opponent.discard_pile
+    assert weak_creature in opponent.cards_laid_out  # Harpy Mother takes it for opponent
+    assert game.current_player.name == "Player 2"  # turn passed to opponent
