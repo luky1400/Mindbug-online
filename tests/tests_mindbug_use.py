@@ -1,4 +1,4 @@
-from base_classes import DrawPile, Game
+from base_classes import Card, DrawPile, Game
 from cards import (
     Axolotl_healer,
     Chameleon_sniper,
@@ -282,3 +282,84 @@ def test_stolen_compost_dragon_resurrected_card_cannot_be_mindbugged_again() -> 
     assert any(isinstance(card, Compost_dragon) for card in opponent.cards_laid_out)
     assert resurrected_card in opponent.cards_laid_out
     assert resurrected_card not in opponent.discard_pile
+
+
+def test_mindbug_steal_compost_dragon_auto_resolve_does_not_consume_turn() -> None:
+    """When opponent steals Compost Dragon with Mindbug and its PLAY action
+    auto-resolves (1 card in discard), the original player should still be
+    able to play — _turn_action_taken must remain False."""
+    game = Game(
+        player_names=["Player 1", "Player 2"],
+        starting_draw_pile_size=0,
+        players_start_with_mindbugs=2,
+        await_mindbug_response=True,
+        enforce_turn_action_limit=True,
+        auto_end_turn_after_successful_play=True,
+    )
+    game.start_game()
+
+    player = game.current_player
+    opponent = game.opponent
+
+    compost = Compost_dragon()
+    second_card = Tiger_squirrel()
+    discard_target = Card(name="Plain Card", strength=3)
+
+    player.hand = [compost, second_card]
+    player.cards_laid_out = [Luchataur()]  # keep player alive
+    opponent.hand = [Chameleon_sniper(), Tiger_squirrel()]
+    opponent.discard_pile = [discard_target]  # only 1 → auto-resolve
+
+    game.play_card(hand_index=0)
+    game.respond_to_mindbug(True)
+
+    # Auto-resolved: Compost Dragon played discard_target onto opponent's battlefield
+    assert discard_target in opponent.cards_laid_out
+    assert game._turn_action_taken is False
+
+    # Original player should be able to play their second card
+    game.play_card(hand_index=0)
+    assert second_card not in player.hand
+
+
+def test_mindbug_steal_compost_dragon_pending_choice_does_not_consume_turn() -> None:
+    """When opponent steals Compost Dragon with Mindbug and its PLAY action
+    creates a pending choice (2+ cards in discard), the original player should
+    still be able to play after the choice resolves."""
+    game = Game(
+        player_names=["Player 1", "Player 2"],
+        starting_draw_pile_size=0,
+        players_start_with_mindbugs=2,
+        await_mindbug_response=True,
+        enforce_turn_action_limit=True,
+        auto_end_turn_after_successful_play=True,
+    )
+    game.start_game()
+
+    player = game.current_player
+    opponent = game.opponent
+
+    compost = Compost_dragon()
+    second_card = Tiger_squirrel()
+    discard_1 = Card(name="Plain A", strength=3)
+    discard_2 = Card(name="Plain B", strength=4)
+
+    player.hand = [compost, second_card]
+    player.cards_laid_out = [Luchataur()]
+    opponent.hand = [Chameleon_sniper(), Tiger_squirrel()]
+    opponent.discard_pile = [discard_1, discard_2]  # 2 → pending choice
+
+    game.play_card(hand_index=0)
+    game.respond_to_mindbug(True)
+
+    assert game._pending_card_action_choice is not None
+    assert game._turn_action_taken is False
+
+    game.resolve_pending_card_action([0])
+
+    assert discard_1 in opponent.cards_laid_out
+    assert game._turn_action_taken is False
+
+    # Original player can play
+    game.play_card(hand_index=0)
+    assert second_card not in player.hand

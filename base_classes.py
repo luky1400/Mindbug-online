@@ -282,6 +282,7 @@ class Game:
         self._pending_defeated_ordering: PendingDefeatedOrdering | None = None
         self._defeated_action_queue: list[DefeatedCreatureEntry] = []
         self._pending_combat_finalization: PendingCombatFinalization | None = None
+        self._play_is_stolen_by_mindbug: bool = False
         self._pending_hyenix_triggers: list[PendingHyenixTrigger] = []
         self.number_of_players = len(player_names)
         self.number_of_cards_in_game = (
@@ -743,11 +744,11 @@ class Game:
             return
         card = owner.discard_pile.pop(selected_indices[0])
         self.log.append(f"{owner.name} plays {card.name} from their discard pile.")
-        is_mindbug_stolen = not pending.auto_end_after_play
+        stolen = not pending.auto_end_after_play or self._play_is_stolen_by_mindbug
         self._finalize_played_card(
             owner_index=pending.responding_player_index,
             card=card,
-            consume_turn_action=not is_mindbug_stolen,
+            consume_turn_action=not stolen,
         )
 
     def _apply_count_draculeech_choice(
@@ -1855,18 +1856,21 @@ class Game:
         ):
             original_turn = self.turn
             self.turn = owner_index
+            stolen = not consume_turn_action
+            self._play_is_stolen_by_mindbug = stolen
             try:
                 card.trigger_action(self)
             finally:
                 self.turn = original_turn
+                self._play_is_stolen_by_mindbug = False
+            # When stolen by Mindbug (consume_turn_action=False), the original player
+            # retains their turn after the pending choice resolves — do not auto-end it.
+            if stolen and self._pending_card_action_choice is not None:
+                self._pending_card_action_choice.auto_end_after_play = False
             self._recalculate_ongoing_effects()
 
         self._check_game_over()
         self._process_next_hyenix_trigger_if_needed()
-        # When stolen by Mindbug (consume_turn_action=False), the original player
-        # retains their turn after the pending choice resolves — do not auto-end it.
-        if not consume_turn_action and self._pending_card_action_choice is not None:
-            self._pending_card_action_choice.auto_end_after_play = False
         if self.enforce_turn_action_limit and consume_turn_action:
             self._turn_action_taken = True
             self._pending_frenzy_attacker_id = None

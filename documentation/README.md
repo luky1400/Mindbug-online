@@ -18,3 +18,6 @@
     - If HUNTER target was destroyed → "Combat is cancelled" → `_finalize_attack_action` (handles FRENZY)
     - If HUNTER target survived → `_resolve_combat()` proceeds normally
 
+- When Compost Dragon is stolen by Mindbug and its PLAY action auto-resolves (1 card in discard), _apply_compost_dragon_choice used auto_end_after_play as a proxy for "was stolen by Mindbug". But in the auto-resolve path, the correction of auto_end_after_play = False (line 1868) never ran because _pending_card_action_choice was never set.
+  - Fix: Added _play_is_stolen_by_mindbug flag on the Game, set before trigger_action and cleared after. _apply_compost_dragon_choice now checks both auto_end_after_play and this flag, so it works correctly in both the auto-resolve and pending-choice paths.
+
