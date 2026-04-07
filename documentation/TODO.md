@@ -1,4 +1,4 @@
-# Brief author’s notes for internal purposes
+# Author’s TODO list and notes
 
 ## TODO - backend
 
@@ -54,6 +54,7 @@ V případě shody tento proces opakujte."
 
 ## Bugs - frontend
 
+- TODO - make Game fit one screen. If zoom out. it should be dynamic.
 - Opponents cards laid out can be selected for target attack but they have no blue border when selected!
 - In Knightmare, Steamforger cards, I dont see green actual strength if it is higher than normal.
 - I see FRENZY above Hyenix card when deciding whether to play it or not.
