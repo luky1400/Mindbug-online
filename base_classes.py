@@ -1926,7 +1926,8 @@ class Game:
                         card_label=attacker.short_label(),
                     )
                 )
-        if defender_defeated:
+        # Note - we must check that defender is still in cards_laid out because it can be destroyed by an attacker's DEFEATED action
+        if defender_defeated and defender in defender_owner.cards_laid_out:
             was_deferred = self._destroy_creature(
                 defender_owner, defender, defer_defeated_action=need_ordering
             )

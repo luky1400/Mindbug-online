@@ -1,4 +1,4 @@
-from base_classes import DrawPile, Game
+from base_classes import Card, DrawPile, Game
 from unittest.mock import patch
 from cards import (
     Boar_zooka,
@@ -412,3 +412,31 @@ def test_defeated_ordering_game_over_during_queue_stops_processing() -> None:
     assert game.winner == opponent
     # Queue should be cleared
     assert game._defeated_action_queue == []
+
+
+def test_attacker_defeated_action_destroys_defender_no_crash() -> None:
+    """When attacker's DEFEATED action destroys the defender (who was also
+    defeated in combat), _resolve_combat should not crash with list.remove."""
+    game = _new_game()
+    player = game.current_player
+    opponent = game.opponent
+
+    # Explosive Toad (strength 5, DEFEATED: defeat a creature of choice)
+    # attacks a plain strength-5 creature without DEFEATED.
+    # Both die (equal strength). Toad's DEFEATED fires immediately and
+    # auto-selects the defender as its target (only enemy creature).
+    # Then _resolve_combat tries to destroy the defender again — should not crash.
+    toad = Explosive_toad()
+    plain_defender = Card(name="Plain Fighter", strength=5)
+
+    player.cards_laid_out = [toad]
+    opponent.cards_laid_out = [plain_defender]
+    player.hand = [Tiger_squirrel()]
+    opponent.hand = [Chameleon_sniper()]
+
+    # This should not raise "list.remove(x): x not in list"
+    game.attack(attacker_index=0)
+    game.defend(defender_index=0)
+
+    assert toad in player.discard_pile
+    assert plain_defender in opponent.discard_pile
