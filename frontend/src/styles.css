@@ -16,6 +16,7 @@ body {
   background: radial-gradient(circle at top, #10203e, var(--bg));
   color: var(--text);
   min-height: 100vh;
+  overflow-x: hidden;
 }
 
 .app-shell {
@@ -76,27 +77,8 @@ body {
 }
 
 .hand-area {
-  flex: 0 0 auto;
-  min-height: 0;
-  overflow: visible;
   position: relative;
-  display: flex;
-  align-items: flex-end;
-}
-
-.hand-scroll {
-  overflow-x: auto;
-  overflow-y: visible;
-  position: relative;
-  z-index: 30;
-  padding-top: 52px;
-  margin-top: -52px;
-  width: 100%;
-  pointer-events: none;
-}
-
-.hand-scroll > * {
-  pointer-events: auto;
+  z-index: 20;
 }
 
 .setup-grid {
@@ -495,8 +477,6 @@ body {
   justify-content: center;
   align-items: flex-end;
   gap: 0;
-  width: max-content;
-  min-width: 100%;
   padding: 6px 20px 0;
 }
 
