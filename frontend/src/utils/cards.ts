@@ -46,7 +46,8 @@ const baseStrengthByName: Record<string, number> = {
   "Turbo Bug": 4,
   "Turf the Surfer": 8,
   "Tusked Extorter": 8,
-  "Urchin Hurler": 5
+  "Urchin Hurler": 5,
+  "Wheatle": 6
 };
 
 const nativeAbilityTagsByName: Record<string, string[]> = {
@@ -74,7 +75,8 @@ const nativeAbilityTagsByName: Record<string, string[]> = {
   "Spider Owl": ["SNEAKY", "POISONOUS"],
   "The Pack": ["TOUGH", "HUNTER"],
   "Tiger Squirrel": ["SNEAKY"],
-  "Urchin Hurler": ["HUNTER"]
+  "Urchin Hurler": ["HUNTER"],
+  "Wheatle": ["FRENZY", "TOUGH"]
 };
 
 const highlightedBattlefieldCards = new Set([

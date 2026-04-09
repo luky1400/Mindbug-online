@@ -5,7 +5,7 @@
 - Add tests regularly for things that are not working
 - Simplify and unify code
 - Investigate if logs make sense - is order correct? ... Add log "Player 1" attacks.
-- TODO - Implement - Wheatl_e, ..
+- TODO - check that THe PAck works as expected - HUNTER + SNEAKY
 
 ## TODO - frontend
 
@@ -15,6 +15,7 @@
 - zlepšit zobrazení actual strength - stejně změnit i number of copies
 - Smazat Close button u Card preview?
 - Show Mindbug icon somewhere
+- Improve Whaetl_e choosing number appearance.
 - Special effects:
   - when card is defeated
   - when card is discarded

@@ -85,6 +85,7 @@ def get_card_pool(sets: list[CardSet] | None = None) -> list[Card]:
             (Steamforger, 1),
             (The_pack, 1),
             (Unigon, 1),
+            (Wheatl_e, 1),
         ]
     )
     allowed_sets = set(sets)
@@ -1104,17 +1105,16 @@ class Urchin_hurler(Card):
 #     set: CardSet = CardSet.PROMO_CARDS
 
 
-# class Wheatl_e(Card):
-#     name: str = "Wheatle"
-#     strength: int = 6
-#     special_types: list[CardSpecialType] = [CardSpecialType.FRENZY, CardSpecialType.TOUGH]
-#     action_type: CardActionType = CardActionType.ATTACK
-#     action_description: str = "Choose a number. An opponent gives you all cards from their hand with power equal to the chosen number that number. Put them into your hand."
-#     set: CardSet = CardSet.PROMO_CARDS
+class Wheatl_e(Card):
+    name: str = "Wheatle"
+    strength: int = 6
+    special_types: list[CardSpecialType] = [CardSpecialType.FRENZY, CardSpecialType.TOUGH]
+    action_type: CardActionType = CardActionType.ATTACK
+    action_description: str = "Choose a number. An opponent gives you all cards from their hand with power equal to the chosen number that number. Put them into your hand."
+    set: CardSet = CardSet.PROMO_CARDS
 
-#     def trigger_action(self, game: Game) -> None:
-#         # TODO - player chooses a number between 1 and 10?
-#         game.resolve_wheatle_action(self)
+    def trigger_action(self, game: Game) -> None:
+        game.resolve_wheatle_action(self)
 
 
 # class Wolfman_steve(Card):

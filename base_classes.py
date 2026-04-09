@@ -607,6 +607,8 @@ class Game:
             return f"Waiting for {responder_name} to choose a creature that cannot block because of Turf the Surfer."
         if pending.action_key == "tusked_extorter":
             return f"Waiting for {responder_name} to choose a card to discard for Tusked Extorter."
+        if pending.action_key == "wheatle":
+            return f"Waiting for {responder_name} to choose a number (1-10) for Wheatle."
         return f"Waiting for {responder_name} to resolve a card action choice."
 
     def resolve_pending_card_action(self, selected_indices: list[int]) -> None:
@@ -658,6 +660,8 @@ class Game:
             self._apply_turf_the_surfer_choice(pending, selected_indices)
         elif pending.action_key == "tusked_extorter":
             self._apply_tusked_extorter_choice(pending, selected_indices)
+        elif pending.action_key == "wheatle":
+            self._apply_wheatle_choice(pending, selected_indices)
         else:
             raise ValueError("Unsupported pending card action choice.")
 
@@ -976,6 +980,26 @@ class Game:
         self.log.append(
             f"{source_owner.name}'s Tusked Extorter attacks {responder.name} and makes them discard {card.name}."
         )
+
+    def _apply_wheatle_choice(
+        self, pending: PendingCardActionChoice, selected_indices: list[int]
+    ) -> None:
+        owner = self.players[pending.responding_player_index]
+        opponent = self.players[1 - pending.responding_player_index]
+        chosen_number = selected_indices[0] + 1
+        matching_cards = [card for card in opponent.hand if card.strength == chosen_number]
+        for card in matching_cards:
+            opponent.hand.remove(card)
+            owner.hand.append(card)
+        if matching_cards:
+            names = ", ".join(card.name for card in matching_cards)
+            self.log.append(
+                f"{owner.name}'s Wheatle takes {names} (strength {chosen_number}) from {opponent.name}'s hand."
+            )
+        else:
+            self.log.append(
+                f"{owner.name}'s Wheatle finds no cards with strength {chosen_number} in {opponent.name}'s hand."
+            )
 
     def lose_life(
         self,
@@ -1597,6 +1621,20 @@ class Game:
             min_choices=1,
             max_choices=1,
             draw_up_to_hand_limit_after_resolution=True,
+            auto_end_after_attack=True,
+        )
+
+    def resolve_wheatle_action(self, source_card: Card) -> None:
+        self._set_pending_card_action_choice(
+            action_key="wheatle",
+            source_card=source_card,
+            responding_player_index=self.turn,
+            selection_owner_index=self.turn,
+            selection_zone="options",
+            eligible_indices=list(range(10)),
+            min_choices=1,
+            max_choices=1,
+            option_labels=[str(i) for i in range(1, 11)],
             auto_end_after_attack=True,
         )
 
