@@ -604,6 +604,12 @@ export function App() {
 
   const pendingCardActionPool = getPendingCardActionPool(state);
 
+  const selectedAttackerIsHunter =
+    canAct &&
+    selectedAttackerIndex !== null &&
+    viewer?.battlefield[selectedAttackerIndex] != null &&
+    cardHasTag(viewer.battlefield[selectedAttackerIndex], "HUNTER");
+
   // ── Lobby screen ──────────────────────────────────────────────────────────
   if (screen === "lobby") {
     return (
@@ -722,7 +728,11 @@ export function App() {
             title={opponent?.name || state!.opponent_player_name || "Opponent"}
             player={opponent || { player_index: 1, name: state!.opponent_player_name || "Opponent", lives: 0, mindbugs_remaining: 0, hand_count: 0, draw_count: 0, discard_count: 0, battlefield: [], discard: [], hand: [] }}
             battlefieldMode={canAnswerDefense || hasBlockingChoiceModal ? "readonly" : "defender"}
-            selectedBattlefieldIndex={canAnswerDefense && !hasBlockingChoiceModal ? selectedDefenderIndex : null}
+            selectedBattlefieldIndex={
+              !hasBlockingChoiceModal && (canAnswerDefense || selectedAttackerIsHunter)
+                ? selectedDefenderIndex
+                : null
+            }
             onSelectBattlefield={canAnswerDefense || hasBlockingChoiceModal ? undefined : (index) => toggleSelected("defender", index)}
             onPreview={(label) => setPreviewCardLabel(label)}
             animatedBattlefieldStolenIndices={animatedCards.opponentBattlefieldStolen}
