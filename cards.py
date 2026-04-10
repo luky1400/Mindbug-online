@@ -836,7 +836,7 @@ class Short_neck_giraffodile(Card):
 #     name: str = "Sluggernaut"
 #     strength: int = 6
 #     special_types: list[CardSpecialType] = [CardSpecialType.TOUGH]
-#     action_type: CardActionType = CardActionType.LOSE_TOUGH_CHARGE # TODO - add action_description
+#     action_type: CardActionType = CardActionType.LOSE_TOUGH_CHARGE
 #     set: CardSet = CardSet.PROMO_CARDS
 
 #     def trigger_action(self, game: Game) -> None:
@@ -990,17 +990,18 @@ class The_pack(Card):
         CardSpecialType.HUNTER,
         CardSpecialType.TOUGH,
     ]
+    action_type: CardActionType = CardActionType.LOSE_TOUGH_CHARGE
     description: str = (
         f"While this creature is exhausted, it has {CardSpecialType.SNEAKY.value}."
     )
     set: CardSet = CardSet.PROMO_CARDS
 
-    def apply_ongoing_effect(self, game: Game, owner, opponent) -> None:
-        if self.tough_charges == 0 and CardSpecialType.SNEAKY not in self.special_types:
-            self.special_types.append(CardSpecialType.SNEAKY)
-            game.log.append(
-                f"{game.current_player.name}'s {self.name} has {CardSpecialType.SNEAKY.value}."
-            )
+    def trigger_action(self, game: Game) -> None:
+        if self.tough_charges == 0:
+            if CardSpecialType.SNEAKY not in self.special_types:
+                self.special_types.append(CardSpecialType.SNEAKY)
+            owner = next(p for p in game.players if self in p.cards_laid_out)
+            game.log.append(f"{owner.name}'s {self.name} has {CardSpecialType.SNEAKY.value}.")
 
 
 class Tiger_squirrel(Card):

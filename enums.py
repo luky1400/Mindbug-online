@@ -13,6 +13,7 @@ class CardActionType(Enum):
     PLAY = "PLAY"
     ATTACK = "ATTACK"
     DEFEATED = "DEFEATED"
+    LOSE_TOUGH_CHARGE = "LOSE_TOUGH_CHARGE"
 
 
 class CardSet(Enum):

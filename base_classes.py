@@ -1787,6 +1787,13 @@ class Game:
         ):
             creature.tough_charges -= 1
             self.log.append(f"{creature.name} survives due to TOUGH.")
+            if creature.action_type == CardActionType.LOSE_TOUGH_CHARGE:
+                creature.trigger_action(self)
+                if self._pending_card_action_choice is None:
+                    self._draw_up_to_hand_limit_for_each_player_if_needed()
+                self.log.append(
+                    f"{owner.name}'s {creature.name} triggers its LOSE_TOUGH_CHARGE action."
+                )
             return False
         owner.cards_laid_out.remove(creature)
         owner.move_to_discard(creature)
