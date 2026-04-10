@@ -179,12 +179,11 @@ class Boar_zooka(Card):
     set: CardSet = CardSet.PROMO_CARDS
 
     def trigger_action(self, game: Game) -> None:
-        # TODO - destroy cards of the other than owner of this card - same as Barrel
-        for card in game.opponent.cards_laid_out.copy():
-            game._destroy_creature(game.opponent, card)
-        game.log.append(
-            f"{game.current_player.name}'s {game.current_player.cards_laid_out[0].name} defeats all enemy creatures."
-        )
+        owner = next(p for p in game.players if any(c is self for c in p.discard_pile))
+        opponent = game.players[1 - game.players.index(owner)]
+        for card in opponent.cards_laid_out.copy():
+            game._destroy_creature(opponent, card)
+        game.log.append(f"{owner.name}'s {self.name} defeats all enemy creatures.")
 
     def apply_ongoing_effect(self, game: Game, owner, opponent) -> None:
         self.cannot_block = True
@@ -619,11 +618,12 @@ class Knightmare(Card):
     set: CardSet = CardSet.PROMO_CARDS
 
     def trigger_action(self, game: Game) -> None:
+        owner = next(p for p in game.players if any(c is self for c in p.discard_pile))
+        opponent = game.players[1 - game.players.index(owner)]
         game.game_state = GameState.GAME_OVER
-        # TODO - winner is not owner of the card - it should be opponent of the owner of the card
-        game.winner = game.opponent
+        game.winner = opponent
         game.log.append(
-            f"{game.opponent.name} wins the game because {game.current_player.name}'s {self.name} was defeated."
+            f"{opponent.name} wins the game because {owner.name}'s {self.name} was defeated."
         )
 
     def apply_ongoing_effect(self, game: Game, owner, opponent) -> None:
@@ -912,17 +912,20 @@ class Strange_barrel(Card):
     set: CardSet = CardSet.FIRST_CONTACT
 
     def trigger_action(self, game: Game) -> None:
+        # NOTE - two different copies of the same card would incorrectly match with "in" operator. Using "is" checks object identity, guaranteeing the exact instance is found.
+        # card is in the owner's discard pile by the time trigger_action runs
+        owner = next(p for p in game.players if any(c is self for c in p.discard_pile))
+        opponent = game.players[1 - game.players.index(owner)]
         for _ in range(2):
-            if len(game.opponent.hand) > 0:
-                # TODO - if defeated in oppoents turn, it gives card to opponent - we must make it independent - check also for othr defeated
-                card = game.opponent.hand.pop(randint(0, len(game.opponent.hand) - 1))
-                game.current_player.hand.append(card)
+            if len(opponent.hand) > 0:
+                card = opponent.hand.pop(randint(0, len(opponent.hand) - 1))
+                owner.hand.append(card)
                 game.log.append(
-                    f"{game.current_player.name} steals {card.name} from {game.opponent.name}'s hand."
+                    f"{owner.name} steals {card.name} from {opponent.name}'s hand."
                 )
             else:
                 game.log.append(
-                    f"{game.current_player.name} cannot steal a card from {game.opponent.name}'s hand because they have no cards."
+                    f"{owner.name} cannot steal a card from {opponent.name}'s hand because they have no cards."
                 )
 
 
