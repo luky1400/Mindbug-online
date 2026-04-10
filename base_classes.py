@@ -848,7 +848,8 @@ class Game:
         self.log.append(
             f"{owner.name} plays {card.name} from {opponent.name}'s discard pile."
         )
-        is_mindbug_stolen = not pending.auto_end_after_play
+        # NOTE - same as in Compost Dragon case - if card is stolen by Mindbug, it should not consume turn action
+        is_mindbug_stolen = not pending.auto_end_after_play or self._play_is_stolen_by_mindbug
         self._finalize_played_card(
             owner_index=pending.responding_player_index,
             card=card,
