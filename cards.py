@@ -360,6 +360,7 @@ class Future_eric(Card):
         cards_moved = 0
         for _ in range(2):
             if not game.unused_pile:
+                game.log.append(f"{game.current_player.name} has no cards to put on the bottom of their draw pile.")
                 break
             card = game.unused_pile.pop(0)
             game.current_player.draw_pile.add(card)

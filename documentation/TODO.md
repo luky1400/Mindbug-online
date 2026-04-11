@@ -5,7 +5,10 @@
 - Add tests regularly for things that are not working
 - Simplify and unify code
 - Investigate if logs make sense - is order correct? ... Add log "Player 1" attacks.
-- TODO - check that THe PAck works as expected - HUNTER + SNEAKY
+  - Why "Ongoing effects recalculated." is twice in logs?  
+  Player 2 declines to use Mindbug.
+  Ongoing effects recalculated.
+  Ongoing effects recalculated.
 
 ## TODO - frontend
 
@@ -47,7 +50,7 @@
 - Attack, play_card, End turn button - lepší by bylo místo click buttons, přetahovat
 - add persistent database-backed sessions so rooms survive server restarts.
 - add Time limit for action - 1 min
-- (dát na rozklikávatko (vpravo nahoře): pravidla)
+- (dát na rozklikávatko (vpravo nahoře) pro pravidla)
 
 ## Bugs - backend
 
@@ -55,8 +58,7 @@
 
 ## Bugs - frontend
 
-- I see FRENZY above Hyenix card when deciding whether to play it or not.
 - "End turn" button should disappear immediatelly after clicking 2nd attack button. Now, it stays there when waiting for opponent choice whether to defeat or lose life.
-- FOr cards with purple border, I dont see that they are selected when being clicked.
-- 
+- For cards with purple border, I dont see that they are selected when being clicked.
+- I see FRENZY above Hyenix card when deciding whether to play it or not.
 
