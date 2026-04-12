@@ -10,7 +10,6 @@ from typing import Optional
 from collections.abc import Callable
 from base_classes import Game
 from random import randint
-import random
 
 
 def _build_card_pool(card_specs: list[tuple[Callable[[], Card], int]]) -> list[Card]:
