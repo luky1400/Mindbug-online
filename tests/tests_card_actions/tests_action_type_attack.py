@@ -4,6 +4,7 @@ from cards import (
     Chameleon_sniper,
     Count_draculeech,
     Ferret_bomber,
+    Hyenix,
     Luchataur,
     Majestic_manticore,
     Shark_dog,
@@ -409,3 +410,88 @@ def test_attack_action_causing_game_over_with_no_defenders() -> None:
     assert game.game_state == GameState.GAME_OVER
     assert game.winner == player
     assert opponent.number_of_lives == 0
+
+
+def test_attack_turbo_bug_triggers_hyenix_choice_when_opponent_has_hyenix_in_discard() -> None:
+    """Regression: when an ATTACK action causes the opponent to lose life and
+    the opponent has Hyenix in their discard pile, a pending choice for the
+    opponent must be created so they can decide whether to play Hyenix.
+    Previously the queued Hyenix trigger was never converted into a pending
+    card-action choice during ATTACK actions, so the prompt never appeared."""
+    game = _new_game()
+    player = game.current_player
+    opponent = game.opponent
+    opponent_index = game.players.index(opponent)
+
+    hyenix = Hyenix()
+    opponent.number_of_lives = 5
+    opponent.discard_pile = [hyenix]
+    player.cards_laid_out = [Turbo_bug()]
+    opponent.cards_laid_out = [Luchataur()]
+    # Keep game active even if Turbo Bug is defeated in combat afterwards.
+    player.hand = [Tiger_squirrel()]
+
+    game.attack(attacker_index=0)
+
+    assert opponent.number_of_lives == 1
+    assert game._pending_card_action_choice is not None
+    assert game._pending_card_action_choice.action_key == "hyenix"
+    assert game._pending_card_action_choice.responding_player_index == opponent_index
+    # Attack must be paused while waiting for the opponent's Hyenix decision.
+    assert game._pending_attack_continuation is not None
+
+
+def test_attack_turbo_bug_opponent_plays_hyenix_then_attack_continues() -> None:
+    """If the opponent chooses to play Hyenix from their discard pile after
+    losing life from a Turbo Bug ATTACK, Hyenix should enter their battlefield
+    and the paused attack should continue to defense resolution."""
+    game = _new_game()
+    player = game.current_player
+    opponent = game.opponent
+
+    hyenix = Hyenix()
+    opponent.number_of_lives = 5
+    opponent.discard_pile = [hyenix]
+    player.cards_laid_out = [Turbo_bug()]
+    opponent.cards_laid_out = [Luchataur()]
+    player.hand = [Tiger_squirrel()]
+
+    game.attack(attacker_index=0)
+    # Option index 1 = "Play Hyenix".
+    game.resolve_pending_card_action([1])
+
+    assert hyenix in opponent.cards_laid_out
+    assert hyenix not in opponent.discard_pile
+    # Attack should have resumed and be awaiting the defense decision.
+    assert game._pending_attack_continuation is None
+    assert game._pending_defense_decision is not None
+
+    # Block with Luchataur — Turbo Bug (4) loses to Luchataur (9).
+    game.defend(defender_index=0)
+    assert opponent.number_of_lives == 1
+
+
+def test_attack_turbo_bug_opponent_keeps_hyenix_in_discard_then_attack_continues() -> None:
+    """If the opponent chooses to keep Hyenix in the discard pile, the attack
+    should continue normally and Hyenix should remain in discard."""
+    game = _new_game()
+    player = game.current_player
+    opponent = game.opponent
+
+    hyenix = Hyenix()
+    opponent.number_of_lives = 5
+    opponent.discard_pile = [hyenix]
+    player.cards_laid_out = [Turbo_bug()]
+    opponent.cards_laid_out = [Luchataur()]
+    player.hand = [Tiger_squirrel()]
+
+    game.attack(attacker_index=0)
+    # Option index 0 = "Keep Hyenix in discard pile".
+    game.resolve_pending_card_action([0])
+
+    assert hyenix in opponent.discard_pile
+    assert hyenix not in opponent.cards_laid_out
+    assert game._pending_defense_decision is not None
+
+    game.defend(defender_index=0)
+    assert opponent.number_of_lives == 1

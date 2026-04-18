@@ -1229,6 +1229,12 @@ class Game:
         # Trigger action if attacker has an action type
         if attacker.action_type == CardActionType.ATTACK:
             attacker.trigger_action(self)
+            # ATTACK actions that cause the opponent to lose life (e.g. Turbo Bug,
+            # Chameleon Sniper) only queue Hyenix triggers; surface them now so
+            # the opponent gets the choice to play Hyenix from their discard pile
+            # before combat continues.
+            if self._pending_card_action_choice is None:
+                self._process_next_hyenix_trigger_if_needed()
             if self._pending_card_action_choice is not None:
                 # Action needs player input — pause attack and continue after choice resolves
                 self._pending_attack_continuation = PendingAttackContinuation(
