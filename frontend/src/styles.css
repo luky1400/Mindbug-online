@@ -161,7 +161,7 @@ body {
 }
 
 .zone-title {
-  margin: 0 0 8px;
+  margin: 0 0 2px;
   font-size: 1.18rem;
   font-weight: 800;
   color: #f3f7ff;
@@ -458,7 +458,7 @@ body {
   justify-content: center; /* flex-start? */
   align-items: flex-end;
   align-content: flex-end;
-  padding-top: 8px;
+  padding-top: 0;
   padding-bottom: 0;
   /* Let wrapped rows grow the row's intrinsic height. When this exceeds the
      zone height, .zone shows a vertical scrollbar on the right. */
