@@ -180,15 +180,18 @@ body {
 .board-zone-layout {
   display: flex;
   gap: 12px;
-  /* Bottom-align so the discard pile icon at the bottom of the sidebar
-     lines up with the bottom edge of the battlefield cards. */
-  align-items: flex-end;
+  /* Stretch so the sidebar fills the same vertical space as the battlefield
+     row. Combined with `justify-content: space-between` on the sidebar, this
+     keeps the lives heart near the player-name title at the top while the
+     discard pile button stays aligned with the bottom edge of the cards. */
+  align-items: stretch;
 }
 
 .board-zone-sidebar {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: space-between;
   gap: 4px;
   flex-shrink: 0;
 }
@@ -460,12 +463,16 @@ body {
   padding-bottom: 0;
 }
 
+/* Battlefield cards scale with viewport height so the whole game fits on
+   one screen without scrolling. Width is derived from height to preserve the
+   original 206x268 aspect ratio. The 268px upper bound matches the original
+   design on tall screens. */
 .battlefield-cards-row > .card-tile.card-tile-large {
-  width: 206px; /* TODO - adjust this to be more accurate */
+  width: min(206px, calc(min(268px, 26dvh) * 206 / 268));
 }
 
 .battlefield-cards-row > .card-tile.card-tile-large .card-image {
-  height: 268px; /* TODO - adjust this to be more accurate */
+  height: min(268px, 26dvh);
 }
 
 .hand-row {
