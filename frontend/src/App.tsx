@@ -108,9 +108,14 @@ export function App() {
     state &&
     state.is_viewer_turn &&
     !gameOver &&
-    !canAnswerMindbug &&
-    !canAnswerDefense &&
+    // Block on any pending state, not just ones the viewer must answer:
+    // the FRENZY second attack still has _pending_frenzy_attacker_id set while
+    // we wait for the opponent to choose a blocker, so checking only
+    // `canAnswer*` would leave the End turn button visible mid-attack.
+    !state.pending_mindbug &&
+    !state.pending_defense &&
     !state.pending_card_action &&
+    !state.pending_defeated_ordering &&
     hasPendingFrenzyAttack
   );
 

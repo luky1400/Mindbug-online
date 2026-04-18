@@ -37,7 +37,6 @@
 
 ## Bugs - frontend
 
-- "End turn" button should disappear immediatelly after clicking 2nd attack button. Now, it stays there when waiting for opponent choice whether to defeat or lose life.
 - For cards with purple border, I dont see that they are selected when being clicked.
 - I can select card as defender when Turf the surfer forbits it from defending
 
