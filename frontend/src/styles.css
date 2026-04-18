@@ -180,7 +180,9 @@ body {
 .board-zone-layout {
   display: flex;
   gap: 12px;
-  align-items: center;
+  /* Bottom-align so the discard pile icon at the bottom of the sidebar
+     lines up with the bottom edge of the battlefield cards. */
+  align-items: flex-end;
 }
 
 .board-zone-sidebar {
