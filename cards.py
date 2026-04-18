@@ -29,42 +29,42 @@ def get_card_pool(sets: list[CardSet] | None = None) -> list[Card]:
     card_pool = _build_card_pool(
         [
             # CardSet.FIRST_CONTACT - includes 48/49 cards
-            (Axolotl_healer, 2),
+            # (Axolotl_healer, 2),
             (Bee_bear, 1),
             (Brain_fly, 1),
             (Chameleon_sniper, 1),
             (Compost_dragon, 2),
             (Deathweaver, 1),
-            (Elephantopus, 1),
+            # (Elephantopus, 1),
             (Explosive_toad, 2),
-            (Ferret_bomber, 2),
-            (Giraffodile, 1),
-            (Goblin_werewolf, 2),
-            (Gorillion, 1),
-            (Grave_robber, 2),
-            (Harpy_mother, 1),
-            (Kangasaurus_rex, 2),
-            (killer_bee, 2),
-            (Lone_yeti, 1),
-            (Luchataur, 2),
-            (Mysterious_mermaid, 1),
-            (Plated_scorpion, 2),
-            (Rhino_turtle, 2),
-            (Shark_dog, 1),
-            (Sharky_crab_dog_mummypus, 1),
-            (Shield_bugs, 2),
-            (
-                Short_neck_giraffodile,
-                1,
-            ),  # = nerfed version of Giraffodile (exclusive for online Mindbug) - replace Girafoddile/add to Add-ons set?
-            (Snail_hydra, 2),
-            (Snail_thrower, 1),
-            (Spider_owl, 2),
-            (Strange_barrel, 1),
-            (Tiger_squirrel, 2),
-            (Turbo_bug, 1),
-            (Tusked_extorter, 2),
-            (Urchin_hurler, 1),
+            # (Ferret_bomber, 2),
+            # (Giraffodile, 1),
+            # (Goblin_werewolf, 2),
+            # (Gorillion, 1),
+            # (Grave_robber, 2),
+            # (Harpy_mother, 1),
+            # (Kangasaurus_rex, 2),
+            # (killer_bee, 2),
+            # (Lone_yeti, 1),
+            # (Luchataur, 2),
+            # (Mysterious_mermaid, 1),
+            # (Plated_scorpion, 2),
+            # (Rhino_turtle, 2),
+            # (Shark_dog, 1),
+            # (Sharky_crab_dog_mummypus, 1),
+            # (Shield_bugs, 2),
+            # (
+            #     Short_neck_giraffodile,
+            #     1,
+            # ),  # = nerfed version of Giraffodile (exclusive for online Mindbug) - replace Girafoddile/add to Add-ons set?
+            # (Snail_hydra, 2),
+            # (Snail_thrower, 1),
+            # (Spider_owl, 2),
+            # (Strange_barrel, 1),
+            # (Tiger_squirrel, 2),
+            # (Turbo_bug, 1),
+            # (Tusked_extorter, 2),
+            # (Urchin_hurler, 1),
             # CardSet.NEW_SERVANTS - includes 24 cards
             (Bugserker, 2),
             (Count_draculeech, 2),
@@ -865,7 +865,7 @@ class Sluggernaut(Card):
     special_types: list[CardSpecialType] = [CardSpecialType.TOUGH]
     description: str = (
         "When this creature loses its TOUGH charge, choose: it becomes "
-        f"{CardSpecialType.HUNTER.value} with strength 6 or "
+        f"{CardSpecialType.HUNTER.value} with strength 5 or "
         f"{CardSpecialType.FRENZY.value} with strength 8 until it is discarded."
     )
     chosen_form: Optional[str] = None
@@ -885,7 +885,7 @@ class Sluggernaut(Card):
             return
 
         if self.chosen_form == "hunter":
-            self.strength = 6
+            self.strength = 5
             if CardSpecialType.HUNTER not in self.special_types:
                 self.special_types.append(CardSpecialType.HUNTER)
         elif self.chosen_form == "frenzy":
