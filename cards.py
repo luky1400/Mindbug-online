@@ -87,6 +87,7 @@ def get_card_pool(sets: list[CardSet] | None = None) -> list[Card]:
             (Macaw_dagon, 1),
             (Mindbug_bug, 1),
             (Ram_hopper, 1),
+            (Sluggernaut, 1),
             (Steamforger, 1),
             (The_pack, 1),
             (Unigon, 1),
