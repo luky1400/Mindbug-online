@@ -2280,6 +2280,11 @@ class Game:
         if self.game_state == GameState.GAME_OVER:
             return
         if self._pending_card_action_choice is not None:
+            # Sluggernaut's form choice is queued passively from apply_ongoing_effect
+            # and has no inherent auto-end context, so propagate the play context
+            # here so the turn ends after the player resolves the choice.
+            if self._pending_card_action_choice.action_key == "sluggernaut":
+                self._pending_card_action_choice.auto_end_after_play = True
             return
         self.end_turn()
 
@@ -2289,6 +2294,8 @@ class Game:
         if self.game_state == GameState.GAME_OVER:
             return
         if self._pending_card_action_choice is not None:
+            if self._pending_card_action_choice.action_key == "sluggernaut":
+                self._pending_card_action_choice.auto_end_after_attack = True
             return
         if self._pending_defense_decision is not None:
             return
