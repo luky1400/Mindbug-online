@@ -39,7 +39,6 @@
 
 - "End turn" button should disappear immediatelly after clicking 2nd attack button. Now, it stays there when waiting for opponent choice whether to defeat or lose life.
 - For cards with purple border, I dont see that they are selected when being clicked.
-- I see FRENZY above Hyenix card when deciding whether to play it or not.
 - I can select card as defender when Turf the surfer forbits it from defending
 
 ## TODO - game rules

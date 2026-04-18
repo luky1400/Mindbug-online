@@ -24,9 +24,14 @@ export function PendingCardActionModal({
     .split("|")
     .map((part) => part.trim())
     .filter(Boolean);
-  const actionHeading = details.includes("|")
-    ? detailParts[detailParts.length - 1] || "Choose card"
-    : details || "Choose card";
+  // Skip parts that only describe keywords (e.g. "<FRENZY>") or TOUGH state
+  // (e.g. "tough:0 <TOUGH>") since those duplicate badges already shown on the
+  // card image and are not meaningful action descriptions.
+  const actionDescriptionParts = detailParts.filter(
+    (part) => !part.startsWith("<") && !part.startsWith("tough:")
+  );
+  const actionHeading =
+    actionDescriptionParts[actionDescriptionParts.length - 1] || "Choose";
   const stagedCardLabel = pending.staged_card_label;
   const isOptionChoice = pending.selection_zone === "options";
   const isChoiceReady =
