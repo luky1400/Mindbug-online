@@ -93,6 +93,7 @@ def get_card_pool(sets: list[CardSet] | None = None) -> list[Card]:
             (Unigon, 1),
             (Watts_dog, 1),
             (Wheatl_e, 1),
+            (Wolfman_steve, 1),
         ]
     )
     allowed_sets = set(sets)
@@ -1183,15 +1184,12 @@ class Wheatl_e(Card):
         game.resolve_wheatle_action(self)
 
 
-# class Wolfman_steve(Card):
-#     name: str = "Wolfman Steve"
-#     strength: int = 8
-#     special_types: list[CardSpecialType] = []
-#     description: str = "Opponent cannot play cards with power 4 or less from their hand."
-#     set: CardSet = CardSet.PROMO_CARDS
+class Wolfman_steve(Card):
+    name: str = "Wolfman Steve"
+    strength: int = 8
+    special_types: list[CardSpecialType] = []
+    description: str = "Opponent cannot play cards with power 4 or less from their hand."
+    set: CardSet = CardSet.PROMO_CARDS
 
-#     def apply_ongoing_effect(self, game: Game, owner, opponent) -> None:
-#         if game.current_player is not owner:
-#         # TODO - add attribute cannot_play_cards_with_power_4_or_less_from_hand to Player class
-#         # TODO - implement - raise Error on backend, card should not be allowed for selection on frontend - if no feasible hand cards to play, no PLAY button appears, if player cannot play any card and cannot attack, he loses the game
-#         opponent.cannot_play_cards_with_power_4_or_less_from_hand = True
+    def apply_ongoing_effect(self, game: Game, owner, opponent) -> None:
+        opponent.cannot_play_cards_with_power_4_or_less_from_hand = True

@@ -19,6 +19,7 @@ from cards import (
     Tiger_squirrel,
     Urchin_hurler,
     Watts_dog,
+    Wolfman_steve,
     killer_bee,
 )
 
@@ -223,3 +224,68 @@ def test_knightmare_prevents_its_owner_from_losing_life_from_card_effects() -> N
     game.play_card(hand_index=0)
 
     assert protected_player.number_of_lives == 3
+
+
+def test_wolfman_steve_blocks_opponent_from_playing_weak_cards_from_hand() -> None:
+    game = _new_game()
+    owner = game.players[0]
+    opponent = game.players[1]
+
+    owner.cards_laid_out = [Wolfman_steve()]
+    weak_card = Brain_fly()  # strength 4
+    opponent.hand = [weak_card]
+    game.turn = 1
+
+    with pytest.raises(ValueError):
+        game.play_card(hand_index=0)
+
+    assert weak_card in opponent.hand
+
+
+def test_wolfman_steve_allows_opponent_to_play_strong_cards_from_hand() -> None:
+    game = _new_game()
+    owner = game.players[0]
+    opponent = game.players[1]
+
+    owner.cards_laid_out = [Wolfman_steve()]
+    strong_card = Luchataur()  # strength 9
+    opponent.hand = [strong_card]
+    game.turn = 1
+
+    game.play_card(hand_index=0)
+
+    assert strong_card in opponent.cards_laid_out
+    assert strong_card not in opponent.hand
+
+
+def test_wolfman_steve_does_not_restrict_its_owner() -> None:
+    game = _new_game()
+    owner = game.players[0]
+
+    owner.cards_laid_out = [Wolfman_steve()]
+    weak_card = Brain_fly()  # strength 4
+    owner.hand = [weak_card]
+    game.turn = 0
+
+    game.play_card(hand_index=0)
+
+    assert weak_card in owner.cards_laid_out
+
+
+def test_wolfman_steve_restriction_lifts_when_removed_from_battlefield() -> None:
+    game = _new_game()
+    owner = game.players[0]
+    opponent = game.players[1]
+
+    wolfman = Wolfman_steve()
+    owner.cards_laid_out = [wolfman]
+    weak_card = Brain_fly()  # strength 4
+    opponent.hand = [weak_card]
+    game.turn = 1
+
+    owner.cards_laid_out = []
+    owner.discard_pile = [wolfman]
+
+    game.play_card(hand_index=0)
+
+    assert weak_card in opponent.cards_laid_out

@@ -177,6 +177,7 @@ class Player:
     cannot_activate_play_effects: bool = False
     life_loss_before_using_mindbug: int = 0
     cannot_lose_life: bool = False
+    cannot_play_cards_with_power_4_or_less_from_hand: bool = False
 
     def draw(self, amount: int = 1) -> None:
         self.hand.extend(self.draw_pile.draw(amount))
@@ -421,6 +422,7 @@ class Game:
         self._ensure_active()
         self._ensure_no_pending_resolution()
         self._recalculate_ongoing_effects()
+        self._ensure_hand_card_play_allowed(hand_index=hand_index, card=card)
         card_to_play, played_from_hand = self._resolve_card_to_play(
             hand_index=hand_index, card=card
         )
@@ -507,6 +509,25 @@ class Game:
         card_from_hand = self.current_player.play_from_hand(hand_index)
         self._draw_up_to_hand_limit_for_each_player_if_needed()
         return card_from_hand, True
+
+    def _ensure_hand_card_play_allowed(
+        self, hand_index: Optional[int], card: Optional[Card]
+    ) -> None:
+        # Only restrict plays from hand; effect-driven plays (card argument) bypass this check.
+        if card is not None or hand_index is None:
+            return
+        actor = self.current_player
+        if hand_index < 0 or hand_index >= len(actor.hand):
+            return
+        prospective_card = actor.hand[hand_index]
+        if (
+            actor.cannot_play_cards_with_power_4_or_less_from_hand
+            and prospective_card.strength is not None
+            and prospective_card.strength <= 4
+        ):
+            raise ValueError(
+                f"{prospective_card.name} cannot be played from hand because the opponent has Wolfman Steve in play."
+            )
 
     def _queue_pending_mindbug_decision_if_needed(
         self, card: Card, played_from_hand: bool
@@ -2336,6 +2357,7 @@ class Game:
             player.cannot_activate_play_effects = False
             player.life_loss_before_using_mindbug = 0
             player.cannot_lose_life = False
+            player.cannot_play_cards_with_power_4_or_less_from_hand = False
             for card in player.cards_laid_out:
                 card.strength = card.base_strength
                 card.special_types = list(card.base_special_types)

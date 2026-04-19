@@ -57,7 +57,8 @@ const baseStrengthByName: Record<string, number> = {
   "Unigon": 9,
   "Urchin Hurler": 5,
   "Watts Dog": 5,
-  "Wheatle": 6
+  "Wheatle": 6,
+  "Wolfman Steve": 8
 };
 
 const nativeAbilityTagsByName: Record<string, string[]> = {
@@ -101,7 +102,8 @@ const highlightedBattlefieldCards = new Set([
   "Hamster Lion",
   "Knightmare",
   "Mindbug Bug",
-  "Watts Dog"
+  "Watts Dog",
+  "Wolfman Steve"
 ]);
 
 export interface ParsedCard {
