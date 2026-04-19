@@ -17,12 +17,6 @@
     ```python
     if no feasible hand cards to play, no PLAY button appears, if player cannot play any card and cannot attack, he loses the game
     ```
-- Do not allow select cards for play, attack or defense when they are not eligible defenders. Think of some nice simple visual display of this information E.g.:
-  - Turf the surfer forbits
-  - Watts_dog
-  - Bee_bear
-  - Hamster_lion
-  - Wolfman_steve
 - [Inspiration](https://www.google.com/search?q=mindbug+sharkdog+kills+target+before+combat&sca_esv=a02f3e9b87f4a5a7&biw=928&bih=929&sxsrf=ANbL-n7HQ14P5EW6K1BdKcbbh2tpTjZctA%3A1774706171802&ei=-93HabrZML6N-d8Py-v86A0&ved=0ahUKEwj6ws3X38KTAxW-Rv4FHcs1H90Q4dUDCBE&uact=5&oq=mindbug+sharkdog+kills+target+before+combat&gs_lp=Egxnd3Mtd2l6LXNlcnAiK21pbmRidWcgc2hhcmtkb2cga2lsbHMgdGFyZ2V0IGJlZm9yZSBjb21iYXQyBRAhGKABMgUQIRigAUiAX1CkC1iPXnABeACQAQCYAYYBoAGVFaoBBDE5Ljm4AQPIAQD4AQGYAhygArsVwgIIEAAYsAMY7wXCAgsQABiABBiwAxiiBMICCBAAGBYYChgewgIFEAAY7wXCAggQABiABBiiBMICBxAhGKABGAqYAwCIBgGQBgWSBwUxNy4xMaAHk1-yBwUxNi4xMbgHtxXCBwYxLjIzLjTIBzmACAA&sclient=gws-wiz-serp#fpstate=ive&vld=cid:9515da25,vid:kjw0N0Uhvm8,st:0)
 - Adjust UI layout to screen size
 - Smazat Close button u Card preview?
@@ -38,13 +32,13 @@
 
 ## Bugs - backend
 
-- TODO - check that greying works for all non eligible cards
+- 
 - When each player has Hyenix in discard pile and both lose life simultaneously. Player who is on turn must decide which player resolves Hyenix choice first.
   - this situation probably cannot happen
 
 ## Bugs - frontend
 
-- 
+- TODO - check that greying works for all non eligible cards
 
 ## TODO - game rules
 
