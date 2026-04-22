@@ -774,6 +774,11 @@ export function App() {
             onSelectBattlefield={canAnswerDefense || hasBlockingChoiceModal ? undefined : (index) => toggleSelected("defender", index)}
             onPreview={(label) => setPreviewCardLabel(label)}
             animatedBattlefieldStolenIndices={animatedCards.opponentBattlefieldStolen}
+            pendingDefenseAttackerIndex={
+              state?.pending_defense?.response_required_from_viewer
+                ? state.pending_defense.attacker_index
+                : null
+            }
           />
 
           <div className="game-status-bar">
@@ -854,6 +859,11 @@ export function App() {
               canAnswerDefense
                 ? "This creature cannot block this attacker."
                 : "This creature cannot attack right now."
+            }
+            pendingDefenseAttackerIndex={
+              state?.pending_defense && !state.pending_defense.response_required_from_viewer
+                ? state.pending_defense.attacker_index
+                : null
             }
           />
 

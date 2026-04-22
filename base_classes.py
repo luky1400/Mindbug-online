@@ -2299,6 +2299,7 @@ class Game:
                     self._pending_defense_decision.defending_player_index
                 ].name,
                 "attacker_label": self._pending_defense_decision.attacker.short_label(),
+                "attacker_index": self._get_pending_defense_attacker_index(),
                 "response_required_from_viewer": self._pending_defense_decision.defending_player_index
                 == viewer_index,
                 "eligible_defender_indices": self._get_pending_defense_eligible_indices(),
@@ -2357,8 +2358,21 @@ class Game:
                 self._pending_defense_decision.defending_player_index
             ].name,
             "attacker_label": self._pending_defense_decision.attacker.short_label(),
+            "attacker_index": self._get_pending_defense_attacker_index(),
             "eligible_defender_indices": self._get_pending_defense_eligible_indices(),
         }
+
+    def _get_pending_defense_attacker_index(self) -> int | None:
+        if self._pending_defense_decision is None:
+            return None
+        attacker = self._pending_defense_decision.attacker
+        attacker_owner = self.players[
+            self._pending_defense_decision.attacking_player_index
+        ]
+        for index, card in enumerate(attacker_owner.cards_laid_out):
+            if card is attacker:
+                return index
+        return None
 
     def _serialize_pending_card_action(self) -> dict[str, Any] | None:
         if self._pending_card_action_choice is None:

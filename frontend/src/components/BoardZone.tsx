@@ -15,6 +15,7 @@ interface BoardZoneProps {
   animatedBattlefieldStolenIndices?: Set<number>;
   disabledBattlefieldIndices?: Set<number>;
   disabledBattlefieldTitle?: string;
+  pendingDefenseAttackerIndex?: number | null;
 }
 
 export function BoardZone({
@@ -27,7 +28,8 @@ export function BoardZone({
   onPreview,
   animatedBattlefieldStolenIndices,
   disabledBattlefieldIndices,
-  disabledBattlefieldTitle
+  disabledBattlefieldTitle,
+  pendingDefenseAttackerIndex
 }: BoardZoneProps) {
   const battlefieldClickable = battlefieldMode !== "readonly";
   const [showDiscardModal, setShowDiscardModal] = useState(false);
@@ -91,6 +93,7 @@ export function BoardZone({
                         showToughCharge
                         showAbilityBadges
                         showBattlefieldHighlight
+                        pendingDefenseAttacker={pendingDefenseAttackerIndex === index}
                         onClick={battlefieldClickable && !isDisabled ? () => onSelectBattlefield?.(index) : undefined}
                         onDoubleClick={() => onPreview?.(label)}
                         animationClass={animatedBattlefieldStolenIndices?.has(index) ? "card-tile-stolen-anim" : ""}

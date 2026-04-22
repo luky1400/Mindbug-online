@@ -676,6 +676,27 @@ body {
   box-shadow: 0 0 0 3px var(--accent), 0 0 18px rgba(138, 125, 255, 0.45);
 }
 
+/* Highlight the card that is currently attacking while the defender is
+   deciding whether to block or take 1 life. Red dashed border + red glow,
+   gently pulsing to draw attention. */
+.card-tile-pending-defense-attacker,
+.card-tile-pending-defense-attacker.card-tile-battlefield-highlight,
+.card-tile-pending-defense-attacker.card-tile-selected,
+.card-tile-pending-defense-attacker.card-tile-selected.card-tile-battlefield-highlight {
+  border: 2px dashed #ff4d4f;
+  box-shadow: 0 0 0 2px rgba(255, 77, 79, 0.35), 0 0 22px rgba(255, 77, 79, 0.55);
+  animation: pending-defense-attacker-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes pending-defense-attacker-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 1px rgba(255, 77, 79, 0.30), 0 0 18px rgba(255, 77, 79, 0.45);
+  }
+  50% {
+    box-shadow: 0 0 0 2px rgba(255, 77, 79, 0.55), 0 0 18px rgba(255, 77, 79, 0.75);
+  }
+}
+
 /* Visually mark cards that cannot be picked for the current action
    (play / attack / defense). Cursor turns into not-allowed and the tile
    is desaturated and dimmed. */

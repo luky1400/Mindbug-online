@@ -35,6 +35,7 @@ export interface PendingDefenseState {
   attacking_player_name: string;
   defending_player_name: string;
   attacker_label: CardLabel;
+  attacker_index: number | null;
   response_required_from_viewer: boolean;
   eligible_defender_indices: number[];
 }

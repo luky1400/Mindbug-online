@@ -15,6 +15,7 @@ interface CardTileProps {
   showToughCharge?: boolean;
   showAbilityBadges?: boolean;
   showBattlefieldHighlight?: boolean;
+  pendingDefenseAttacker?: boolean;
   animationClass?: string;
 }
 
@@ -31,6 +32,7 @@ export function CardTile({
   showToughCharge = false,
   showAbilityBadges = false,
   showBattlefieldHighlight = false,
+  pendingDefenseAttacker = false,
   animationClass = ""
 }: CardTileProps) {
   const parsed = parseCardLabel(label);
@@ -40,12 +42,13 @@ export function CardTile({
   const selectedClass = selected ? "card-tile-selected" : "";
   const disabledClass = disabled ? "card-tile-disabled" : "";
   const highlightClass = showBattlefieldHighlight && isHighlightedBattlefieldCard(label) ? "card-tile-battlefield-highlight" : "";
+  const pendingAttackerClass = pendingDefenseAttacker ? "card-tile-pending-defense-attacker" : "";
   const activeToughCharge = showToughCharge && hasActiveToughCharge(label);
   const activeAbilityBadges = showAbilityBadges ? getActiveAbilityBadges(label) : [];
 
   return (
     <button
-      className={`card-tile ${sizeClass} ${selectableClass} ${selectedClass} ${disabledClass} ${highlightClass} ${animationClass}`}
+      className={`card-tile ${sizeClass} ${selectableClass} ${selectedClass} ${disabledClass} ${highlightClass} ${pendingAttackerClass} ${animationClass}`}
       onClick={effectiveClickable ? onClick : undefined}
       onDoubleClick={onDoubleClick}
       title={disabled ? disabledTitle : undefined}
