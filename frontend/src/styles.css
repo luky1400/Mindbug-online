@@ -733,9 +733,9 @@ body {
   top: 0px;
   left: 14px;
   background: rgba(7, 18, 36, 0.86);
-  border: 1px solid var(--border);
+  border: 0px solid var(--border);
   border-radius: 8px;
-  font-size: 16px;
+  font-size: 14.5px;
   font-weight: 900;
   padding: 4px 10px;
   color: #dce8ff;

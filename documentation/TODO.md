@@ -39,7 +39,6 @@
 ## Bugs - frontend
 
 - When card is greyed out, I cannot see badges - FRENZY, etc.
-- 
 
 ## TODO - game rules
 
