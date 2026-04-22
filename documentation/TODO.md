@@ -13,21 +13,19 @@
 
 ## TODO - frontend
 
-- Do not show Play button if no cards to be played (even if you cannot play card from hand because of ongoing effect), and do not show attack button if no cards to attack with (even if you cannot attack because of ongoing effect)
-  - Also, show only Attack or End turn button when FRENZY card can attack again
 - Update pictures in README
-- make crads nicer so it is readable well - texty se tam asi nejak dotahnou oddelene a strenth a nazev take
-- enhance UI - change colours, choosing windows, ..
-- Add scrolling to logs?
-- Adjust UI layout to screen size
 - Special effects:
+  - lost of life
+  - souboj
   - when card is defeated
   - when card is discarded
-  - drawing cards
-  - Hunt/No hunt
-  - Hrac utoci
   - Aktivovala se akce
   - Zesnovačka zrušila PLAY akci, ..
+  - (Drawing cards - prekliknuti cisla na hand icon)
+- make crads nicer so it is readable well - texty se tam asi nejak dotahnou oddelene a strenth a nazev take
+- Adjust UI layout to screen size
+- Add scrolling to logs?
+- enhance UI - change colours, choosing windows, ..
 
 ## Bugs - backend
 
