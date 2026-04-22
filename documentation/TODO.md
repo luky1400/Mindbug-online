@@ -15,12 +15,13 @@
 
 - Do not show Play button if no cards to be played (even if you cannot play card from hand because of ongoing effect), and do not show attack button if no cards to attack with (even if you cannot attack because of ongoing effect)
   - Also, show only Attack or End turn button when FRENZY card can attack again
-- Add scrolling to logs?
-- Adjust UI layout to screen size
-- enhance UI - change colours, choosing windows, ..
-- make crads nicer so it is readable well - texty se tam asi nejak dotahnou oddelene a strenth a nazev take
 - Když defender vybira, jestli a cim bude branit, tak zvyraznit utocici kartu:
   - Prompt: can you make red dashed border/glow to card that was selected as attacker. This border should only be applied until defender is selected.
+
+- make crads nicer so it is readable well - texty se tam asi nejak dotahnou oddelene a strenth a nazev take
+- enhance UI - change colours, choosing windows, ..
+- Add scrolling to logs?
+- Adjust UI layout to screen size
 - Special effects:
   - when card is defeated
   - when card is discarded
@@ -58,7 +59,6 @@
 - add other cards from different sets:
   - BEYOND ETERNITY, BATTLEFRUIT KINGDOM
   - Need to adjust frontend accordingly. E.g.: purple border for Jazz dog, Pandamme. Badges for new ongoing effects.
-- Attack, play_card, End turn button - lepší by bylo místo click buttons, přetahovat?
 - add persistent database-backed sessions so rooms survive server restarts.
 - add Time limit for action - 1 min
 - (dát na rozklikávatko (vpravo nahoře) pro pravidla)
