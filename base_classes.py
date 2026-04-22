@@ -2139,6 +2139,11 @@ class Game:
             if stolen and self._pending_card_action_choice is not None:
                 self._pending_card_action_choice.auto_end_after_play = False
             self._recalculate_ongoing_effects()
+            # Draw up after the PLAY effect resolves, so cards added to the draw pile
+            # by the effect itself (e.g. Future Eric) get a chance to refill the hand.
+            # Skip if a player choice is pending — that path will refill on resolution.
+            if self._pending_card_action_choice is None:
+                self._draw_up_to_hand_limit_for_each_player_if_needed()
 
         self._check_game_over()
         self._process_next_hyenix_trigger_if_needed()

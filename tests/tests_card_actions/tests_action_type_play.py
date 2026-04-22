@@ -6,6 +6,7 @@ from cards import (
     Chameleon_sniper,
     Compost_dragon,
     Ferret_bomber,
+    Future_eric,
     Goreagle_alpha,
     Grave_robber,
     Hyenix,
@@ -424,6 +425,33 @@ def test_play_grave_robber_plays_card_from_opponent_discard_and_triggers_its_pla
     assert stolen_card in player.cards_laid_out
     assert stolen_card not in opponent.discard_pile
     assert other_discard_card in opponent.discard_pile
+
+
+def test_play_future_eric_refills_hand_from_cards_it_added_to_draw_pile() -> None:
+    # Regression: Future Eric's PLAY effect adds 2 cards to the bottom of the draw pile,
+    # then the game must refill the hand using those just-added cards.
+    game = _new_game()
+    player = game.current_player
+    opponent = game.opponent
+
+    player.hand = [Future_eric()]
+    player.draw_pile = DrawPile([])
+    bottom_card_a = Tiger_squirrel()
+    bottom_card_b = Ferret_bomber()
+    game.unused_pile = [bottom_card_a, bottom_card_b]
+    opponent.hand = [Chameleon_sniper()]
+
+    game.play_card(hand_index=0)
+
+    # Future Eric is on board, both unused-pile cards entered the draw pile,
+    # and the hand was refilled to the limit (5) from those cards.
+    assert any(c.name == "Future Eric" for c in player.cards_laid_out)
+    assert game.unused_pile == []
+    assert len(player.hand) == min(
+        game.hand_size_limit, len([bottom_card_a, bottom_card_b])
+    )
+    assert bottom_card_a in player.hand
+    assert bottom_card_b in player.hand
 
 
 def test_play_tiger_squirrel_defeats_enemy_creature_with_power_7_or_more() -> None:
