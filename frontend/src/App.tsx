@@ -635,6 +635,15 @@ export function App() {
 
   const viewerUnplayableHandSet = new Set(viewer?.unplayable_hand_indices || []);
   const viewerCannotAttackSet = new Set(viewer?.unable_to_attack_indices || []);
+
+  const hasAnyPlayableHandCard =
+    !!viewer && hand.length > 0 && hand.some((_, index) => !viewerUnplayableHandSet.has(index));
+  const hasAnyEligibleAttacker =
+    !!viewer &&
+    viewer.battlefield.length > 0 &&
+    viewer.battlefield.some((_, index) => !viewerCannotAttackSet.has(index));
+  const showPlayButton = canAct && !hasPendingFrenzyAttack && hasAnyPlayableHandCard;
+  const showAttackButton = canAct && hasAnyEligibleAttacker;
   const eligibleDefenderIndices = state?.pending_defense?.eligible_defender_indices || [];
   const viewerIneligibleDefenderSet = canAnswerDefense && viewer
     ? new Set(
@@ -815,20 +824,24 @@ export function App() {
                 </button>
               </div>
             ) : null}
-            {canAct ? (
+            {showPlayButton || showAttackButton ? (
               <div className="d-flex gap-2 align-items-center">
-                <button className="btn btn-sm btn-primary" onClick={() => void playSelectedCard()} type="button">
-                  Play card
-                </button>
-                {selectedAttackerIsHunter && selectedDefenderIndex !== null ? (
-                  <button className="btn btn-sm btn-hunt" onClick={() => void attackSelected()} type="button">
-                    Hunt
+                {showPlayButton ? (
+                  <button className="btn btn-sm btn-primary" onClick={() => void playSelectedCard()} type="button">
+                    Play card
                   </button>
-                ) : (
-                  <button className="btn btn-sm btn-danger" onClick={() => void attackSelected()} type="button">
-                    Attack
-                  </button>
-                )}
+                ) : null}
+                {showAttackButton ? (
+                  selectedAttackerIsHunter && selectedDefenderIndex !== null ? (
+                    <button className="btn btn-sm btn-hunt" onClick={() => void attackSelected()} type="button">
+                      Hunt
+                    </button>
+                  ) : (
+                    <button className="btn btn-sm btn-danger" onClick={() => void attackSelected()} type="button">
+                      Attack
+                    </button>
+                  )
+                ) : null}
               </div>
             ) : null}
             {canManuallyEndTurn ? (
