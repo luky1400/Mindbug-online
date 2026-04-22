@@ -46,6 +46,18 @@ body {
   color: #212529;
 }
 
+.btn-hunt {
+  background: #fd7e14;
+  border-color: #fd7e14;
+  color: #212529;
+}
+
+.btn-hunt:hover {
+  background: #e8590c;
+  border-color: #e8590c;
+  color: #212529;
+}
+
 .game-status-bar {
   display: flex;
   align-items: center;

@@ -13,8 +13,6 @@
 
 ## TODO - frontend
 
-- Block - instead of Block with selected creature
-- If target for hunt is selected, show HUNT button instead of Attack
 - Do not show Play button if no cards to be played (even if you cannot play card from hand because of ongoing effect), and do not show attack button if no cards to attack with (even if you cannot attack because of ongoing effect)
   - Also, show only Attack or End turn button when FRENZY card can attack again
 - Add scrolling to logs?

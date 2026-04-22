@@ -803,7 +803,7 @@ export function App() {
             {state!.pending_defense?.response_required_from_viewer ? (
               <div className="d-flex gap-2 align-items-center">
                 <button className="btn btn-sm btn-block-defend" onClick={() => void defendWithSelectedBlocker()} type="button">
-                  Block with selected
+                  Block
                 </button>
                 <button className="btn btn-sm btn-warning" onClick={() => void takeLifeLoss()} type="button">
                   Lose 1 life
@@ -815,9 +815,15 @@ export function App() {
                 <button className="btn btn-sm btn-primary" onClick={() => void playSelectedCard()} type="button">
                   Play card
                 </button>
-                <button className="btn btn-sm btn-danger" onClick={() => void attackSelected()} type="button">
-                  Attack
-                </button>
+                {selectedAttackerIsHunter && selectedDefenderIndex !== null ? (
+                  <button className="btn btn-sm btn-hunt" onClick={() => void attackSelected()} type="button">
+                    Hunt
+                  </button>
+                ) : (
+                  <button className="btn btn-sm btn-danger" onClick={() => void attackSelected()} type="button">
+                    Attack
+                  </button>
+                )}
               </div>
             ) : null}
             {canManuallyEndTurn ? (
