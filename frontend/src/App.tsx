@@ -590,6 +590,12 @@ export function App() {
     setGameId(nextGameId);
     setJoinCode(nextGameId);
     clearSelections();
+    prevStateRef.current = null;
+    if (animTimerRef.current) {
+      clearTimeout(animTimerRef.current);
+      animTimerRef.current = null;
+    }
+    setAnimatedCards(emptyAnimatedRef.current);
     applyState(nextState);
     persistSession({ gameId: nextGameId, playerId: nextPlayerId });
     connectSocket(nextGameId, nextPlayerId);
@@ -854,6 +860,12 @@ export function App() {
     clearPersistedSession();
     setGameId(null);
     setState(null);
+    prevStateRef.current = null;
+    if (animTimerRef.current) {
+      clearTimeout(animTimerRef.current);
+      animTimerRef.current = null;
+    }
+    setAnimatedCards(emptyAnimatedRef.current);
     clearSelections();
     setStatusText("");
     setErrorText("");

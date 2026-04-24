@@ -13,13 +13,11 @@
 
 ## TODO - frontend
 
-- Special effects:
+Special effects - think of imporvements
 
-I want the same effect as when card is played as when it is stolen by Mindbug - green glow
+(I want the same effect as when card is played as when it is stolen by Mindbug - green glow)
 
-I dont see lose of life visualization when player choice window to play hyenix from discard pile pos up
-
-dont show effects of add life/cards at the start of the game
+(I dont see lose of life visualization when player choice window to play hyenix from discard pile pos up - wait for it?)
 
 (Zesnovačka zrušila PLAY akci, ..)
 
