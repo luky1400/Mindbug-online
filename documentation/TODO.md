@@ -14,13 +14,16 @@
 ## TODO - frontend
 
 - Special effects:
-  - lost of life
-  - souboj (a visualization effect that card has attacked player and player lost life, or that it attacked card that has been selected as blocker)
-  - when card is defeated
-  - when card is discarded
-  - Aktivovala se akce
-  - Zesnovačka zrušila PLAY akci, ..
-  - (Drawing cards - prekliknuti cisla na hand icon)
+
+I want vizualization when card is moved to discard pile - card should fade a way - either from battlefield or hand - effect should like the card was destroyed and goes to cemetery
+
+I want the same effect as when card is played as when it is stolen by Mindbug
+
+I dont see lose of life visualization when player choice window to play hyenix from discard pile pos up
+
+- Aktivovala se akce
+- Zesnovačka zrušila PLAY akci, ..
+- (Drawing cards - prekliknuti cisla na hand icon)
 - make crads nicer so it is readable well - texty se tam asi nejak dotahnou oddelene a strenth a nazev take
 - Adjust UI layout to screen size
 - Add scrolling to logs?
@@ -29,12 +32,12 @@
 ## Bugs - backend
 
 - Dont choose number with Wheatle when opponent has no cards
-
 - (When each player has Hyenix in discard pile and both lose life simultaneously. Player who is on turn must decide which player resolves Hyenix choice first. - this situation probably cannot happen)
 
 ## Bugs - frontend
 
 - When card is greyed out, I cannot see badges - FRENZY, etc., neither actual strength render
+- vice zvyraznit utocici kartu?
 
 ## TODO - game rules
 

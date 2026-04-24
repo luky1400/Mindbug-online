@@ -50,13 +50,28 @@ export function App() {
     viewerHand: Set<number>;
     viewerDiscard: Set<number>;
     opponentDiscard: Set<number>;
+    viewerDiscardDefeated: boolean;
+    opponentDiscardDefeated: boolean;
     viewerBattlefieldStolen: Set<number>;
     opponentBattlefieldStolen: Set<number>;
+    viewerBattlefieldPlayed: Set<number>;
+    opponentBattlefieldPlayed: Set<number>;
+    viewerBattlefieldToughExhausted: Set<number>;
+    opponentBattlefieldToughExhausted: Set<number>;
+    viewerLifeLoss: boolean;
+    opponentLifeLoss: boolean;
+    viewerCombatEffect: "direct-hit" | "block-hit" | null;
+    opponentCombatEffect: "direct-hit" | "block-hit" | null;
   };
   const EMPTY_SET = new Set<number>();
   const emptyAnimatedRef = useRef<AnimatedCards>({
     viewerHand: EMPTY_SET, viewerDiscard: EMPTY_SET, opponentDiscard: EMPTY_SET,
+    viewerDiscardDefeated: false, opponentDiscardDefeated: false,
     viewerBattlefieldStolen: EMPTY_SET, opponentBattlefieldStolen: EMPTY_SET,
+    viewerBattlefieldPlayed: EMPTY_SET, opponentBattlefieldPlayed: EMPTY_SET,
+    viewerBattlefieldToughExhausted: EMPTY_SET, opponentBattlefieldToughExhausted: EMPTY_SET,
+    viewerLifeLoss: false, opponentLifeLoss: false,
+    viewerCombatEffect: null, opponentCombatEffect: null,
   });
   const [animatedCards, setAnimatedCards] = useState<AnimatedCards>(emptyAnimatedRef.current);
   const animTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -72,6 +87,52 @@ export function App() {
       if (remaining > 0) {
         prevCounts.set(nextArr[i], remaining - 1);
       } else {
+        result.add(i);
+      }
+    }
+    return result;
+  }, []);
+
+  const hasDiscardedBattlefieldCard = useCallback((
+    prevBattlefield: string[],
+    nextBattlefield: string[],
+    nextDiscard: string[],
+    newDiscardIndices: Set<number>
+  ): boolean => {
+    const nextBattlefieldCounts = new Map<string, number>();
+    for (const label of nextBattlefield) {
+      nextBattlefieldCounts.set(label, (nextBattlefieldCounts.get(label) || 0) + 1);
+    }
+
+    const removedFromBattlefield = new Map<string, number>();
+    for (const label of prevBattlefield) {
+      const remaining = nextBattlefieldCounts.get(label) || 0;
+      if (remaining > 0) {
+        nextBattlefieldCounts.set(label, remaining - 1);
+      } else {
+        removedFromBattlefield.set(label, (removedFromBattlefield.get(label) || 0) + 1);
+      }
+    }
+
+    for (const discardIndex of newDiscardIndices) {
+      const label = nextDiscard[discardIndex];
+      if ((removedFromBattlefield.get(label) || 0) > 0) return true;
+    }
+
+    return false;
+  }, []);
+
+  const detectToughExhaustedCards = useCallback((prevBattlefield: string[], nextBattlefield: string[]): Set<number> => {
+    const result = new Set<number>();
+    const length = Math.min(prevBattlefield.length, nextBattlefield.length);
+    for (let i = 0; i < length; i++) {
+      const prevCard = parseCardLabel(prevBattlefield[i]);
+      const nextCard = parseCardLabel(nextBattlefield[i]);
+      if (
+        prevCard.name === nextCard.name &&
+        (prevCard.toughCharges || 0) > 0 &&
+        (nextCard.toughCharges || 0) === 0
+      ) {
         result.add(i);
       }
     }
@@ -260,34 +321,74 @@ export function App() {
       const nextViewerDiscard = nextState.viewer.discard || [];
       const prevOpponentDiscard = prev.opponent?.discard || [];
       const nextOpponentDiscard = nextState.opponent?.discard || [];
+      const prevViewerBattlefield = prev.viewer.battlefield;
+      const nextViewerBattlefield = nextState.viewer.battlefield;
+      const prevOpponentBattlefield = prev.opponent?.battlefield || [];
+      const nextOpponentBattlefield = nextState.opponent?.battlefield || [];
 
       const newHandIndices = detectNewCards(prevHand, nextHand);
       const newViewerDiscard = detectNewCards(prevViewerDiscard, nextViewerDiscard);
       const newOpponentDiscard = detectNewCards(prevOpponentDiscard, nextOpponentDiscard);
+      const newViewerBattlefield = detectNewCards(prevViewerBattlefield, nextViewerBattlefield);
+      const newOpponentBattlefield = detectNewCards(prevOpponentBattlefield, nextOpponentBattlefield);
+      const viewerBattlefieldToughExhausted = detectToughExhaustedCards(prevViewerBattlefield, nextViewerBattlefield);
+      const opponentBattlefieldToughExhausted = detectToughExhaustedCards(prevOpponentBattlefield, nextOpponentBattlefield);
+      const viewerLostLife = nextState.viewer.lives < prev.viewer.lives;
+      const opponentLostLife = Boolean(
+        prev.opponent &&
+        nextState.opponent &&
+        nextState.opponent.lives < prev.opponent.lives
+      );
+      const viewerBattlefieldDefeated = hasDiscardedBattlefieldCard(
+        prevViewerBattlefield,
+        nextViewerBattlefield,
+        nextViewerDiscard,
+        newViewerDiscard
+      );
+      const opponentBattlefieldDefeated = hasDiscardedBattlefieldCard(
+        prevOpponentBattlefield,
+        nextOpponentBattlefield,
+        nextOpponentDiscard,
+        newOpponentDiscard
+      );
 
       // Detect Mindbug steal: responding player's battlefield gained a card after mindbug ended
       let viewerBattlefieldStolen = EMPTY_SET;
       let opponentBattlefieldStolen = EMPTY_SET;
       if (mindbugStepEnded && prev.pending_mindbug) {
-        const prevViewerBf = prev.viewer.battlefield;
-        const nextViewerBf = nextState.viewer?.battlefield || [];
-        const prevOpponentBf = prev.opponent?.battlefield || [];
-        const nextOpponentBf = nextState.opponent?.battlefield || [];
-
         if (prev.pending_mindbug.response_required_from_viewer) {
           // Viewer was the responding player — if viewer's battlefield grew, viewer stole it
-          const newOnViewer = detectNewCards(prevViewerBf, nextViewerBf);
+          const newOnViewer = detectNewCards(prevViewerBattlefield, nextViewerBattlefield);
           if (newOnViewer.size > 0) viewerBattlefieldStolen = newOnViewer;
         } else {
           // Opponent was the responding player — if opponent's battlefield grew, opponent stole it
-          const newOnOpponent = detectNewCards(prevOpponentBf, nextOpponentBf);
+          const newOnOpponent = detectNewCards(prevOpponentBattlefield, nextOpponentBattlefield);
           if (newOnOpponent.size > 0) opponentBattlefieldStolen = newOnOpponent;
         }
       }
 
+      const viewerBattlefieldPlayed = new Set(
+        [...newViewerBattlefield].filter((index) => !viewerBattlefieldStolen.has(index))
+      );
+      const opponentBattlefieldPlayed = new Set(
+        [...newOpponentBattlefield].filter((index) => !opponentBattlefieldStolen.has(index))
+      );
+      const viewerCombatEffect = viewerLostLife
+        ? "direct-hit"
+        : viewerBattlefieldDefeated
+          ? "block-hit"
+          : null;
+      const opponentCombatEffect = opponentLostLife
+        ? "direct-hit"
+        : opponentBattlefieldDefeated
+          ? "block-hit"
+          : null;
       const hasAny =
         newHandIndices.size > 0 || newViewerDiscard.size > 0 || newOpponentDiscard.size > 0 ||
-        viewerBattlefieldStolen.size > 0 || opponentBattlefieldStolen.size > 0;
+        viewerBattlefieldStolen.size > 0 || opponentBattlefieldStolen.size > 0 ||
+        viewerBattlefieldPlayed.size > 0 || opponentBattlefieldPlayed.size > 0 ||
+        viewerBattlefieldToughExhausted.size > 0 || opponentBattlefieldToughExhausted.size > 0 ||
+        viewerLostLife || opponentLostLife || Boolean(viewerCombatEffect) || Boolean(opponentCombatEffect);
 
       if (hasAny) {
         if (animTimerRef.current) clearTimeout(animTimerRef.current);
@@ -295,13 +396,23 @@ export function App() {
           viewerHand: newHandIndices,
           viewerDiscard: newViewerDiscard,
           opponentDiscard: newOpponentDiscard,
+          viewerDiscardDefeated: viewerBattlefieldDefeated,
+          opponentDiscardDefeated: opponentBattlefieldDefeated,
           viewerBattlefieldStolen,
           opponentBattlefieldStolen,
+          viewerBattlefieldPlayed,
+          opponentBattlefieldPlayed,
+          viewerBattlefieldToughExhausted,
+          opponentBattlefieldToughExhausted,
+          viewerLifeLoss: viewerLostLife,
+          opponentLifeLoss: opponentLostLife,
+          viewerCombatEffect,
+          opponentCombatEffect,
         });
         animTimerRef.current = setTimeout(() => {
           setAnimatedCards(emptyAnimatedRef.current);
           animTimerRef.current = null;
-        }, 700);
+        }, 1700);
       }
     }
 
@@ -782,7 +893,13 @@ export function App() {
             }
             onSelectBattlefield={canAnswerDefense || hasBlockingChoiceModal ? undefined : (index) => toggleSelected("defender", index)}
             onPreview={(label) => setPreviewCardLabel(label)}
+            animatedDiscardIndices={animatedCards.opponentDiscard}
+            animatedDiscardDefeated={animatedCards.opponentDiscardDefeated}
             animatedBattlefieldStolenIndices={animatedCards.opponentBattlefieldStolen}
+            animatedBattlefieldPlayedIndices={animatedCards.opponentBattlefieldPlayed}
+            animatedBattlefieldToughExhaustedIndices={animatedCards.opponentBattlefieldToughExhausted}
+            lifeLossAnimated={animatedCards.opponentLifeLoss}
+            combatEffect={animatedCards.opponentCombatEffect}
             pendingDefenseAttackerIndex={
               state?.pending_defense?.response_required_from_viewer
                 ? state.pending_defense.attacker_index
@@ -860,7 +977,13 @@ export function App() {
             selectedBattlefieldIndex={hasBlockingChoiceModal ? null : canAnswerDefense ? selectedDefenderIndex : selectedAttackerIndex}
             onSelectBattlefield={hasBlockingChoiceModal ? undefined : (index) => toggleSelected(canAnswerDefense ? "defender" : "attacker", index)}
             onPreview={(label) => setPreviewCardLabel(label)}
+            animatedDiscardIndices={animatedCards.viewerDiscard}
+            animatedDiscardDefeated={animatedCards.viewerDiscardDefeated}
             animatedBattlefieldStolenIndices={animatedCards.viewerBattlefieldStolen}
+            animatedBattlefieldPlayedIndices={animatedCards.viewerBattlefieldPlayed}
+            animatedBattlefieldToughExhaustedIndices={animatedCards.viewerBattlefieldToughExhausted}
+            lifeLossAnimated={animatedCards.viewerLifeLoss}
+            combatEffect={animatedCards.viewerCombatEffect}
             disabledBattlefieldIndices={
               canAnswerDefense
                 ? viewerIneligibleDefenderSet

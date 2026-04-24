@@ -3,6 +3,8 @@ import type { PlayerState } from "../types/game";
 import { CardTile } from "./CardTile";
 import { DiscardPileModal } from "./DiscardPileModal";
 
+type CombatEffect = "direct-hit" | "block-hit";
+
 interface BoardZoneProps {
   title: string;
   player: PlayerState;
@@ -12,7 +14,12 @@ interface BoardZoneProps {
   onSelectBattlefield?: (index: number) => void;
   onPreview?: (label: string) => void;
   animatedDiscardIndices?: Set<number>;
+  animatedDiscardDefeated?: boolean;
   animatedBattlefieldStolenIndices?: Set<number>;
+  animatedBattlefieldPlayedIndices?: Set<number>;
+  animatedBattlefieldToughExhaustedIndices?: Set<number>;
+  lifeLossAnimated?: boolean;
+  combatEffect?: CombatEffect | null;
   disabledBattlefieldIndices?: Set<number>;
   disabledBattlefieldTitle?: string;
   pendingDefenseAttackerIndex?: number | null;
@@ -26,13 +33,25 @@ export function BoardZone({
   selectedBattlefieldIndex,
   onSelectBattlefield,
   onPreview,
+  animatedDiscardIndices,
+  animatedDiscardDefeated = false,
   animatedBattlefieldStolenIndices,
+  animatedBattlefieldPlayedIndices,
+  animatedBattlefieldToughExhaustedIndices,
+  lifeLossAnimated = false,
+  combatEffect = null,
   disabledBattlefieldIndices,
   disabledBattlefieldTitle,
   pendingDefenseAttackerIndex
 }: BoardZoneProps) {
   const battlefieldClickable = battlefieldMode !== "readonly";
   const [showDiscardModal, setShowDiscardModal] = useState(false);
+  const hasAnimatedDiscard = Boolean(animatedDiscardIndices?.size);
+  const discardAnimationClass = hasAnimatedDiscard
+    ? animatedDiscardDefeated
+      ? "discard-pile-btn-defeated-anim"
+      : "discard-pile-btn-discarded-anim"
+    : "";
 
   return (
     <>
@@ -42,7 +61,7 @@ export function BoardZone({
           <div className="board-zone-layout">
             <div className="board-zone-sidebar">
               <div className="stat-item stat-lives">
-                <div className="life-heart" aria-label={`${player.lives} lives`}>
+                <div className={`life-heart ${lifeLossAnimated ? "life-heart-loss-anim" : ""}`} aria-label={`${player.lives} lives`}>
                   <span className="life-heart-number">{player.lives}</span>
                 </div>
               </div>
@@ -62,7 +81,7 @@ export function BoardZone({
                 </div>
               </div>
               <button
-                className={`discard-pile-btn ${player.discard_count === 0 ? "discard-pile-btn-empty" : ""}`}
+                className={`discard-pile-btn ${player.discard_count === 0 ? "discard-pile-btn-empty" : ""} ${discardAnimationClass}`}
                 onClick={player.discard_count > 0 ? () => setShowDiscardModal(true) : undefined}
                 title={player.discard_count > 0 ? "View discard pile" : "Discard pile is empty"}
                 type="button"
@@ -80,6 +99,13 @@ export function BoardZone({
                 ) : (
                   player.battlefield.map((label, index) => {
                     const isDisabled = battlefieldClickable && (disabledBattlefieldIndices?.has(index) ?? false);
+                    const animationClass = animatedBattlefieldStolenIndices?.has(index)
+                      ? "card-tile-stolen-anim"
+                      : animatedBattlefieldToughExhaustedIndices?.has(index)
+                        ? "card-tile-tough-exhausted-anim"
+                        : animatedBattlefieldPlayedIndices?.has(index)
+                          ? "card-tile-played-anim"
+                          : "";
                     return (
                       <CardTile
                         key={`${label}-${index}`}
@@ -96,7 +122,7 @@ export function BoardZone({
                         pendingDefenseAttacker={pendingDefenseAttackerIndex === index}
                         onClick={battlefieldClickable && !isDisabled ? () => onSelectBattlefield?.(index) : undefined}
                         onDoubleClick={() => onPreview?.(label)}
-                        animationClass={animatedBattlefieldStolenIndices?.has(index) ? "card-tile-stolen-anim" : ""}
+                        animationClass={animationClass}
                       />
                     );
                   })
@@ -104,6 +130,11 @@ export function BoardZone({
               </div>
             </div>
           </div>
+          {combatEffect ? (
+            <div className={`combat-effect combat-effect-${combatEffect}`} aria-live="polite">
+              <span>{combatEffect === "direct-hit" ? "Direct hit!" : "Clash!"}</span>
+            </div>
+          ) : null}
         </div>
       </section>
       {showDiscardModal ? (
