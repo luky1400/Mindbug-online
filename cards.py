@@ -330,7 +330,7 @@ class Ferret_pacifier(Card):
     set: CardSet = CardSet.NEW_SERVANTS
 
     def apply_ongoing_effect(self, game: Game, owner, opponent) -> None:
-        if not opponent.cards_laid_out:
+        if len(opponent.cards_laid_out) == 0:
             return
         highest_power = max(card.strength for card in opponent.cards_laid_out)
         for card in opponent.cards_laid_out:
@@ -455,7 +455,7 @@ class Hamster_lion(Card):
     set: CardSet = CardSet.NEW_SERVANTS
 
     def apply_ongoing_effect(self, game: Game, owner, opponent) -> None:
-        if not opponent.cards_laid_out:
+        if len(opponent.cards_laid_out) == 0:
             return
         lowest_power = min(card.strength for card in opponent.cards_laid_out)
         for card in opponent.cards_laid_out:
@@ -562,7 +562,6 @@ class Jazz_dog(Card):
     strength: int = 5
     special_types: list[CardSpecialType] = []
     description: str = "At the end of your turn, if an enemy creature blocked this turn and is still in play, take control of it."
-    apply_ongoing_effect_priority: OngoingEffectPriority = OngoingEffectPriority.EARLY
     set: CardSet = CardSet.PROMO_CARDS
 
     def trigger_end_turn_effect(self, game: Game) -> None:

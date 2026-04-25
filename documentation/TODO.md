@@ -15,7 +15,7 @@
 
 (I want the same effect as when card is played as when it is stolen by Mindbug - green glow?)
 
-(Zesnovačka zrušila PLAY akci, ..)
+(Zesnovačka zrušila PLAY akci, Jazz_dog stole cards, Ivy_mindbug)
 
 - make cards nicer so it is readable well - texty se tam asi nejak dotahnou oddelene a strenth a nazev take
 - Adjust UI layout to screen size
@@ -24,6 +24,7 @@
 
 ## Bugs - backend
 
+- delete  action_types attribute from Card and use rather card.trigger_play_effect(self), ..
 - (When each player has Hyenix in discard pile and both lose life simultaneously. Player who is on turn must decide which player resolves Hyenix choice first. - this situation probably cannot happen)
 
 ## Bugs - frontend
