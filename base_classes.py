@@ -1756,6 +1756,11 @@ class Game:
         )
 
     def resolve_wheatle_action(self, source_card: Card) -> None:
+        if len(self.opponent.hand) == 0:
+            self.log.append(
+                f"{self.current_player.name}'s Wheatle finds no cards because {self.opponent.name}'s hand is empty."
+            )
+            return
         self._set_pending_card_action_choice(
             action_key="wheatle",
             source_card=source_card,

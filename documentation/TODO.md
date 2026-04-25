@@ -19,12 +19,11 @@
 
 - make cards nicer so it is readable well - texty se tam asi nejak dotahnou oddelene a strenth a nazev take
 - Adjust UI layout to screen size
-- Add scrolling to logs?
+- Longer logs history/ add scrolling?
 - enhance UI - change colours, choosing windows, ..
 
 ## Bugs - backend
 
-- Dont choose number with Wheatle when opponent has no cards
 - (When each player has Hyenix in discard pile and both lose life simultaneously. Player who is on turn must decide which player resolves Hyenix choice first. - this situation probably cannot happen)
 
 ## Bugs - frontend

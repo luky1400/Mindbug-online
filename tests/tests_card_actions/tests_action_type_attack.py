@@ -16,6 +16,7 @@ from cards import (
     Turbo_bug,
     Turf_the_surfer,
     Tusked_extorter,
+    Wheatl_e,
 )
 from enums import CardSpecialType, GameState
 
@@ -94,6 +95,22 @@ def test_attack_tusked_extorter_opponent_discards_a_card_from_hand() -> None:
 
     assert opponent.hand == []
     assert card_to_discard in opponent.discard_pile
+
+
+def test_attack_wheatle_skips_choice_when_opponent_hand_is_empty() -> None:
+    game = _new_game()
+    player = game.current_player
+    opponent = game.opponent
+
+    opponent.hand = []
+    player.cards_laid_out = [Wheatl_e()]
+    opponent.cards_laid_out = [Luchataur()]
+
+    game.attack(attacker_index=0)
+
+    assert game._pending_card_action_choice is None
+    assert game._pending_attack_continuation is None
+    assert game._pending_defense_decision is not None
 
 
 def test_attack_chameleon_sniper_opponent_loses_1_life() -> None:
