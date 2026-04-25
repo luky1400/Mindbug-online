@@ -13,15 +13,13 @@
 
 ## TODO - frontend
 
-Special effects - think of imporvements
-
-(I want the same effect as when card is played as when it is stolen by Mindbug - green glow)
+(I want the same effect as when card is played as when it is stolen by Mindbug - green glow?)
 
 (I dont see lose of life visualization when player choice window to play hyenix from discard pile pos up - wait for it?)
 
 (Zesnovačka zrušila PLAY akci, ..)
 
-- make crads nicer so it is readable well - texty se tam asi nejak dotahnou oddelene a strenth a nazev take
+- make cards nicer so it is readable well - texty se tam asi nejak dotahnou oddelene a strenth a nazev take
 - Adjust UI layout to screen size
 - Add scrolling to logs?
 - enhance UI - change colours, choosing windows, ..
@@ -43,7 +41,7 @@ Special effects - think of imporvements
   - efekty schopnosti: Příchod, ..
   - Stálé schopnosti (př. Zesnovačka)
   - do své herní oblasti
-  - support i pro Češtinu
+  - support i pro Češtinu - problem I dont have czech cards
 - Udělat funkce pro tyhle termíny: Odložit, Ovládnout nestvůru
 
 ## Nice to have

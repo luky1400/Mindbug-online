@@ -158,7 +158,7 @@ export function BoardZone({
           </div>
           {combatEffect ? (
             <div className={`combat-effect combat-effect-${combatEffect}`} aria-live="polite">
-              <span>{combatEffect === "direct-hit" ? "Direct hit!" : "Clash!"}</span>
+              <span>{combatEffect === "direct-hit" ? "Direct hit" : "Clash"}</span>
             </div>
           ) : null}
           {discardGhosts.length > 0 ? (
