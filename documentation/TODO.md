@@ -30,7 +30,7 @@ Visualization effects
 
 ## Bugs - frontend
 
-- 
+- dont make cards_laid_out blick
 
 ## TODO - game rules
 

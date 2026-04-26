@@ -74,6 +74,63 @@ def test_defeated_explosive_toad_lets_owner_choose_enemy_creature_to_defeat() ->
     assert enemy_creature_2 in opponent.cards_laid_out
 
 
+def test_defending_explosive_toad_lets_owner_choose_enemy_creature_to_defeat() -> None:
+    game = _new_game()
+    attacker_owner = game.current_player
+    defender_owner = game.opponent
+
+    attacker = Luchataur()
+    other_enemy = Tiger_squirrel()
+    explosive_toad = Explosive_toad()
+
+    attacker_owner.cards_laid_out = [attacker, other_enemy]
+    defender_owner.cards_laid_out = [explosive_toad]
+    attacker_owner.hand = [Chameleon_sniper()]
+    defender_owner.hand = [Shield_bugs()]
+
+    game.attack(attacker_index=0)
+    game.defend(defender_index=0)
+
+    assert game._pending_card_action_choice is not None
+    assert game._pending_card_action_choice.action_key == "explosive_toad"
+    assert game._pending_card_action_choice.responding_player_index == game.players.index(
+        defender_owner
+    )
+    assert game._pending_card_action_choice.selection_owner_index == game.players.index(
+        attacker_owner
+    )
+    assert game._pending_combat_finalization is not None
+
+    game.resolve_pending_card_action([1])
+
+    assert other_enemy in attacker_owner.discard_pile
+    assert attacker in attacker_owner.cards_laid_out
+    assert explosive_toad in defender_owner.discard_pile
+    assert game._pending_combat_finalization is None
+
+
+def test_defending_explosive_toad_auto_defeats_only_enemy_creature() -> None:
+    game = _new_game()
+    attacker_owner = game.current_player
+    defender_owner = game.opponent
+
+    attacker = Luchataur()
+    explosive_toad = Explosive_toad()
+
+    attacker_owner.cards_laid_out = [attacker]
+    defender_owner.cards_laid_out = [explosive_toad]
+    attacker_owner.hand = [Chameleon_sniper()]
+    defender_owner.hand = [Shield_bugs()]
+
+    game.attack(attacker_index=0)
+    game.defend(defender_index=0)
+
+    assert game._pending_card_action_choice is None
+    assert game._pending_combat_finalization is None
+    assert attacker in attacker_owner.discard_pile
+    assert explosive_toad in defender_owner.discard_pile
+
+
 def test_defeated_harpy_mother_takes_control_of_up_to_2_weak_enemy_creatures() -> None:
     game = _new_game()
     player = game.current_player
@@ -90,12 +147,95 @@ def test_defeated_harpy_mother_takes_control_of_up_to_2_weak_enemy_creatures() -
 
     _attack_and_defend(game, attacker_index=0, defender_index=2)
     # Eligible indices are [0, 1] (weak_enemy_1 and weak_enemy_2); choose both.
+    assert game._pending_card_action_choice is not None
+    assert game._pending_card_action_choice.min_choices == 0
     game.resolve_pending_card_action([0, 1])
 
     assert harpy_mother in player.discard_pile
     assert weak_enemy_1 in player.cards_laid_out
     assert weak_enemy_2 in player.cards_laid_out
     assert strong_enemy in opponent.cards_laid_out
+
+
+def test_defending_harpy_mother_lets_owner_choose_weak_enemy_creatures_to_take() -> None:
+    game = _new_game()
+    attacker_owner = game.current_player
+    defender_owner = game.opponent
+
+    strong_attacker = Luchataur()
+    weak_enemy_1 = Chameleon_sniper()
+    weak_enemy_2 = Tiger_squirrel()
+    strong_enemy = Luchataur()
+    harpy_mother = Harpy_mother()
+
+    attacker_owner.cards_laid_out = [
+        strong_attacker,
+        weak_enemy_1,
+        weak_enemy_2,
+        strong_enemy,
+    ]
+    defender_owner.cards_laid_out = [harpy_mother]
+    attacker_owner.hand = [Shield_bugs()]
+    defender_owner.hand = [Chameleon_sniper()]
+
+    game.attack(attacker_index=0)
+    game.defend(defender_index=0)
+
+    assert game._pending_card_action_choice is not None
+    assert game._pending_card_action_choice.action_key == "harpy_mother"
+    assert game._pending_card_action_choice.responding_player_index == game.players.index(
+        defender_owner
+    )
+    assert game._pending_card_action_choice.selection_owner_index == game.players.index(
+        attacker_owner
+    )
+    assert game._pending_card_action_choice.eligible_indices == [1, 2]
+    assert game._pending_card_action_choice.min_choices == 0
+    assert game._pending_card_action_choice.max_choices == 2
+    assert game._pending_combat_finalization is not None
+
+    game.resolve_pending_card_action([1, 2])
+
+    assert weak_enemy_1 in defender_owner.cards_laid_out
+    assert weak_enemy_2 in defender_owner.cards_laid_out
+    assert strong_attacker in attacker_owner.cards_laid_out
+    assert strong_enemy in attacker_owner.cards_laid_out
+    assert harpy_mother in defender_owner.discard_pile
+    assert game._pending_combat_finalization is None
+
+
+def test_defending_harpy_mother_can_decline_only_eligible_weak_enemy_creature() -> None:
+    game = _new_game()
+    attacker_owner = game.current_player
+    defender_owner = game.opponent
+
+    strong_attacker = Luchataur()
+    weak_enemy = Tiger_squirrel()
+    strong_enemy = Luchataur()
+    harpy_mother = Harpy_mother()
+
+    attacker_owner.cards_laid_out = [strong_attacker, weak_enemy, strong_enemy]
+    defender_owner.cards_laid_out = [harpy_mother]
+    attacker_owner.hand = [Shield_bugs()]
+    defender_owner.hand = [Chameleon_sniper()]
+
+    game.attack(attacker_index=0)
+    game.defend(defender_index=0)
+
+    assert game._pending_card_action_choice is not None
+    assert game._pending_card_action_choice.action_key == "harpy_mother"
+    assert game._pending_card_action_choice.eligible_indices == [1]
+    assert game._pending_card_action_choice.min_choices == 0
+    assert game._pending_card_action_choice.max_choices == 1
+    assert game._pending_combat_finalization is not None
+
+    game.resolve_pending_card_action([])
+
+    assert weak_enemy in attacker_owner.cards_laid_out
+    assert strong_attacker in attacker_owner.cards_laid_out
+    assert strong_enemy in attacker_owner.cards_laid_out
+    assert harpy_mother in defender_owner.discard_pile
+    assert game._pending_combat_finalization is None
 
 
 def test_defeated_strange_barrel_steals_up_to_2_cards_from_opponent_hand() -> None:

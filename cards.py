@@ -502,6 +502,7 @@ class Hyenix(Card):
 
 
 # PROBLEM - https://boardgamegeek.com/thread/3176165/chuck-harpy-mother-interaction
+# https://boardgamegeek.com/thread/3176165/chuck-harpy-mother-interaction
 # class Chuck(Card):
 #     name: str = "Chuck"
 #     strength: int = 3

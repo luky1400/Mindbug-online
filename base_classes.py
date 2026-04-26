@@ -1652,7 +1652,7 @@ class Game:
             selection_owner_index=enemy,
             selection_zone="battlefield",
             eligible_indices=eligible_indices,
-            min_choices=1,
+            min_choices=0,
             max_choices=max_choices,
             draw_up_to_hand_limit_after_resolution=True,  # Probbaly redundant in Harpy mother case
             auto_end_after_attack=True,  # NOTE - this is here so that when attack harpy mother, turn auto-ends after combat
@@ -2263,6 +2263,13 @@ class Game:
             )
             self._recalculate_ongoing_effects()
             self._check_game_over()
+
+        if self._pending_card_action_choice is not None:
+            self._pending_combat_finalization = PendingCombatFinalization(
+                attacker=attacker,
+                attacker_owner_index=self.players.index(attacker_owner),
+            )
+            return
 
         self._finalize_attack_action(attacker_owner, attacker)
 
