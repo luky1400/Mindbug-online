@@ -5,19 +5,24 @@
 - Add tests regularly for things that are not working
 - Simplify and unify code
 - Investigate if logs make sense - is order correct? ... Add log "Player 1" attacks.
-  - Why "Ongoing effects recalculated." is twice in logs?  
-  Player 2 declines to use Mindbug.
+  - Player 2 declines to use Mindbug.
   Ongoing effects recalculated.
   Ongoing effects recalculated.
+  - Waiting for Player 1 to choose enemy creatures to take control of with Harpy Mother.
+  Player 1's Harpy Mother is defeated and triggers its DEFEATED action.
+  Ongoing effects recalculated.
+  Ongoing effects recalculated.
+  Ongoing effects recalculated.
+  Ongoing effects recalculated.
+  Turn passes to Player 1.
 - Implement: Ratomanger, Slugapult (+ Alien_brain)
 - delete action_types attribute from Card and use rather card.trigger_play_effect(self), ..
+- add bar plot Whaetl_e trigger - number of cards for each strength (1-10) that opponent can possible have in hand
 
 ## TODO - frontend
 
-Visualization effects
-
-- (I want the same effect as when card is played as when it is stolen by Mindbug - green glow?)
-- (Zesnovačka zrušila PLAY akci, Jazz_dog took control of cards)
+- show visualization effect of discarded cards from hand for longer time + 1s (I dont have enough time to look at them properly)
+- (visualization effects for: Zesnovačka zrušila PLAY akci, Jazz_dog took control of cards)
 - make cards nicer so it is readable well - texty se tam asi nejak dotahnou oddelene a strenth a nazev take
 - Adjust UI layout to screen size
 - Longer logs history/ add scrolling?
@@ -25,7 +30,8 @@ Visualization effects
 
 ## Bugs - backend
 
-- 
+- Harpy mother steals cards with strength above 5 except to 5!! when defeated when it attacked
+- TODO - hamster efffects (and others) does not work for Froblin, .. - Ftoblin ongoing effect should trigger first, then hamster and others
 - (When each player has Hyenix in discard pile and both lose life simultaneously. Player who is on turn must decide which player resolves Hyenix choice first. - this situation probably cannot happen)
 
 ## Bugs - frontend
