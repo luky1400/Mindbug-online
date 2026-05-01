@@ -2506,8 +2506,7 @@ class Game:
                 card.cannot_attack = card.base_cannot_attack
 
         # TODO - we must assign apply_ongoing_effect_priority to cards in cards.py to apply ongoing effects in order of priority
-        # Sharky_crab_dog_mummypus should be applied after other cards, because it can give new tags to the card
-        # Hamster Lion should be applied before Froblin/Goblin Werewolf, etc.
+        # Ongoing effects of Sharky_crab_dog_mummypus, Hamster_lion, etc. should be applied latest because they depend on other ongoing effects
         all_cards: list[tuple[Card, Any, Any]] = [
             (card, self.players[owner_idx], self.players[1 - owner_idx])
             for owner_idx, owner in enumerate(self.players)

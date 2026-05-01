@@ -30,8 +30,7 @@
 
 ## Bugs - backend
 
-- Harpy mother steals cards with strength above 5 except to 5!! when defeated when it attacked
-- TODO - hamster efffects (and others) does not work for Froblin, .. - Ftoblin ongoing effect should trigger first, then hamster and others
+- Sometimes, Harpy_mother steals cards with strength above 5 except to 5!! when defeated when it attacked - very strange
 - (When each player has Hyenix in discard pile and both lose life simultaneously. Player who is on turn must decide which player resolves Hyenix choice first. - this situation probably cannot happen)
 
 ## Bugs - frontend

@@ -276,6 +276,7 @@ class Elephantopus(Card):
     strength: int = 7
     special_types: list[CardSpecialType] = [CardSpecialType.TOUGH]
     description: str = "Opponent cannot block with creatures with power 4 or less."
+    apply_ongoing_effect_priority: OngoingEffectPriority = OngoingEffectPriority.LATE
     set: CardSet = CardSet.FIRST_CONTACT
 
     def apply_ongoing_effect(self, game: Game, owner, opponent) -> None:
@@ -327,6 +328,7 @@ class Ferret_pacifier(Card):
     strength: int = 4
     special_types: list[CardSpecialType] = []
     description: str = "The enemy creature(s) with the highest power cannot block."
+    apply_ongoing_effect_priority: OngoingEffectPriority = OngoingEffectPriority.LATE
     set: CardSet = CardSet.NEW_SERVANTS
 
     def apply_ongoing_effect(self, game: Game, owner, opponent) -> None:
@@ -452,6 +454,7 @@ class Hamster_lion(Card):
     strength: int = 8
     special_types: list[CardSpecialType] = [CardSpecialType.FRENZY]
     description: str = "The enemy creature(s) with the lowest power cannot attack."
+    apply_ongoing_effect_priority: OngoingEffectPriority = OngoingEffectPriority.LATE
     set: CardSet = CardSet.NEW_SERVANTS
 
     def apply_ongoing_effect(self, game: Game, owner, opponent) -> None:
