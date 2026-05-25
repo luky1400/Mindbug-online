@@ -20,7 +20,7 @@ This project is a digital replica of the [Mindbug](https://boardgamegeek.com/boa
 
 - `base_classes.py` - core game engine and state
 - `cards.py` - card pool definitions
-- `enums.py` - shared enums
+- `enums.py` - defined enums
 - `main.py` - CLI game runner
 - `web_app.py` - FastAPI + Socket.IO multiplayer backend
 - `web/index.html` - basic frontend UI
