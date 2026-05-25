@@ -6,19 +6,18 @@ import type {
   ResolveCardActionChoiceRequest,
   SessionResponse
 } from "../types/game";
+import { backendUrl, serverUrl } from "../config";
 import { io, type Socket } from "socket.io-client";
-
-const serverUrl = import.meta.env.VITE_SERVER_URL || "/";
 
 async function requestJson<T>(path: string, options: RequestInit = {}): Promise<T> {
   let response: Response;
   try {
-    response = await fetch(path, {
+    response = await fetch(backendUrl(path), {
       headers: { "Content-Type": "application/json" },
       ...options
     });
   } catch {
-    throw new Error("Cannot reach backend API. Start FastAPI on http://127.0.0.1:8000.");
+    throw new Error("Cannot reach backend API. Check VITE_SERVER_URL or start FastAPI on http://127.0.0.1:8000.");
   }
 
   const raw = await response.text();

@@ -1,3 +1,5 @@
+import { backendUrl } from "../config";
+
 // TODO - check if all cards are included here
 const baseStrengthByName: Record<string, number> = {
   "Axolotl Healer": 4,
@@ -165,7 +167,7 @@ export function cardImageUrl(cardLabel: string): string {
     .replace(/[^a-z0-9 ]+/g, "")
     .trim()
     .replace(/\s+/g, "_");
-  return `/card-images/${slug}.png`;
+  return backendUrl(`/card-images/${slug}.png`);
 }
 
 export function strengthClassName(cardLabel: string): "buff" | "debuff" | "neutral" {
