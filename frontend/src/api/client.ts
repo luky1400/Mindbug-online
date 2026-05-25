@@ -71,6 +71,7 @@ export function createGameSocket(
   playerId: string,
   handlers: GameSocketHandlers
 ): Socket {
+  console.log('Server URL:', serverUrl);
   const socket = io(serverUrl, {
     path: "/socket.io",
     transports: ["websocket"],
