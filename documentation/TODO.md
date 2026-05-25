@@ -15,11 +15,10 @@
   Ongoing effects recalculated.
   Ongoing effects recalculated.
   Turn passes to Player 1.
-- Implement: Slugapult (+ Alien_brain)
+- Implement: Pudl, (+ Slugapult, Alien_brain)
 - delete action_types attribute from Card and use rather card.trigger_play_effect(self), ..
 - deploy game to internet
 - Optionally use only one giraffe
-- (add bar plot Whaetl_e trigger - number of cards for each strength (1-10) that opponent can possible have in hand)
 
 ## TODO - frontend
 
