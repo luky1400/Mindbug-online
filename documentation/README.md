@@ -1,7 +1,7 @@
-## Brief documentation notes
+## Brief Author’s Notes
 
 - Game rules - [English rules](https://mindbug.me/wp-content/uploads/2023/08/mindbug-rulebook-ENGLISH-small.pdf), [Czech rules](https://www.rexhry.cz/storage/instructions/mb.rulebook.v3.cze_.web_.pdf)
-- Create room now lets the host choose which sets are used for that room. First Contact is always selected and cannot be unchecked, while the remaining CardSet values can be enabled. The selected sets are sent in the create-room request, stored on the room, used when the game starts, and shown in the UI in both the room metadata and room status area.
+- Create room lets the host choose which sets are used for that room. First Contact is always selected and cannot be unchecked, while the remaining CardSet values can be enabled. The selected sets are sent in the create-room request, stored on the room, used when the game starts, and shown in the UI in both the room metadata and room status area.
 - Rooms are stored only in memory, so if the host server restarts, the game is lost.
 - In `_select_cards_for_game()`, after selecting game cards, the remaining cards from the card pool are cloned, shuffled, and stored in `self.unused_pile`
 - 2 main action functions: play_card, attack - resolved plays and attacks automatically trigger end_turn()

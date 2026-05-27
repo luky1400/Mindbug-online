@@ -18,7 +18,7 @@ This project is a non-commerical digital replica of the [Mindbug](https://boardg
 
 ## Play with friend online
 
-### 1) Play the game at [mind-bug-game.vercel.app](http://mind-bug-game.vercel.app). The backend is deployed on Render and the frontend on Vercel.
+### 1) Play the game at [mindbug-online.vercel.app](http://mindbug-online.vercel.app). The backend is deployed on Render and the frontend on Vercel.
 
 ### 2) Tunnel your local server with ngrok
 

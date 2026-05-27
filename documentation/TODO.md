@@ -1,4 +1,4 @@
-# Author’s TODO list and notes
+# Author’s TODO List
 
 ## TODO - backend
 
@@ -21,16 +21,15 @@
 - Test if deployment works fine:
   - add /health endpoint? - for Render
   - make game faster?
-  - change domain
 
 ## TODO - frontend
 
 - show visualization effect of discarded cards from hand for longer time + 1s (I dont have enough time to look at them properly)
-- (visualization effects for: Zesnovačka zrušila PLAY akci, Jazz_dog took control of cards)
 - make cards nicer so it is readable well - texty se tam asi nejak dotahnou oddelene a strenth a nazev take
 - Adjust UI layout to screen size
 - Longer logs history/ add scrolling?
 - enhance UI - change colours, choosing windows, ..
+- (visualization effects for: Zesnovačka zrušila PLAY akci, Jazz_dog took control of cards)
 
 ## Bugs - backend
 
