@@ -208,7 +208,7 @@ class LegacyGameStore:
 
 
 allowed_origins = [
-    "https://mind-bug-game.vercel.app",
+    "https://mindbug-online.vercel.app",
     "http://localhost:5173",
     "http://127.0.0.1:5173",
 ]
@@ -217,7 +217,7 @@ fastapi_app = FastAPI(title="Mindbug Prototype API", version="0.2.0")
 fastapi_app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
-    allow_origin_regex=r"https://mind-bug-game-[a-z0-9-]+\.vercel\.app",
+    allow_origin_regex=r"https://mindbug-online-[a-z0-9-]+\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
